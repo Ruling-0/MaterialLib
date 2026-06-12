@@ -1,5 +1,7 @@
 package com.ruling_0.materiallib;
 
+import com.ruling_0.materiallib.api.MaterialRegistry;
+
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -16,8 +18,10 @@ public class CommonProxy {
         MaterialLib.LOG.info("I am MaterialLib at version " + Tags.VERSION);
     }
 
-    // load "Do your mod setup. Build whatever data structures you care about. Register recipes." (Remove if not needed)
-    public void init(FMLInitializationEvent event) {}
+    // Mods depending on materiallib register materials in their preInit handlers, which all run before this.
+    public void init(FMLInitializationEvent event) {
+        MaterialRegistry.instance().resolve();
+    }
 
     // postInit "Handle interaction with other mods, complete your setup based on this." (Remove if not needed)
     public void postInit(FMLPostInitializationEvent event) {}

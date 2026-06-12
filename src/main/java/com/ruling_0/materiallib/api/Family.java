@@ -1,0 +1,99 @@
+package com.ruling_0.materiallib.api;
+
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+
+/// A named group of [Material]s that share [Property] values and generated [Shape]s.
+///
+/// A family's properties and shapes apply to every member, with the member's own values taking precedence.
+/// Families are created through [MaterialLibAPI#newFamily] during preInit and become read-only once the registry
+/// resolves during this mod's init. Membership is only available after resolution, since other mods may alter it
+/// through [FamilyEdit]s and [MaterialEdit]s until then.
+public final class Family {
+
+    private final MaterialRegistry registry;
+    private final String modid;
+    private final String name;
+    private final Map<Property<?>, Object> properties;
+    private final Set<Shape> shapes;
+
+    private Set<Material> members;
+
+    Family(MaterialRegistry registry, String modid, String name, Map<Property<?>, Object> properties,
+           Set<Shape> shapes) {
+        this.registry = registry;
+        this.modid = modid;
+        this.name = name;
+        this.properties = new LinkedHashMap<>(properties);
+        this.shapes = new LinkedHashSet<>(shapes);
+    }
+
+    public String getModId() { return modid; }
+
+    public String getName() { return name; }
+
+    /// The registry key, `modid:name`.
+    public String getKey() { return Names.key(modid, name); }
+
+    /// The materials belonging to this family. Only available after the registry has resolved.
+    public Set<Material> getMaterials() {
+        registry.requireResolved("query the members of " + getKey());
+        return members;
+    }
+
+    /// The shapes this family generates for all members. Only available after the registry has resolved.
+    public Set<Shape> getShapes() {
+        registry.requireResolved("query the shapes of " + getKey());
+        return Collections.unmodifiableSet(shapes);
+    }
+
+    /// Resolves a property for this family: its own value, else the property's default. Only available after the
+    /// registry has resolved.
+    @SuppressWarnings("unchecked")
+    public <T> T getProperty(Property<T> property) {
+        registry.requireResolved("query properties of " + getKey());
+        Object value = properties.get(property);
+        if (value != null) return (T) value;
+        return property.getDefaultValue();
+    }
+
+    /// True if this family sets the property explicitly (the property default does not count).
+    public boolean hasProperty(Property<?> property) {
+        registry.requireResolved("query properties of " + getKey());
+        return properties.containsKey(property);
+    }
+
+    /// Properties set directly on this family, excluding default values.
+    public Map<Property<?>, Object> getOwnProperties() {
+        registry.requireResolved("query properties of " + getKey());
+        return Collections.unmodifiableMap(properties);
+    }
+
+    void setPropertyValue(Property<?> property, Object value) {
+        properties.put(property, value);
+    }
+
+    void removePropertyValue(Property<?> property) {
+        properties.remove(property);
+    }
+
+    void addShape(Shape shape) {
+        shapes.add(shape);
+    }
+
+    void removeShape(Shape shape) {
+        shapes.remove(shape);
+    }
+
+    Set<Shape> getShapesInternal() { return shapes; }
+
+    void setMembersInternal(Set<Material> members) { this.members = Collections.unmodifiableSet(members); }
+
+    @Override
+    public String toString() {
+        return "Family[" + getKey() + "]";
+    }
+}
