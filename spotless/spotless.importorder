@@ -1,0 +1,8 @@
+#Organize Import Order
+#Mon Jan 26 00:46:00 UTC 2026
+0=java
+1=javax
+2=net.minecraft
+3=net.minecraftforge
+6=com
+7=net
