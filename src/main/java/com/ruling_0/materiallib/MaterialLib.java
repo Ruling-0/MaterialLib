@@ -1,14 +1,13 @@
 package com.ruling_0.materiallib;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 @Mod(modid = MaterialLib.MODID, version = Tags.VERSION, name = "MaterialLib", acceptedMinecraftVersions = "[1.7.10]")
 public class MaterialLib {
@@ -16,7 +15,8 @@ public class MaterialLib {
     public static final String MODID = "materiallib";
     public static final Logger LOG = LogManager.getLogger(MODID);
 
-    @SidedProxy(clientSide = "com.ruling_0.materiallib.ClientProxy", serverSide = "com.ruling_0.materiallib.CommonProxy")
+    @SidedProxy(clientSide = "com.ruling_0.materiallib.ClientProxy",
+                serverSide = "com.ruling_0.materiallib.CommonProxy")
     public static CommonProxy proxy;
 
     @Mod.EventHandler
