@@ -10,7 +10,7 @@ public final class StandardProperties {
 
     /// The material's unlocalized name, used for item registration, translation keys, and oredict entries.
     /// Derived from the name passed to [MaterialLibAPI#newMaterial]; builders and edits reject attempts to set or
-    /// remove it.
+    /// remove it. Conventionally, this should start with a capital letter.
     public static final Property<String> NAME = Property.of(MaterialLib.MODID, "name");
 
     /// The texture set shapes draw their textures from. Derived from the texture set passed to

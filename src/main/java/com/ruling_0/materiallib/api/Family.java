@@ -11,11 +11,11 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 ///
 /// A material may belong to several families at once. Properties fall back member-to-family: a member's own
 /// value takes precedence, and among multiple families setting the same property the alphabetically-first
-/// family key wins (see [Material#getProperty]). The family's shapes are added to every member, except members
-/// that removed them individually through [MaterialEdit#removeShape]. Families are created through
-/// [MaterialLibAPI#newFamily] during preInit and become read-only once the registry resolves during this mod's
-/// init. Membership is only available after resolution, since other mods may alter it through [FamilyEdit]s and
-/// [MaterialEdit]s until then.
+/// family key wins (see [Material#getProperty]). Property conflict should not be relied on; wherever possible, keys
+/// should be unique. The family's shapes are added to every member, except members that removed them individually
+/// through [MaterialEdit#removeShape]. Families are created through [MaterialLibAPI#newFamily] during preInit and
+/// become read-only once the registry resolves during this mod's init. Membership is only available after resolution,
+/// since other mods may alter it through [FamilyEdit]s and [MaterialEdit]s until then.
 public final class Family {
 
     private final MaterialRegistry registry;

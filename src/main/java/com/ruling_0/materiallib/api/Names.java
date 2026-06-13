@@ -6,7 +6,7 @@ final class Names {
 
     private Names() {}
 
-    /// Validates the identifiers a shape implementation reports and returns the shape.
+    /// Validates the identifiers of a shape implementation and returns the shape.
     static Shape validate(Shape shape) {
         if (shape == null) throw new IllegalArgumentException("shape must not be null");
         validate("shape modid", shape.getModId());

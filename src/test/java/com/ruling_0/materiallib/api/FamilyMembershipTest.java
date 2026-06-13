@@ -44,6 +44,16 @@ class FamilyMembershipTest {
     }
 
     @Test
+    void familyBuilderIgnoresUnregisteredMaterial() {
+        registry.newFamily("testmod", "Alloys")
+            .addMaterial("testmod", "Never")
+            .build();
+        registry.resolve();
+
+        assertTrue(registry.getFamily("testmod", "Alloys").getMaterials().isEmpty());
+    }
+
+    @Test
     void builderAccumulatesMultipleFamilies() {
         Family alloys = registry.newFamily("testmod", "Alloys")
             .build();
