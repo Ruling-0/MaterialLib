@@ -1,5 +1,7 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Objects;
+
 import net.minecraftforge.client.IItemRenderer;
 
 import cpw.mods.fml.relauncher.Side;
@@ -25,6 +27,8 @@ public final class MaterialLibClient {
 
     /// Renders every item shape of `material` through `renderer`. Call from a mod's client proxy.
     public static void setItemRenderer(Material material, IItemRenderer renderer) {
+        Objects.requireNonNull(material, "material must not be null");
+        Objects.requireNonNull(renderer, "renderer must not be null");
         itemRenderers.put(material, renderer);
     }
 

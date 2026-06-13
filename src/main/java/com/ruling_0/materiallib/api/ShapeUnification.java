@@ -38,16 +38,18 @@ final class ShapeUnification {
             return canonical;
         }
         if (!canonical.getOreDict().equals(shape.getOreDict())) {
-            LOG.warn(
-                "Item shapes {}:{} and {}:{} share a name but have different oredict prefixes ({} vs {}); " +
-                    "unifying onto {} and using its prefix",
+            LOG.error(
+                "Item shapes {}:{} and {}:{} share a name but declare different oredict prefixes ({} vs {}); " +
+                    "unifying onto the first and registering only \"{}\" entries, so recipes using \"{}\" will " +
+                    "not resolve",
                 canonical.getModId(),
                 canonical.getName(),
                 shape.getModId(),
                 shape.getName(),
                 canonical.getOreDict(),
                 shape.getOreDict(),
-                canonical.getOreDict());
+                canonical.getOreDict(),
+                shape.getOreDict());
         }
         aliasToCanonical.put(shape, canonical);
         return canonical;

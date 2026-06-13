@@ -44,6 +44,13 @@ public class ShapeItem extends Item implements Shape {
         this.name = Names.validate("item shape name", name);
         this.oreDict = Names.validate("item shape oredict", oreDict);
         this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
+        try {
+            ShapeNaming.format(displayNameFormat, "");
+        }
+        catch (RuntimeException e) {
+            throw new IllegalArgumentException(
+                "displayNameFormat \"" + displayNameFormat + "\" is not a valid format string", e);
+        }
         setHasSubtypes(true);
         setMaxDamage(0);
         setCreativeTab(CreativeTabs.tabMaterials);
@@ -59,6 +66,11 @@ public class ShapeItem extends Item implements Shape {
     @Override
     public String getOreDict() { return oreDict; }
 
+    @Override
+    public String toString() {
+        return "ShapeItem[" + Names.key(modid, name) + "]";
+    }
+
     void bindServedMaterials(Material[] materials) {
         this.servedMaterials = materials;
     }
@@ -73,8 +85,7 @@ public class ShapeItem extends Item implements Shape {
 
     @Override
     public String getItemStackDisplayName(ItemStack stack) {
-        Material material = MaterialRegistry.instance()
-            .getMaterialByIndex(stack.getItemDamage());
+        Material material = materialFor(stack);
         if (material == null) {
             return super.getItemStackDisplayName(stack);
         }
@@ -83,6 +94,13 @@ public class ShapeItem extends Item implements Shape {
             return StatCollector.translateToLocal(overrideKey);
         }
         return ShapeNaming.format(displayNameFormat, localizedMaterialName(material));
+    }
+
+    /// The material a stack of this shape represents, decoding the damage value, or null if the damage maps to no
+    /// material (a stale or hand-edited stack).
+    private static Material materialFor(ItemStack stack) {
+        return MaterialRegistry.instance()
+            .getMaterialByIndex(stack.getItemDamage());
     }
 
     private static String localizedMaterialName(Material material) {
@@ -117,8 +135,7 @@ public class ShapeItem extends Item implements Shape {
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
-        Material material = MaterialRegistry.instance()
-            .getMaterialByIndex(stack.getItemDamage());
+        Material material = materialFor(stack);
         return material != null ? material.getProperty(StandardProperties.TINT) : 0xFFFFFFFF;
     }
 }

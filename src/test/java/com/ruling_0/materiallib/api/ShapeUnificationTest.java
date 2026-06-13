@@ -70,12 +70,54 @@ class ShapeUnificationTest {
     }
 
     @Test
-    void unifyingShapesWithDifferentOredictPrefixesStillCollapsesToTheFirst() {
+    void unifyingShapesWithDifferentOredictPrefixesUsesTheCanonicalPrefix() {
         TestShape first = new TestShape("amod", "gear", "gear");
         TestShape second = new TestShape("bmod", "gear", "wheel");
         unification.register(first);
 
         assertSame(first, unification.register(second));
         assertSame(first, unification.canonical(second));
+        assertEquals("gear", unification.canonical(second)
+            .getOreDict());
+    }
+
+    @Test
+    void canonicalShapesHoldsOnlyTheCanonicalAfterAnAlias() {
+        TestShape first = new TestShape("amod", "gear");
+        TestShape second = new TestShape("bmod", "gear");
+        unification.register(first);
+        unification.register(second);
+
+        assertEquals(List.of(first), new ArrayList<>(unification.canonicalShapes()));
+    }
+
+    @Test
+    void canonicalShapesPreservesRegistrationOrderAcrossAliases() {
+        TestShape plate = new TestShape("amod", "plate");
+        TestShape gear = new TestShape("amod", "gear");
+        TestShape gearAlias = new TestShape("bmod", "gear");
+        TestShape rod = new TestShape("amod", "rod");
+        unification.register(plate);
+        unification.register(gear);
+        unification.register(gearAlias);
+        unification.register(rod);
+
+        assertEquals(List.of(plate, gear, rod), new ArrayList<>(unification.canonicalShapes()));
+    }
+
+    @Test
+    void multipleAliasesAllResolveToTheSameCanonical() {
+        TestShape first = new TestShape("amod", "gear");
+        TestShape second = new TestShape("bmod", "gear");
+        TestShape third = new TestShape("cmod", "gear");
+        unification.register(first);
+
+        assertSame(first, unification.register(second));
+        assertSame(first, unification.register(third));
+        assertSame(first, unification.canonical(second));
+        assertSame(first, unification.canonical(third));
+        assertFalse(unification.isCanonical(second));
+        assertFalse(unification.isCanonical(third));
+        assertEquals(List.of(first), new ArrayList<>(unification.canonicalShapes()));
     }
 }

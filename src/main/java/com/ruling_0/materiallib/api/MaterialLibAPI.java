@@ -36,10 +36,10 @@ public final class MaterialLibAPI {
         return ItemShapeRegistry.instance().register(item);
     }
 
-    /// The itemstack of `material` in `shape`, with the given stack size. The shape must be an item shape, and
-    /// the registry must have resolved. Only available after the registry has resolved.
+    /// The itemstack of `material` in `shape`, with the given stack size. The shape must be an item shape that
+    /// the material generates. Only available after item shapes have resolved (during this mod's init).
     public static ItemStack getStack(Material material, Shape shape, int amount) {
-        return ItemShapeRegistry.instance().getStack(shape, material, amount);
+        return ItemShapeRegistry.instance().getStack(material, shape, amount);
     }
 
     /// Queues changes to a material registered by any mod; see [MaterialEdit].

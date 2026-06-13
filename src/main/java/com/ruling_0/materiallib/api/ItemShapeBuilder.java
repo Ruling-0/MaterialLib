@@ -1,5 +1,7 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Objects;
+
 /// Builds and registers a simple item [Shape] backed by a [ShapeItem]. Obtained from
 /// [MaterialLibAPI#newItemShape] and finished with [#build], which must be called during the owning mod's
 /// preInit. Mods needing custom item behavior subclass [ShapeItem] instead and register through
@@ -28,7 +30,7 @@ public final class ItemShapeBuilder {
     /// the material name followed by the capitalized shape name. A lang file may override individual names; see
     /// [ShapeNaming].
     public ItemShapeBuilder displayName(String displayNameFormat) {
-        this.displayNameFormat = displayNameFormat;
+        this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
         return this;
     }
 
