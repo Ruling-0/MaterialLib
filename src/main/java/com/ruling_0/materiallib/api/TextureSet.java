@@ -1,7 +1,5 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.Objects;
-
 /// Identifies a folder of material textures supplied by a mod, holding one texture per shape name.
 ///
 /// The folder lives in the owning mod's assets under `textures/items/materials/<name>/` for item shapes and
@@ -38,7 +36,7 @@ public final class TextureSet {
 
     @Override
     public int hashCode() {
-        return Objects.hash(modid, name);
+        return 31 * modid.hashCode() + name.hashCode();
     }
 
     @Override

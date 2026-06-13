@@ -1,15 +1,16 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,10 +30,12 @@ public final class MaterialRegistry {
     private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final MaterialRegistry INSTANCE = new MaterialRegistry();
 
-    private final Map<String, Material> materials = new LinkedHashMap<>();
-    private final Map<String, Family> families = new LinkedHashMap<>();
-    private final List<PendingOp> pendingOps = new ArrayList<>();
+    private final Map<String, Material> materials = new Object2ObjectLinkedOpenHashMap<>();
+    private final Map<String, Family> families = new Object2ObjectLinkedOpenHashMap<>();
+    private final List<PendingOp> pendingOps = new ObjectArrayList<>();
     private boolean resolved;
+    private Collection<Material> materialsView;
+    private Collection<Family> familiesView;
 
     MaterialRegistry() {}
 
@@ -73,14 +76,14 @@ public final class MaterialRegistry {
     /// would be incomplete.
     public Collection<Material> getMaterials() {
         requireResolved("list registered materials", "");
-        return Collections.unmodifiableCollection(materials.values());
+        return materialsView;
     }
 
     /// All registered families. Only available after the registry has resolved; during registration the view
     /// would be incomplete.
     public Collection<Family> getFamilies() {
         requireResolved("list registered families", "");
-        return Collections.unmodifiableCollection(families.values());
+        return familiesView;
     }
 
     public boolean isResolved() { return resolved; }
@@ -103,9 +106,9 @@ public final class MaterialRegistry {
         }
         pendingOps.clear();
 
-        Map<Family, Set<Material>> membership = new LinkedHashMap<>();
+        Map<Family, Set<Material>> membership = new Reference2ObjectLinkedOpenHashMap<>();
         for (Family family : families.values()) {
-            membership.put(family, new LinkedHashSet<>());
+            membership.put(family, new ReferenceLinkedOpenHashSet<>());
         }
         for (Material material : materials.values()) {
             material.resolveFamilies();
@@ -114,12 +117,14 @@ public final class MaterialRegistry {
             }
         }
         for (Map.Entry<Family, Set<Material>> entry : membership.entrySet()) {
-            entry.getKey().setMembersInternal(entry.getValue());
+            entry.getKey().resolveMembers(entry.getValue());
         }
         for (Material material : materials.values()) {
             logPropertyCollisions(material);
             material.resolveShapes();
         }
+        materialsView = Collections.unmodifiableCollection(materials.values());
+        familiesView = Collections.unmodifiableCollection(families.values());
 
         resolved = true;
         LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
@@ -128,9 +133,9 @@ public final class MaterialRegistry {
     /// Logs each property whose resolved value is ambiguous for a material: the material does not set it, and
     /// two or more of its families set conflicting values. The alphabetically-first family still wins.
     private void logPropertyCollisions(Material material) {
-        List<Family> sorted = material.getSortedFamiliesInternal();
-        if (sorted.size() < 2) return;
-        Map<Property<?>, Family> firstSetters = new LinkedHashMap<>();
+        Family[] sorted = material.getSortedFamiliesInternal();
+        if (sorted.length < 2) return;
+        Map<Property<?>, Family> firstSetters = new Reference2ObjectLinkedOpenHashMap<>();
         for (Family family : sorted) {
             for (Map.Entry<Property<?>, Object> entry : family.getOwnPropertiesInternal().entrySet()) {
                 Property<?> property = entry.getKey();

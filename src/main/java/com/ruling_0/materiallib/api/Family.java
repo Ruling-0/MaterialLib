@@ -1,10 +1,11 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
+
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
 /// A named group of [Material]s that share [Property] values and generated [Shape]s.
 ///
@@ -25,6 +26,8 @@ public final class Family {
     private final Set<Shape> shapes;
 
     private Set<Material> members;
+    private Set<Shape> shapesView;
+    private Map<Property<?>, Object> propertiesView;
 
     Family(MaterialRegistry registry, String modid, String name, Map<Property<?>, Object> properties,
            Set<Shape> shapes) {
@@ -32,8 +35,8 @@ public final class Family {
         this.modid = modid;
         this.name = name;
         this.key = Names.key(modid, name);
-        this.properties = new LinkedHashMap<>(properties);
-        this.shapes = new LinkedHashSet<>(shapes);
+        this.properties = new Reference2ObjectLinkedOpenHashMap<>(properties);
+        this.shapes = new ReferenceLinkedOpenHashSet<>(shapes);
     }
 
     public String getModId() { return modid; }
@@ -53,7 +56,7 @@ public final class Family {
     /// [MaterialEdit#removeShape]. Only available after the registry has resolved.
     public Set<Shape> getShapes() {
         registry.requireResolved("query the shapes of ", key);
-        return Collections.unmodifiableSet(shapes);
+        return shapesView;
     }
 
     /// Resolves a property for this family: its own value, else the property's default. Only available after the
@@ -75,7 +78,7 @@ public final class Family {
     /// Properties set directly on this family, excluding default values.
     public Map<Property<?>, Object> getOwnProperties() {
         registry.requireResolved("query properties of ", key);
-        return Collections.unmodifiableMap(properties);
+        return propertiesView;
     }
 
     void setPropertyValue(Property<?> property, Object value) {
@@ -102,7 +105,11 @@ public final class Family {
 
     Map<Property<?>, Object> getOwnPropertiesInternal() { return properties; }
 
-    void setMembersInternal(Set<Material> members) { this.members = Collections.unmodifiableSet(members); }
+    void resolveMembers(Set<Material> members) {
+        this.members = Collections.unmodifiableSet(members);
+        shapesView = Collections.unmodifiableSet(shapes);
+        propertiesView = Collections.unmodifiableMap(properties);
+    }
 
     private void requireMutable() {
         if (registry.isResolved()) {

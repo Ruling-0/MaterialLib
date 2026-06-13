@@ -1,12 +1,13 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
 /// Builds and registers a [Material]. Obtained from [MaterialLibAPI#newMaterial] and finished with [#build],
 /// which registers the material and must be called during preInit.
@@ -16,8 +17,8 @@ public final class MaterialBuilder {
     private final String modid;
     private final String name;
     private final TextureSet textureSet;
-    private final Map<Property<?>, Object> properties = new LinkedHashMap<>();
-    private final Set<Shape> shapes = new LinkedHashSet<>();
+    private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
+    private final Set<Shape> shapes = new ReferenceLinkedOpenHashSet<>();
     private final List<String[]> familyKeys = new ArrayList<>();
     private boolean built;
 

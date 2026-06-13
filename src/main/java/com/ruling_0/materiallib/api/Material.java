@@ -1,13 +1,15 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 /// A registered material: a named member of the registry that generates a set of [Shape]s and carries
 /// [Property] values.
@@ -18,18 +20,23 @@ import java.util.Set;
 /// through [MaterialEdit]s until then.
 public final class Material {
 
+    private static final Comparator<Family> FAMILY_KEY_ORDER = Comparator.comparing(Family::getKey);
+
     private final MaterialRegistry registry;
     private final String modid;
     private final String name;
     private final String key;
     private final Map<Property<?>, Object> properties;
     private final Set<Shape> ownShapes;
-    private final Set<Shape> removedShapes = new LinkedHashSet<>();
-    private final Set<Family> families = new LinkedHashSet<>();
+    // Plain (unordered) sets: removedShapes is only membership-tested, and families is sorted into
+    // sortedFamilies before any iteration order can be observed.
+    private final Set<Shape> removedShapes = new ReferenceOpenHashSet<>(4);
+    private final Set<Family> families = new ReferenceOpenHashSet<>(4);
 
-    private List<Family> sortedFamilies;
+    private Family[] sortedFamilies;
     private Set<Family> familiesView;
     private Set<Shape> shapes;
+    private Map<Property<?>, Object> propertiesView;
 
     Material(MaterialRegistry registry, String modid, String name, Map<Property<?>, Object> properties,
              Set<Shape> ownShapes) {
@@ -37,8 +44,8 @@ public final class Material {
         this.modid = modid;
         this.name = name;
         this.key = Names.key(modid, name);
-        this.properties = new LinkedHashMap<>(properties);
-        this.ownShapes = new LinkedHashSet<>(ownShapes);
+        this.properties = new Reference2ObjectLinkedOpenHashMap<>(properties);
+        this.ownShapes = new ReferenceLinkedOpenHashSet<>(ownShapes);
     }
 
     public String getModId() { return modid; }
@@ -76,7 +83,9 @@ public final class Material {
         Object value = properties.get(property);
         if (value != null) return (T) value;
         for (Family family : sortedFamilies) {
-            if (family.hasProperty(property)) return family.getProperty(property);
+            Object inherited = family.getOwnPropertiesInternal()
+                .get(property);
+            if (inherited != null) return (T) inherited;
         }
         return property.getDefaultValue();
     }
@@ -87,7 +96,8 @@ public final class Material {
         registry.requireResolved("query properties of ", key);
         if (properties.containsKey(property)) return true;
         for (Family family : sortedFamilies) {
-            if (family.hasProperty(property)) return true;
+            if (family.getOwnPropertiesInternal()
+                .containsKey(property)) return true;
         }
         return false;
     }
@@ -95,7 +105,7 @@ public final class Material {
     /// Properties set directly on this material, excluding family-level and default values.
     public Map<Property<?>, Object> getOwnProperties() {
         registry.requireResolved("query properties of ", key);
-        return Collections.unmodifiableMap(properties);
+        return propertiesView;
     }
 
     void setPropertyValue(Property<?> property, Object value) {
@@ -136,16 +146,17 @@ public final class Material {
 
     Map<Property<?>, Object> getOwnPropertiesInternal() { return properties; }
 
-    List<Family> getSortedFamiliesInternal() { return sortedFamilies; }
+    Family[] getSortedFamiliesInternal() { return sortedFamilies; }
 
     void resolveFamilies() {
-        sortedFamilies = new ArrayList<>(families);
-        sortedFamilies.sort(Comparator.comparing(Family::getKey));
-        familiesView = Collections.unmodifiableSet(new LinkedHashSet<>(sortedFamilies));
+        sortedFamilies = families.toArray(new Family[0]);
+        Arrays.sort(sortedFamilies, FAMILY_KEY_ORDER);
+        familiesView = Collections.unmodifiableSet(new ReferenceArraySet<>(sortedFamilies));
+        propertiesView = Collections.unmodifiableMap(properties);
     }
 
     void resolveShapes() {
-        Set<Shape> effective = new LinkedHashSet<>(ownShapes);
+        Set<Shape> effective = new ReferenceLinkedOpenHashSet<>(ownShapes);
         for (Family family : sortedFamilies) {
             for (Shape shape : family.getShapesInternal()) {
                 if (!removedShapes.contains(shape)) {

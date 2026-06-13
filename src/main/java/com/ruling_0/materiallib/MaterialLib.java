@@ -9,7 +9,12 @@ import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-@Mod(modid = MaterialLib.MODID, version = Tags.VERSION, name = "MaterialLib", acceptedMinecraftVersions = "[1.7.10]")
+@Mod(
+     modid = MaterialLib.MODID,
+     version = Tags.VERSION,
+     name = "MaterialLib",
+     acceptedMinecraftVersions = "[1.7.10]",
+     dependencies = "required-after:gtnhlib")
 public class MaterialLib {
 
     public static final String MODID = "materiallib";
