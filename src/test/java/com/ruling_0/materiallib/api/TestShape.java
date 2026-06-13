@@ -4,10 +4,16 @@ final class TestShape implements Shape {
 
     private final String modid;
     private final String name;
+    private final String oreDict;
 
     TestShape(String modid, String name) {
+        this(modid, name, name);
+    }
+
+    TestShape(String modid, String name, String oreDict) {
         this.modid = modid;
         this.name = name;
+        this.oreDict = oreDict;
     }
 
     @Override
@@ -17,7 +23,7 @@ final class TestShape implements Shape {
     public String getName() { return name; }
 
     @Override
-    public String getOreDict() { return name; }
+    public String getOreDict() { return oreDict; }
 
     @Override
     public String toString() {

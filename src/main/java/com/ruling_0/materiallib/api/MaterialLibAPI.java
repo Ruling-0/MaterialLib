@@ -2,6 +2,8 @@ package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
 
+import net.minecraft.item.ItemStack;
+
 /// The public entry point of MaterialLib, wrapping the game's [MaterialRegistry] instance.
 ///
 /// During preInit, mods create materials and families through [#newMaterial] and [#newFamily], and alter ones
@@ -20,6 +22,24 @@ public final class MaterialLibAPI {
     /// Starts building a family owned by `modid`. Register by calling [FamilyBuilder#build] during preInit.
     public static FamilyBuilder newFamily(String modid, String name) {
         return MaterialRegistry.instance().newFamily(modid, name);
+    }
+
+    /// Starts building a simple item shape owned by `modid`. Finish with [ItemShapeBuilder#build] during the
+    /// owning mod's preInit. For custom item behavior, subclass [ShapeItem] and use [#registerItemShape].
+    public static ItemShapeBuilder newItemShape(String modid, String name) {
+        return new ItemShapeBuilder(modid, name);
+    }
+
+    /// Registers a [ShapeItem] subclass and returns the canonical shape to generate (see
+    /// [ItemShapeRegistry#register]). Call during the owning mod's preInit.
+    public static Shape registerItemShape(ShapeItem item) {
+        return ItemShapeRegistry.instance().register(item);
+    }
+
+    /// The itemstack of `material` in `shape`, with the given stack size. The shape must be an item shape, and
+    /// the registry must have resolved. Only available after the registry has resolved.
+    public static ItemStack getStack(Material material, Shape shape, int amount) {
+        return ItemShapeRegistry.instance().getStack(shape, material, amount);
     }
 
     /// Queues changes to a material registered by any mod; see [MaterialEdit].

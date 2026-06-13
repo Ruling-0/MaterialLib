@@ -1,5 +1,6 @@
 package com.ruling_0.materiallib;
 
+import com.ruling_0.materiallib.api.ItemShapeRegistry;
 import com.ruling_0.materiallib.api.MaterialRegistry;
 
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -18,6 +19,7 @@ public class CommonProxy {
     // Mods depending on materiallib register materials in their preInit handlers, which all run before this.
     public void init(FMLInitializationEvent event) {
         MaterialRegistry.instance().resolve();
+        ItemShapeRegistry.instance().resolve();
     }
 
     public void postInit(FMLPostInitializationEvent event) {}
