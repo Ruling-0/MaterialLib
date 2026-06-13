@@ -42,6 +42,13 @@ public final class MaterialLibAPI {
         return MaterialRegistry.instance().getFamily(modid, name);
     }
 
+    /// The material assigned the given global metadata index (see [Material#getIndex]), or null if none has it.
+    /// Lets worldgen and other consumers map an item damage value back to its material. Only available after the
+    /// registry has resolved.
+    public static Material getMaterialByIndex(int index) {
+        return MaterialRegistry.instance().getMaterialByIndex(index);
+    }
+
     /// All registered materials; only available after the registry has resolved.
     public static Collection<Material> getMaterials() { return MaterialRegistry.instance().getMaterials(); }
 

@@ -37,6 +37,7 @@ public final class Material {
     private Set<Family> familiesView;
     private Set<Shape> shapes;
     private Map<Property<?>, Object> propertiesView;
+    private int index = -1;
 
     Material(MaterialRegistry registry, String modid, String name, Map<Property<?>, Object> properties,
              Set<Shape> ownShapes) {
@@ -54,6 +55,14 @@ public final class Material {
 
     /// The registry key, `modid:name`.
     public String getKey() { return key; }
+
+    /// The material's global metadata index: a stable per-material number used as the item damage in every shape
+    /// and as the worldgen/ore id. Assigned at resolve by numbering all registered materials in ascending
+    /// `modid:name` key order from 0. Only available after the registry has resolved.
+    public int getIndex() {
+        registry.requireResolved("query the index of ", key);
+        return index;
+    }
 
     /// The families this material belongs to, iterated in alphabetical (case-sensitive) `modid:name` key order
     /// -- the same order used to resolve property values. Empty for a standalone material. Only available after
@@ -147,6 +156,10 @@ public final class Material {
     Map<Property<?>, Object> getOwnPropertiesInternal() { return properties; }
 
     Family[] getSortedFamiliesInternal() { return sortedFamilies; }
+
+    void resolveIndex(int index) {
+        this.index = index;
+    }
 
     void resolveFamilies() {
         sortedFamilies = families.toArray(new Family[0]);
