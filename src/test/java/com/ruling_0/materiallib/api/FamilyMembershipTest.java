@@ -109,6 +109,24 @@ class FamilyMembershipTest {
     }
 
     @Test
+    void familyEditAddMaterialClaimsMaterial() {
+        Family alloys = registry.newFamily("testmod", "Alloys")
+            .build();
+        Family gems = registry.newFamily("testmod", "Gems")
+            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .addToFamily(gems)
+            .build();
+        registry.editFamily("testmod", "Alloys")
+            .addMaterial("testmod", "TestIron");
+        registry.resolve();
+
+        assertSame(alloys, material.getFamily());
+        assertEquals(Set.of(material), alloys.getMaterials());
+        assertTrue(gems.getMaterials().isEmpty());
+    }
+
+    @Test
     void missingFamilyClaimIsSkipped() {
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily("absentmod", "Missing")

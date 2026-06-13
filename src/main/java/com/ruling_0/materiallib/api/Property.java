@@ -8,7 +8,7 @@ package com.ruling_0.materiallib.api;
 /// as constants (see [StandardProperties] for the ones this mod provides).
 ///
 /// Value resolution for a material checks, in order: the material's own value, the value of the material's
-/// Family (if any), then [#getDefaultValue()].
+/// [Family] (if any), then [#getDefaultValue()].
 public final class Property<T> {
 
     private final String modid;

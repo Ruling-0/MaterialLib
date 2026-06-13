@@ -16,11 +16,12 @@ import org.apache.logging.log4j.Logger;
 /// The broker holding every registered [Material] and [Family].
 ///
 /// The registry has two phases. During registration (all preInit handlers), mods register materials and families
-/// through the builders and queue cross-mod changes through [MaterialEdit] and [FamilyEdit]; nothing can be read
-/// back yet. During this mod's init handler, [#resolve] applies all queued edits in call order, derives family
-/// membership and effective shape sets, and freezes the registry. From then on everything is readable and nothing
-/// can be registered or edited, which guarantees dependent mods a complete registry in their init and postInit
-/// handlers.
+/// through the builders and queue cross-mod changes through [MaterialEdit] and [FamilyEdit]; key lookups return
+/// the registered objects, but their membership, shapes, and properties cannot be read yet, and neither can the
+/// bulk collection views. During this mod's init handler, [#resolve] applies all queued edits in call order,
+/// derives family membership and effective shape sets, and freezes the registry. From then on everything is
+/// readable and nothing can be registered or edited, which guarantees dependent mods a complete registry in
+/// their init and postInit handlers.
 ///
 /// The game uses the single [#instance]; tests construct private registries directly.
 public final class MaterialRegistry {
@@ -56,28 +57,49 @@ public final class MaterialRegistry {
         return new FamilyEdit(this, modid, name);
     }
 
-    /// The material with the given key, or null if none exists.
+    /// The material with the given key, or null if none exists. Usable during registration, though the returned
+    /// material is only readable after the registry resolves.
     public Material getMaterial(String modid, String name) {
         return materials.get(Names.key(modid, name));
     }
 
-    /// The family with the given key, or null if none exists.
+    /// The family with the given key, or null if none exists. Usable during registration, though the returned
+    /// family is only readable after the registry resolves.
     public Family getFamily(String modid, String name) {
         return families.get(Names.key(modid, name));
     }
 
-    public Collection<Material> getMaterials() { return Collections.unmodifiableCollection(materials.values()); }
+    /// All registered materials. Only available after the registry has resolved; during registration the view
+    /// would be incomplete.
+    public Collection<Material> getMaterials() {
+        requireResolved("list registered materials", "");
+        return Collections.unmodifiableCollection(materials.values());
+    }
 
-    public Collection<Family> getFamilies() { return Collections.unmodifiableCollection(families.values()); }
+    /// All registered families. Only available after the registry has resolved; during registration the view
+    /// would be incomplete.
+    public Collection<Family> getFamilies() {
+        requireResolved("list registered families", "");
+        return Collections.unmodifiableCollection(families.values());
+    }
 
     public boolean isResolved() { return resolved; }
 
     /// Applies all queued edits in call order, derives family membership and per-material shape sets, and
-    /// freezes the registry. Called once from this mod's init handler.
+    /// freezes the registry.
+    ///
+    /// This is the lifecycle entry point invoked once by MaterialLib's own init handler. Calling it from any
+    /// other mod freezes the registry early and breaks registration for every mod that has not finished its
+    /// preInit, so other mods must never call it.
     public void resolve() {
         requireRegistration("resolve the registry");
         for (PendingOp op : pendingOps) {
-            op.action.run();
+            try {
+                op.action.run();
+            }
+            catch (RuntimeException e) {
+                throw new IllegalStateException("Failed to apply queued edit \"" + op.description + "\"", e);
+            }
         }
         pendingOps.clear();
 
@@ -94,11 +116,11 @@ public final class MaterialRegistry {
         for (Map.Entry<Family, Set<Material>> entry : membership.entrySet()) {
             entry.getKey().setMembersInternal(entry.getValue());
         }
-
-        resolved = true;
         for (Material material : materials.values()) {
             material.resolveShapes();
         }
+
+        resolved = true;
         LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
     }
 
@@ -155,7 +177,7 @@ public final class MaterialRegistry {
             }
             Family previous = material.getFamilyInternal();
             if (previous != null && previous != family) {
-                LOG.warn("Material {} moved from family {} to {}", material.getKey(), previous.getKey(), familyKey);
+                LOG.info("Material {} moved from family {} to {}", material.getKey(), previous.getKey(), familyKey);
             }
             material.setFamilyInternal(family);
         });
@@ -163,7 +185,7 @@ public final class MaterialRegistry {
 
     void enqueueRemoveFromFamily(String materialModid, String materialName, String familyModid, String familyName) {
         String familyKey = Names.key(familyModid, familyName);
-        enqueueMaterialOp(materialModid, materialName, "remove material from family " + familyKey + ",", material -> {
+        enqueueMaterialOp(materialModid, materialName, "remove family " + familyKey + " from material", material -> {
             Family current = material.getFamilyInternal();
             if (current == null || !current.getKey().equals(familyKey)) {
                 LOG.warn(
@@ -182,10 +204,10 @@ public final class MaterialRegistry {
         pendingOps.add(new PendingOp(description, action));
     }
 
-    void requireResolved(String what) {
+    void requireResolved(String action, String target) {
         if (!resolved) {
             throw new IllegalStateException(
-                "Cannot " + what + ": the material registry has not resolved yet. " +
+                "Cannot " + action + target + ": the material registry has not resolved yet. " +
                     "Registry contents are readable from init onwards in mods depending on materiallib");
         }
     }

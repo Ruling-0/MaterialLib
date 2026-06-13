@@ -42,11 +42,9 @@ public final class MaterialLibAPI {
         return MaterialRegistry.instance().getFamily(modid, name);
     }
 
+    /// All registered materials; only available after the registry has resolved.
     public static Collection<Material> getMaterials() { return MaterialRegistry.instance().getMaterials(); }
 
+    /// All registered families; only available after the registry has resolved.
     public static Collection<Family> getFamilies() { return MaterialRegistry.instance().getFamilies(); }
-
-    public static MaterialRegistry registry() {
-        return MaterialRegistry.instance();
-    }
 }

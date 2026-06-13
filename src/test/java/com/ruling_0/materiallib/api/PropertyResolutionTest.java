@@ -3,6 +3,7 @@ package com.ruling_0.materiallib.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -134,12 +135,54 @@ class PropertyResolutionTest {
     }
 
     @Test
-    void nameAndTextureSetAreAlwaysIdentityDerived() {
+    void identityPropertiesCannotBeSetOrRemoved() {
+        MaterialBuilder builder = registry.newMaterial("testmod", "TestIron", texture);
+        assertThrows(IllegalArgumentException.class, () -> builder.setProperty(StandardProperties.NAME, "Imposter"));
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> builder.setProperty(StandardProperties.TEXTURE_SET, texture));
+
+        FamilyBuilder familyBuilder = registry.newFamily("testmod", "Alloys");
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> familyBuilder.setProperty(StandardProperties.NAME, "Imposter"));
+
+        MaterialEdit materialEdit = registry.editMaterial("testmod", "TestIron");
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> materialEdit.setProperty(StandardProperties.NAME, "Imposter"));
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> materialEdit.removeProperty(StandardProperties.TEXTURE_SET));
+
+        FamilyEdit familyEdit = registry.editFamily("testmod", "Alloys");
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> familyEdit.setProperty(StandardProperties.TEXTURE_SET, texture));
+        assertThrows(IllegalArgumentException.class, () -> familyEdit.removeProperty(StandardProperties.NAME));
+    }
+
+    @Test
+    void nameIsIdentityDerived() {
         Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .setProperty(StandardProperties.NAME, "Imposter")
             .build();
         registry.resolve();
 
         assertEquals("TestIron", StandardProperties.NAME.get(material));
+        assertEquals(texture, StandardProperties.TEXTURE_SET.get(material));
+    }
+
+    @Test
+    void propertyKeysCompareByIdentity() {
+        Property<Integer> first = Property.of("testmod", "sameName");
+        Property<Integer> second = Property.of("testmod", "sameName");
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .setProperty(first, 42)
+            .build();
+        registry.resolve();
+
+        assertEquals(42, first.get(material));
+        assertNull(second.get(material));
+        assertFalse(second.isSet(material));
     }
 }

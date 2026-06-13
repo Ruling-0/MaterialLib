@@ -1,10 +1,18 @@
 package com.ruling_0.materiallib.api;
 
-/// Validation and key formatting for the modid/name pairs that identify materials, families, shapes, and
-/// texture sets.
+/// Validation and key formatting for the modid/name pairs that identify materials, families, properties,
+/// shapes, and texture sets.
 final class Names {
 
     private Names() {}
+
+    /// Validates the identifiers a shape implementation reports and returns the shape.
+    static Shape validate(Shape shape) {
+        if (shape == null) throw new IllegalArgumentException("shape must not be null");
+        validate("shape modid", shape.getModId());
+        validate("shape name", shape.getName());
+        return shape;
+    }
 
     /// Validates an identifier component and returns it. Identifiers must be non-null, non-empty, and free of
     /// whitespace and ':' (the key separator).

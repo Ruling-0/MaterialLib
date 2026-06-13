@@ -80,17 +80,59 @@ class MaterialRegistryTest {
         assertThrows(IllegalStateException.class, material::build);
         FamilyBuilder family = registry.newFamily("testmod", "Alloys");
         assertThrows(IllegalStateException.class, family::build);
-        MaterialEdit edit = registry.editMaterial("testmod", "TestIron");
-        assertThrows(IllegalStateException.class, () -> edit.setTint(0));
+        MaterialEdit materialEdit = registry.editMaterial("testmod", "TestIron");
+        assertThrows(IllegalStateException.class, () -> materialEdit.setTint(0));
+        FamilyEdit familyEdit = registry.editFamily("testmod", "Alloys");
+        assertThrows(IllegalStateException.class, () -> familyEdit.setTint(0));
     }
 
     @Test
     void readBeforeResolveThrows() {
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .build();
+        Family family = registry.newFamily("testmod", "Alloys")
+            .build();
         assertThrows(IllegalStateException.class, material::getShapes);
         assertThrows(IllegalStateException.class, material::getFamily);
         assertThrows(IllegalStateException.class, () -> StandardProperties.TINT.get(material));
+        assertThrows(IllegalStateException.class, family::getMaterials);
+        assertThrows(IllegalStateException.class, family::getShapes);
+        assertThrows(IllegalStateException.class, () -> StandardProperties.TINT.get(family));
+        assertThrows(IllegalStateException.class, registry::getMaterials);
+        assertThrows(IllegalStateException.class, registry::getFamilies);
+    }
+
+    @Test
+    void skippedEditDoesNotStopLaterEdits() {
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .build();
+        registry.editMaterial("absentmod", "Missing")
+            .setTint(0xFF0000FF);
+        registry.editMaterial("testmod", "TestIron")
+            .setTint(0xFF00FF00);
+        registry.resolve();
+
+        assertEquals(0xFF00FF00, StandardProperties.TINT.get(material));
+    }
+
+    @Test
+    void resolvedViewsAreUnmodifiable() {
+        Shape gear = new TestShape("testmod", "gear");
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .generateShape(gear)
+            .build();
+        Family family = registry.newFamily("testmod", "Alloys")
+            .addMaterial(material)
+            .build();
+        registry.resolve();
+
+        assertThrows(UnsupportedOperationException.class, () -> material.getShapes().add(gear));
+        assertThrows(UnsupportedOperationException.class, () -> family.getMaterials().remove(material));
+        assertThrows(UnsupportedOperationException.class, () -> family.getShapes().add(gear));
+        assertThrows(UnsupportedOperationException.class, () -> registry.getMaterials().clear());
+        assertThrows(
+            UnsupportedOperationException.class,
+            () -> material.getOwnProperties().put(StandardProperties.TINT, 0));
     }
 
     @Test

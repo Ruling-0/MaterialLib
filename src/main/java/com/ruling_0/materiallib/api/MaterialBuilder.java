@@ -33,15 +33,18 @@ public final class MaterialBuilder {
         return this;
     }
 
+    /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET], which are
+    /// derived from the [MaterialLibAPI#newMaterial] arguments.
     public <T> MaterialBuilder setProperty(Property<T> property, T value) {
         Objects.requireNonNull(property, "property must not be null");
         Objects.requireNonNull(value, "value must not be null");
+        StandardProperties.requireSettable(property);
         properties.put(property, value);
         return this;
     }
 
     public MaterialBuilder generateShape(Shape shape) {
-        shapes.add(Objects.requireNonNull(shape, "shape must not be null"));
+        shapes.add(Names.validate(shape));
         return this;
     }
 

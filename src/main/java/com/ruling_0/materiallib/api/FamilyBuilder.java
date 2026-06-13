@@ -32,15 +32,18 @@ public final class FamilyBuilder {
         return this;
     }
 
+    /// Sets a property value for all members that do not set their own. Rejects [StandardProperties#NAME] and
+    /// [StandardProperties#TEXTURE_SET], which every material derives from its own builder arguments.
     public <T> FamilyBuilder setProperty(Property<T> property, T value) {
         Objects.requireNonNull(property, "property must not be null");
         Objects.requireNonNull(value, "value must not be null");
+        StandardProperties.requireSettable(property);
         properties.put(property, value);
         return this;
     }
 
     public FamilyBuilder generateShape(Shape shape) {
-        shapes.add(Objects.requireNonNull(shape, "shape must not be null"));
+        shapes.add(Names.validate(shape));
         return this;
     }
 

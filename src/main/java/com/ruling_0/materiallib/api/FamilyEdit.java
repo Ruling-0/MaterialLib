@@ -4,10 +4,11 @@ import java.util.Objects;
 
 /// Queued cross-mod changes to a [Family] identified by key, obtained from [MaterialLibAPI#editFamily].
 ///
-/// Each call queues one operation immediately; there is no terminal apply call. Operations from all mods are
-/// applied in call order when the registry resolves, so the family does not need to exist yet when an edit is
-/// made -- only by the end of preInit. Operations targeting a family that was never registered are skipped with a
-/// logged warning, which keeps edits directed at optional mods harmless.
+/// Operations queue immediately as the methods are called (varargs methods queue one operation per element);
+/// there is no terminal apply call. Operations from all mods are applied in call order when the registry
+/// resolves, so the family does not need to exist yet when an edit is made -- only by the end of preInit.
+/// Operations targeting a family that was never registered are skipped with a logged warning, which keeps edits
+/// directed at optional mods harmless.
 public final class FamilyEdit {
 
     private final MaterialRegistry registry;
@@ -25,9 +26,12 @@ public final class FamilyEdit {
         return setProperty(StandardProperties.TINT, tint);
     }
 
+    /// Sets a property value for all members that do not set their own. Rejects [StandardProperties#NAME] and
+    /// [StandardProperties#TEXTURE_SET], which every material derives from its own builder arguments.
     public <T> FamilyEdit setProperty(Property<T> property, T value) {
         Objects.requireNonNull(property, "property must not be null");
         Objects.requireNonNull(value, "value must not be null");
+        StandardProperties.requireSettable(property);
         registry.enqueueFamilyOp(
             modid,
             name,
@@ -37,9 +41,10 @@ public final class FamilyEdit {
     }
 
     /// Clears the family's value for a property, letting the property default show again for members without
-    /// their own value.
+    /// their own value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
     public FamilyEdit removeProperty(Property<?> property) {
         Objects.requireNonNull(property, "property must not be null");
+        StandardProperties.requireSettable(property);
         registry.enqueueFamilyOp(
             modid,
             name,
@@ -49,7 +54,7 @@ public final class FamilyEdit {
     }
 
     public FamilyEdit generateShape(Shape shape) {
-        Objects.requireNonNull(shape, "shape must not be null");
+        Names.validate(shape);
         registry.enqueueFamilyOp(modid, name, "generate shape " + shape + " on family", f -> f.addShape(shape));
         return this;
     }
@@ -61,8 +66,10 @@ public final class FamilyEdit {
         return this;
     }
 
+    /// Removes a shape the family has at this point in the edit order; a later [#generateShape] adds it back for
+    /// all members. Members that removed the shape individually keep their mask either way.
     public FamilyEdit removeShape(Shape shape) {
-        Objects.requireNonNull(shape, "shape must not be null");
+        Names.validate(shape);
         registry.enqueueFamilyOp(modid, name, "remove shape " + shape + " from family", f -> f.removeShape(shape));
         return this;
     }
@@ -85,7 +92,7 @@ public final class FamilyEdit {
     }
 
     /// Removes a material from this family. Skipped with a logged warning if the material belongs to a different
-    /// family at this point in the edit order.
+    /// family or to none at this point in the edit order.
     public FamilyEdit removeMaterial(String materialModid, String materialName) {
         registry.enqueueRemoveFromFamily(
             Names.validate("material modid", materialModid),

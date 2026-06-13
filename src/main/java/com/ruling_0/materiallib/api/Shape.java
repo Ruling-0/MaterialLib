@@ -6,6 +6,11 @@ package com.ruling_0.materiallib.api;
 /// material generating it. Materials declare which shapes they generate through [MaterialBuilder#generateShape]
 /// (or at the group level through [FamilyBuilder#generateShape]), and the resulting per-material set is available
 /// from [Material#getShapes] once the registry has resolved.
+///
+/// Like [Property] keys, shapes are compared by object identity: implementations are created once and shared as
+/// constants, and two instances reporting the same modid and name are distinct shapes. The identifiers must
+/// satisfy the same rules as material names (non-empty, no ':' or whitespace); the registry validates them
+/// wherever a shape is passed in.
 public interface Shape {
 
     String getModId();
