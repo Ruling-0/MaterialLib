@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +30,7 @@ public final class ItemShapeRegistry {
 
     private final ShapeUnification unification = new ShapeUnification();
     private final List<ShapeItem> canonicalItems = new ObjectArrayList<>();
+    private final List<ShapeItem> canonicalItemsView = Collections.unmodifiableList(canonicalItems);
     private boolean resolved;
 
     ItemShapeRegistry() {}
@@ -36,6 +38,10 @@ public final class ItemShapeRegistry {
     public static ItemShapeRegistry instance() {
         return INSTANCE;
     }
+
+    /// Every registered item shape's backing item, in registration order. Used to attach client renderers; the
+    /// list reflects registrations made so far.
+    public List<ShapeItem> getItemShapes() { return canonicalItemsView; }
 
     /// Registers an item shape and returns the canonical shape to generate (this shape, or the existing one if
     /// another mod already registered its name). Only the canonical shape's item is registered with FML, so call
