@@ -125,6 +125,26 @@ class ShapeResolutionTest {
     }
 
     @Test
+    void shapesUnionAcrossFamilies() {
+        registry.newFamily("testmod", "Metals")
+            .generateShape(ingot)
+            .build();
+        registry.newFamily("othermod", "Framed")
+            .generateShape(frame)
+            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .generateShape(gear)
+            .addToFamily("testmod", "Metals")
+            .addToFamily("othermod", "Framed")
+            .build();
+        registry.editMaterial("testmod", "TestIron")
+            .removeShape(ingot);
+        registry.resolve();
+
+        assertEquals(Set.of(gear, frame), material.getShapes());
+    }
+
+    @Test
     void invalidShapeIdentifiersThrow() {
         MaterialBuilder builder = registry.newMaterial("testmod", "TestIron", texture);
         assertThrows(IllegalArgumentException.class, () -> builder.generateShape(null));

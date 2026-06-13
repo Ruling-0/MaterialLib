@@ -40,8 +40,9 @@ public final class MaterialEdit {
         return this;
     }
 
-    /// Clears the material's own value for a property, letting the family value or property default show again.
-    /// Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
+    /// Clears the material's own value for a property, letting the value from the alphabetically-first family
+    /// that sets it, or the property default, show again. Rejects [StandardProperties#NAME] and
+    /// [StandardProperties#TEXTURE_SET].
     public MaterialEdit removeProperty(Property<?> property) {
         Objects.requireNonNull(property, "property must not be null");
         StandardProperties.requireSettable(property);
@@ -84,9 +85,10 @@ public final class MaterialEdit {
         return this;
     }
 
-    /// Assigns the material to a family, replacing any previous assignment.
-    public MaterialEdit setFamily(String familyModid, String familyName) {
-        registry.enqueueSetFamily(
+    /// Adds the material to a family. A material may belong to any number of families; memberships from all
+    /// mods accumulate.
+    public MaterialEdit addToFamily(String familyModid, String familyName) {
+        registry.enqueueAddToFamily(
             modid,
             name,
             Names.validate("family modid", familyModid),
@@ -94,14 +96,14 @@ public final class MaterialEdit {
         return this;
     }
 
-    /// Detaches the material from whatever family it belongs to at this point in the edit order; does nothing if
-    /// it has none.
-    public MaterialEdit removeFromFamily() {
-        registry.enqueueMaterialOp(
+    /// Removes the material from one family. Skipped with a logged warning if the material is not a member of
+    /// that family at this point in the edit order.
+    public MaterialEdit removeFromFamily(String familyModid, String familyName) {
+        registry.enqueueRemoveFromFamily(
             modid,
             name,
-            "remove family of material",
-            material -> material.setFamilyInternal(null));
+            Names.validate("family modid", familyModid),
+            Names.validate("family name", familyName));
         return this;
     }
 }

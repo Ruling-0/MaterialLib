@@ -7,8 +7,10 @@ package com.ruling_0.materiallib.api;
 /// key whose values are invisible to holders of the first, so properties meant for cross-mod use must be exposed
 /// as constants (see [StandardProperties] for the ones this mod provides).
 ///
-/// Value resolution for a material checks, in order: the material's own value, the value of the material's
-/// [Family] (if any), then [#getDefaultValue()].
+/// Value resolution for a material checks, in order: the material's own value, the values of the material's
+/// [Family]s (taking the first family that sets the property, in alphabetical, case-sensitive `modid:name` key
+/// order), then [#getDefaultValue()]. Conflicting family values are logged when the registry resolves, compared
+/// via `equals`, so value types shared across families should implement it meaningfully.
 public final class Property<T> {
 
     private final String modid;
@@ -35,11 +37,13 @@ public final class Property<T> {
 
     public String getName() { return name; }
 
-    /// The value returned where neither a material nor its family sets this property, or null if none was given.
+    /// The value returned where neither a material nor any of its families sets this property, or null if none
+    /// was given.
     public T getDefaultValue() { return defaultValue; }
 
-    /// Resolves this property for a material: the material's own value, else its family's value, else the
-    /// default. Only available after the registry has resolved.
+    /// Resolves this property for a material: the material's own value, else the value of the
+    /// alphabetically-first family that sets it, else the default. Only available after the registry has
+    /// resolved.
     public T get(Material material) {
         return material.getProperty(this);
     }
@@ -50,7 +54,8 @@ public final class Property<T> {
         return family.getProperty(this);
     }
 
-    /// True if the material or its family sets this property explicitly (the default value does not count).
+    /// True if the material or any of its families sets this property explicitly (the default value does not
+    /// count).
     public boolean isSet(Material material) {
         return material.hasProperty(this);
     }

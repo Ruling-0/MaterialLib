@@ -173,6 +173,79 @@ class PropertyResolutionTest {
     }
 
     @Test
+    void collidingFamilyValuesResolveAlphabetically() {
+        registry.newFamily("testmod", "Beta")
+            .setProperty(MELTING_POINT, 2000)
+            .build();
+        registry.newFamily("testmod", "Alpha")
+            .setProperty(MELTING_POINT, 1000)
+            .build();
+        Material inherited = registry.newMaterial("testmod", "Inherited", texture)
+            .addToFamily("testmod", "Beta")
+            .addToFamily("testmod", "Alpha")
+            .build();
+        Material overriding = registry.newMaterial("testmod", "Overriding", texture)
+            .setProperty(MELTING_POINT, 3000)
+            .addToFamily("testmod", "Beta")
+            .addToFamily("testmod", "Alpha")
+            .build();
+        registry.resolve();
+
+        assertEquals(1000, MELTING_POINT.get(inherited));
+        assertEquals(3000, MELTING_POINT.get(overriding));
+    }
+
+    @Test
+    void alphabeticalOrderComparesFullKey() {
+        registry.newFamily("bmod", "Aaa")
+            .setProperty(MELTING_POINT, 2000)
+            .build();
+        registry.newFamily("amod", "Zzz")
+            .setProperty(MELTING_POINT, 1000)
+            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .addToFamily("bmod", "Aaa")
+            .addToFamily("amod", "Zzz")
+            .build();
+        registry.resolve();
+
+        assertEquals(1000, MELTING_POINT.get(material));
+    }
+
+    @Test
+    void isSetFalseWhenNoFamilySetsProperty() {
+        registry.newFamily("testmod", "Alpha")
+            .build();
+        registry.newFamily("testmod", "Beta")
+            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .addToFamily("testmod", "Alpha")
+            .addToFamily("testmod", "Beta")
+            .build();
+        registry.resolve();
+
+        assertFalse(DURABILITY.isSet(material));
+        assertEquals(100, DURABILITY.get(material));
+    }
+
+    @Test
+    void uncontestedFamilyValueAppliesRegardlessOfOrder() {
+        registry.newFamily("testmod", "Alpha")
+            .build();
+        registry.newFamily("testmod", "Beta")
+            .setProperty(MELTING_POINT, 2000)
+            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .addToFamily("testmod", "Alpha")
+            .addToFamily("testmod", "Beta")
+            .build();
+        registry.resolve();
+
+        assertEquals(2000, MELTING_POINT.get(material));
+        assertTrue(MELTING_POINT.isSet(material));
+    }
+
+    @Test
     void propertyKeysCompareByIdentity() {
         Property<Integer> first = Property.of("testmod", "sameName");
         Property<Integer> second = Property.of("testmod", "sameName");

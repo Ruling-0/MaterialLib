@@ -8,11 +8,13 @@ import java.util.Set;
 
 /// A named group of [Material]s that share [Property] values and generated [Shape]s.
 ///
-/// A family's properties fall back member-to-family: a member's own value takes precedence over the family
-/// value. The family's shapes are added to every member, except members that removed them individually through
-/// [MaterialEdit#removeShape]. Families are created through [MaterialLibAPI#newFamily] during preInit and become
-/// read-only once the registry resolves during this mod's init. Membership is only available after resolution,
-/// since other mods may alter it through [FamilyEdit]s and [MaterialEdit]s until then.
+/// A material may belong to several families at once. Properties fall back member-to-family: a member's own
+/// value takes precedence, and among multiple families setting the same property the alphabetically-first
+/// family key wins (see [Material#getProperty]). The family's shapes are added to every member, except members
+/// that removed them individually through [MaterialEdit#removeShape]. Families are created through
+/// [MaterialLibAPI#newFamily] during preInit and become read-only once the registry resolves during this mod's
+/// init. Membership is only available after resolution, since other mods may alter it through [FamilyEdit]s and
+/// [MaterialEdit]s until then.
 public final class Family {
 
     private final MaterialRegistry registry;
@@ -97,6 +99,8 @@ public final class Family {
     }
 
     Set<Shape> getShapesInternal() { return shapes; }
+
+    Map<Property<?>, Object> getOwnPropertiesInternal() { return properties; }
 
     void setMembersInternal(Set<Material> members) { this.members = Collections.unmodifiableSet(members); }
 

@@ -108,8 +108,8 @@ public final class MaterialRegistry {
             membership.put(family, new LinkedHashSet<>());
         }
         for (Material material : materials.values()) {
-            Family family = material.getFamilyInternal();
-            if (family != null) {
+            material.resolveFamilies();
+            for (Family family : material.getSortedFamiliesInternal()) {
                 membership.get(family).add(material);
             }
         }
@@ -117,11 +117,37 @@ public final class MaterialRegistry {
             entry.getKey().setMembersInternal(entry.getValue());
         }
         for (Material material : materials.values()) {
+            logPropertyCollisions(material);
             material.resolveShapes();
         }
 
         resolved = true;
         LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
+    }
+
+    /// Logs each property whose resolved value is ambiguous for a material: the material does not set it, and
+    /// two or more of its families set conflicting values. The alphabetically-first family still wins.
+    private void logPropertyCollisions(Material material) {
+        List<Family> sorted = material.getSortedFamiliesInternal();
+        if (sorted.size() < 2) return;
+        Map<Property<?>, Family> firstSetters = new LinkedHashMap<>();
+        for (Family family : sorted) {
+            for (Map.Entry<Property<?>, Object> entry : family.getOwnPropertiesInternal().entrySet()) {
+                Property<?> property = entry.getKey();
+                if (material.getOwnPropertiesInternal().containsKey(property)) continue;
+                Family first = firstSetters.putIfAbsent(property, family);
+                if (first != null && !entry.getValue().equals(first.getOwnPropertiesInternal().get(property))) {
+                    LOG.warn(
+                        "Material {} takes {} = {} from family {}; family {} sets conflicting value {}",
+                        material.getKey(),
+                        property,
+                        first.getOwnPropertiesInternal().get(property),
+                        first.getKey(),
+                        family.getKey(),
+                        entry.getValue());
+                }
+            }
+        }
     }
 
     void register(Material material) {
@@ -164,38 +190,40 @@ public final class MaterialRegistry {
         });
     }
 
-    void enqueueSetFamily(String materialModid, String materialName, String familyModid, String familyName) {
+    void enqueueAddToFamily(String materialModid, String materialName, String familyModid, String familyName) {
         String familyKey = Names.key(familyModid, familyName);
-        enqueueMaterialOp(materialModid, materialName, "set family " + familyKey + " for material", material -> {
+        enqueueMaterialOp(materialModid, materialName, "add to family " + familyKey + " material", material -> {
             Family family = families.get(familyKey);
             if (family == null) {
                 LOG.warn(
-                    "Skipping family assignment for material {}: no such family {} is registered",
+                    "Skipping family addition for material {}: no such family {} is registered",
                     material.getKey(),
                     familyKey);
                 return;
             }
-            Family previous = material.getFamilyInternal();
-            if (previous != null && previous != family) {
-                LOG.info("Material {} moved from family {} to {}", material.getKey(), previous.getKey(), familyKey);
-            }
-            material.setFamilyInternal(family);
+            material.addFamilyInternal(family);
         });
     }
 
     void enqueueRemoveFromFamily(String materialModid, String materialName, String familyModid, String familyName) {
         String familyKey = Names.key(familyModid, familyName);
-        enqueueMaterialOp(materialModid, materialName, "remove family " + familyKey + " from material", material -> {
-            Family current = material.getFamilyInternal();
-            if (current == null || !current.getKey().equals(familyKey)) {
+        enqueueMaterialOp(materialModid, materialName, "remove from family " + familyKey + " material", material -> {
+            Family family = families.get(familyKey);
+            if (family == null) {
                 LOG.warn(
-                    "Skipping family removal for material {}: it belongs to {}, not {}",
+                    "Skipping family removal for material {}: no such family {} is registered",
                     material.getKey(),
-                    current == null ? "no family" : current.getKey(),
                     familyKey);
                 return;
             }
-            material.setFamilyInternal(null);
+            if (!material.isMemberOfInternal(family)) {
+                LOG.warn(
+                    "Skipping family removal for material {}: it is not a member of {} at this point in the edit order",
+                    material.getKey(),
+                    familyKey);
+                return;
+            }
+            material.removeFamilyInternal(family);
         });
     }
 

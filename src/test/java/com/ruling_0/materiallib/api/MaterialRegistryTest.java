@@ -1,7 +1,6 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -25,7 +24,7 @@ class MaterialRegistryTest {
         assertEquals("testmod:TestIron", material.getKey());
         assertEquals("TestIron", StandardProperties.NAME.get(material));
         assertEquals(texture, StandardProperties.TEXTURE_SET.get(material));
-        assertNull(material.getFamily());
+        assertTrue(material.getFamilies().isEmpty());
         assertTrue(material.getShapes().isEmpty());
         assertTrue(registry.getMaterials().contains(material));
         assertTrue(registry.isResolved());
@@ -93,7 +92,7 @@ class MaterialRegistryTest {
         Family family = registry.newFamily("testmod", "Alloys")
             .build();
         assertThrows(IllegalStateException.class, material::getShapes);
-        assertThrows(IllegalStateException.class, material::getFamily);
+        assertThrows(IllegalStateException.class, material::getFamilies);
         assertThrows(IllegalStateException.class, () -> StandardProperties.TINT.get(material));
         assertThrows(IllegalStateException.class, family::getMaterials);
         assertThrows(IllegalStateException.class, family::getShapes);
@@ -127,6 +126,7 @@ class MaterialRegistryTest {
         registry.resolve();
 
         assertThrows(UnsupportedOperationException.class, () -> material.getShapes().add(gear));
+        assertThrows(UnsupportedOperationException.class, () -> material.getFamilies().remove(family));
         assertThrows(UnsupportedOperationException.class, () -> family.getMaterials().remove(material));
         assertThrows(UnsupportedOperationException.class, () -> family.getShapes().add(gear));
         assertThrows(UnsupportedOperationException.class, () -> registry.getMaterials().clear());

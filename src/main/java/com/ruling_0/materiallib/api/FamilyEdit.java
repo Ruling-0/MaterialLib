@@ -81,9 +81,10 @@ public final class FamilyEdit {
         return this;
     }
 
-    /// Adds a material to this family, replacing the material's previous family assignment if it had one.
+    /// Adds a material to this family. A material may belong to any number of families; memberships from all
+    /// mods accumulate.
     public FamilyEdit addMaterial(String materialModid, String materialName) {
-        registry.enqueueSetFamily(
+        registry.enqueueAddToFamily(
             Names.validate("material modid", materialModid),
             Names.validate("material name", materialName),
             modid,
@@ -91,8 +92,8 @@ public final class FamilyEdit {
         return this;
     }
 
-    /// Removes a material from this family. Skipped with a logged warning if the material belongs to a different
-    /// family or to none at this point in the edit order.
+    /// Removes a material from this family. Skipped with a logged warning if the material is not a member at
+    /// this point in the edit order.
     public FamilyEdit removeMaterial(String materialModid, String materialName) {
         registry.enqueueRemoveFromFamily(
             Names.validate("material modid", materialModid),

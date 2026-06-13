@@ -1,7 +1,9 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -16,8 +18,7 @@ public final class MaterialBuilder {
     private final TextureSet textureSet;
     private final Map<Property<?>, Object> properties = new LinkedHashMap<>();
     private final Set<Shape> shapes = new LinkedHashSet<>();
-    private String familyModid;
-    private String familyName;
+    private final List<String[]> familyKeys = new ArrayList<>();
     private boolean built;
 
     MaterialBuilder(MaterialRegistry registry, String modid, String name, TextureSet textureSet) {
@@ -55,18 +56,19 @@ public final class MaterialBuilder {
         return this;
     }
 
-    /// Assigns the material to a family. A material belongs to at most one family; a later assignment, including
-    /// one made by another mod through edits, replaces this one.
+    /// Adds the material to a family. A material may belong to any number of families; memberships from all
+    /// mods accumulate.
     public MaterialBuilder addToFamily(Family family) {
         Objects.requireNonNull(family, "family must not be null");
         return addToFamily(family.getModId(), family.getName());
     }
 
-    /// Assigns the material to a family by key, deferring the lookup until the registry resolves. The family may
+    /// Adds the material to a family by key, deferring the lookup until the registry resolves. The family may
     /// be registered by any mod at any point during preInit.
     public MaterialBuilder addToFamily(String familyModid, String familyName) {
-        this.familyModid = Names.validate("family modid", familyModid);
-        this.familyName = Names.validate("family name", familyName);
+        familyKeys.add(
+            new String[] { Names.validate("family modid", familyModid),
+                Names.validate("family name", familyName) });
         return this;
     }
 
@@ -80,8 +82,8 @@ public final class MaterialBuilder {
         properties.put(StandardProperties.TEXTURE_SET, textureSet);
         Material material = new Material(registry, modid, name, properties, shapes);
         registry.register(material);
-        if (familyModid != null) {
-            registry.enqueueSetFamily(modid, name, familyModid, familyName);
+        for (String[] familyKey : familyKeys) {
+            registry.enqueueAddToFamily(modid, name, familyKey[0], familyKey[1]);
         }
         built = true;
         return material;

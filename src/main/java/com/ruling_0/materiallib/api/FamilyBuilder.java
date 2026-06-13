@@ -54,8 +54,8 @@ public final class FamilyBuilder {
         return this;
     }
 
-    /// Adds a material to this family. A material belongs to at most one family; a later assignment, including
-    /// one made by another mod through edits, replaces this one.
+    /// Adds a material to this family. A material may belong to any number of families; memberships from all
+    /// mods accumulate.
     public FamilyBuilder addMaterial(Material material) {
         Objects.requireNonNull(material, "material must not be null");
         return addMaterial(material.getModId(), material.getName());
@@ -86,7 +86,7 @@ public final class FamilyBuilder {
         Family family = new Family(registry, modid, name, properties, shapes);
         registry.register(family);
         for (String[] memberKey : memberKeys) {
-            registry.enqueueSetFamily(memberKey[0], memberKey[1], modid, name);
+            registry.enqueueAddToFamily(memberKey[0], memberKey[1], modid, name);
         }
         built = true;
         return family;
