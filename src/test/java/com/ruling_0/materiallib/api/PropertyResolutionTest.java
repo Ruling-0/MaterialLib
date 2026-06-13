@@ -32,10 +32,10 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals(2000, MELTING_POINT.get(own));
-        assertEquals(1000, MELTING_POINT.get(inherited));
-        assertNull(MELTING_POINT.get(standalone));
-        assertEquals(100, DURABILITY.get(standalone));
+        assertEquals(2000, own.getProperty(MELTING_POINT));
+        assertEquals(1000, inherited.getProperty(MELTING_POINT));
+        assertNull(standalone.getProperty(MELTING_POINT));
+        assertEquals(100, standalone.getProperty(DURABILITY));
     }
 
     @Test
@@ -47,8 +47,8 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals(0xFFFFFFFF, StandardProperties.TINT.get(material));
-        assertEquals(0xFFFFCC00, StandardProperties.TINT.get(tinted));
+        assertEquals(0xFFFFFFFF, material.getProperty(StandardProperties.TINT));
+        assertEquals(0xFFFFCC00, tinted.getProperty(StandardProperties.TINT));
     }
 
     @Test
@@ -61,7 +61,7 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals(0xFFFFCC00, StandardProperties.TINT.get(member));
+        assertEquals(0xFFFFCC00, member.getProperty(StandardProperties.TINT));
     }
 
     @Test
@@ -71,9 +71,9 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertTrue(MELTING_POINT.isSet(material));
-        assertFalse(DURABILITY.isSet(material));
-        assertEquals(100, DURABILITY.get(material));
+        assertTrue(material.hasProperty(MELTING_POINT));
+        assertFalse(material.hasProperty(DURABILITY));
+        assertEquals(100, material.getProperty(DURABILITY));
     }
 
     @Test
@@ -84,7 +84,7 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals(1800, MELTING_POINT.get(material));
+        assertEquals(1800, material.getProperty(MELTING_POINT));
     }
 
     @Test
@@ -97,7 +97,7 @@ class PropertyResolutionTest {
             .setProperty(MELTING_POINT, 2000);
         registry.resolve();
 
-        assertEquals(2000, MELTING_POINT.get(material));
+        assertEquals(2000, material.getProperty(MELTING_POINT));
     }
 
     @Test
@@ -113,7 +113,7 @@ class PropertyResolutionTest {
             .removeProperty(MELTING_POINT);
         registry.resolve();
 
-        assertEquals(1000, MELTING_POINT.get(material));
+        assertEquals(1000, material.getProperty(MELTING_POINT));
     }
 
     @Test
@@ -130,8 +130,8 @@ class PropertyResolutionTest {
             .removeProperty(MELTING_POINT);
         registry.resolve();
 
-        assertEquals(500, DURABILITY.get(material));
-        assertNull(MELTING_POINT.get(material));
+        assertEquals(500, material.getProperty(DURABILITY));
+        assertNull(material.getProperty(MELTING_POINT));
     }
 
     @Test
@@ -168,8 +168,8 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals("TestIron", StandardProperties.NAME.get(material));
-        assertEquals(texture, StandardProperties.TEXTURE_SET.get(material));
+        assertEquals("TestIron", material.getProperty(StandardProperties.NAME));
+        assertEquals(texture, material.getProperty(StandardProperties.TEXTURE_SET));
     }
 
     @Test
@@ -191,8 +191,8 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals(1000, MELTING_POINT.get(inherited));
-        assertEquals(3000, MELTING_POINT.get(overriding));
+        assertEquals(1000, inherited.getProperty(MELTING_POINT));
+        assertEquals(3000, overriding.getProperty(MELTING_POINT));
     }
 
     @Test
@@ -209,7 +209,7 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals(1000, MELTING_POINT.get(material));
+        assertEquals(1000, material.getProperty(MELTING_POINT));
     }
 
     @Test
@@ -224,8 +224,8 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertFalse(DURABILITY.isSet(material));
-        assertEquals(100, DURABILITY.get(material));
+        assertFalse(material.hasProperty(DURABILITY));
+        assertEquals(100, material.getProperty(DURABILITY));
     }
 
     @Test
@@ -241,8 +241,8 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals(2000, MELTING_POINT.get(material));
-        assertTrue(MELTING_POINT.isSet(material));
+        assertEquals(2000, material.getProperty(MELTING_POINT));
+        assertTrue(material.hasProperty(MELTING_POINT));
     }
 
     @Test
@@ -254,8 +254,8 @@ class PropertyResolutionTest {
             .build();
         registry.resolve();
 
-        assertEquals(42, first.get(material));
-        assertNull(second.get(material));
-        assertFalse(second.isSet(material));
+        assertEquals(42, material.getProperty(first));
+        assertNull(material.getProperty(second));
+        assertFalse(material.hasProperty(second));
     }
 }

@@ -22,8 +22,8 @@ class MaterialRegistryTest {
         assertEquals("testmod", material.getModId());
         assertEquals("TestIron", material.getName());
         assertEquals("testmod:TestIron", material.getKey());
-        assertEquals("TestIron", StandardProperties.NAME.get(material));
-        assertEquals(texture, StandardProperties.TEXTURE_SET.get(material));
+        assertEquals("TestIron", material.getProperty(StandardProperties.NAME));
+        assertEquals(texture, material.getProperty(StandardProperties.TEXTURE_SET));
         assertTrue(material.getFamilies().isEmpty());
         assertTrue(material.getShapes().isEmpty());
         assertTrue(registry.getMaterials().contains(material));
@@ -93,10 +93,10 @@ class MaterialRegistryTest {
             .build();
         assertThrows(IllegalStateException.class, material::getShapes);
         assertThrows(IllegalStateException.class, material::getFamilies);
-        assertThrows(IllegalStateException.class, () -> StandardProperties.TINT.get(material));
+        assertThrows(IllegalStateException.class, () -> material.getProperty(StandardProperties.TINT));
         assertThrows(IllegalStateException.class, family::getMaterials);
         assertThrows(IllegalStateException.class, family::getShapes);
-        assertThrows(IllegalStateException.class, () -> StandardProperties.TINT.get(family));
+        assertThrows(IllegalStateException.class, () -> family.getProperty(StandardProperties.TINT));
         assertThrows(IllegalStateException.class, registry::getMaterials);
         assertThrows(IllegalStateException.class, registry::getFamilies);
     }
@@ -111,7 +111,7 @@ class MaterialRegistryTest {
             .setTint(0xFF00FF00);
         registry.resolve();
 
-        assertEquals(0xFF00FF00, StandardProperties.TINT.get(material));
+        assertEquals(0xFF00FF00, material.getProperty(StandardProperties.TINT));
     }
 
     @Test
@@ -150,6 +150,6 @@ class MaterialRegistryTest {
         registry.editFamily("absentmod", "Missing")
             .setTint(0xFF0000FF);
         registry.resolve();
-        assertEquals(0xFFFFFFFF, StandardProperties.TINT.get(material));
+        assertEquals(0xFFFFFFFF, material.getProperty(StandardProperties.TINT));
     }
 }

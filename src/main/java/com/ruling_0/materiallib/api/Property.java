@@ -7,10 +7,11 @@ package com.ruling_0.materiallib.api;
 /// key whose values are invisible to holders of the first, so properties meant for cross-mod use must be exposed
 /// as constants (see [StandardProperties] for the ones this mod provides).
 ///
-/// Value resolution for a material checks, in order: the material's own value, the values of the material's
-/// [Family]s (taking the first family that sets the property, in alphabetical, case-sensitive `modid:name` key
-/// order), then [#getDefaultValue()]. Conflicting family values are logged when the registry resolves, compared
-/// via `equals`, so value types shared across families should implement it meaningfully.
+/// Values are read through [Material#getProperty] and [Family#getProperty]. Resolution for a material checks,
+/// in order: the material's own value, the values of the material's [Family]s (taking the first family that
+/// sets the property, in alphabetical, case-sensitive `modid:name` key order), then [#getDefaultValue()].
+/// Conflicting family values are logged when the registry resolves, compared via `equals`, so value types
+/// shared across families should implement it meaningfully.
 public final class Property<T> {
 
     private final String modid;
@@ -23,7 +24,7 @@ public final class Property<T> {
         this.defaultValue = defaultValue;
     }
 
-    /// Creates a property with no default value; [#get] returns null where the property is unset.
+    /// Creates a property with no default value; lookups return null where the property is unset.
     public static <T> Property<T> of(String modid, String name) {
         return new Property<>(modid, name, null);
     }
@@ -40,30 +41,6 @@ public final class Property<T> {
     /// The value returned where neither a material nor any of its families sets this property, or null if none
     /// was given.
     public T getDefaultValue() { return defaultValue; }
-
-    /// Resolves this property for a material: the material's own value, else the value of the
-    /// alphabetically-first family that sets it, else the default. Only available after the registry has
-    /// resolved.
-    public T get(Material material) {
-        return material.getProperty(this);
-    }
-
-    /// Resolves this property for a family: the family's own value, else the default. Only available after the
-    /// registry has resolved.
-    public T get(Family family) {
-        return family.getProperty(this);
-    }
-
-    /// True if the material or any of its families sets this property explicitly (the default value does not
-    /// count).
-    public boolean isSet(Material material) {
-        return material.hasProperty(this);
-    }
-
-    /// True if the family sets this property explicitly (the default value does not count).
-    public boolean isSet(Family family) {
-        return family.hasProperty(this);
-    }
 
     @Override
     public String toString() {
