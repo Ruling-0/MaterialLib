@@ -177,6 +177,11 @@ public final class MaterialRegistry {
         for (String key : newKeys) {
             assignedIndices.put(key, next++);
         }
+        if (next - 1 > Short.MAX_VALUE) {
+            throw new IllegalStateException(
+                "Material index " + (next - 1) + " exceeds the item damage limit of " + Short.MAX_VALUE +
+                    "; too many materials have been registered across this instance's history.");
+        }
 
         materialsByIndex = new Material[next];
         for (Map.Entry<String, Integer> entry : assignedIndices.entrySet()) {

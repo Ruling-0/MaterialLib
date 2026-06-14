@@ -176,4 +176,36 @@ class MaterialIndexTest {
         assertEquals(1, assigned.get("amod:New")
             .intValue());
     }
+
+    @Test
+    void newMaterialAppendsAboveAReservedHighestIndex() {
+        Map<String, Integer> persisted = new LinkedHashMap<>();
+        persisted.put("amod:A", 0);
+        persisted.put("amod:Z", 10);
+        registry.setPersistedIndices(persisted);
+        material("amod", "A");
+        Material added = material("amod", "M");
+        registry.resolve();
+
+        assertEquals(11, added.getIndex());
+        assertNull(registry.getMaterialByIndex(10));
+    }
+
+    @Test
+    void reResolvingWithTheAssignedMapReproducesTheSameIndices() {
+        material("bmod", "Iron");
+        material("amod", "Zinc");
+        registry.resolve();
+        Map<String, Integer> firstAssignment = new LinkedHashMap<>(registry.getAssignedIndices());
+
+        MaterialRegistry relaunch = new MaterialRegistry();
+        relaunch.setPersistedIndices(firstAssignment);
+        relaunch.newMaterial("bmod", "Iron", texture)
+            .build();
+        relaunch.newMaterial("amod", "Zinc", texture)
+            .build();
+        relaunch.resolve();
+
+        assertEquals(firstAssignment, relaunch.getAssignedIndices());
+    }
 }

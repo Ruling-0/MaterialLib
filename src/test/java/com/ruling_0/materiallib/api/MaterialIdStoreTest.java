@@ -73,4 +73,43 @@ class MaterialIdStoreTest {
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
+
+    @Test
+    void readingAFilePresentButMissingMaterialsFailsLoudly() throws Exception {
+        Files.write(file().toPath(), "{\"version\":1}".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
+    }
+
+    @Test
+    void readingAFileWithEmptyMaterialsGivesAnEmptyMap() throws Exception {
+        Files.write(file().toPath(), "{\"version\":1,\"materials\":{}}".getBytes(StandardCharsets.UTF_8));
+
+        assertTrue(MaterialIdStore.read(file())
+            .isEmpty());
+    }
+
+    @Test
+    void readingANegativeIndexFailsLoudly() throws Exception {
+        Files.write(file().toPath(), "{\"version\":1,\"materials\":{\"amod:A\":-1}}".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
+    }
+
+    @Test
+    void readingADuplicateIndexFailsLoudly() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":1,\"materials\":{\"amod:A\":0,\"amod:B\":0}}".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
+    }
+
+    @Test
+    void writeOverwritesAnExistingFile() {
+        MaterialIdStore.write(file(), Map.of("amod:Iron", 0, "amod:Gold", 1));
+        MaterialIdStore.write(file(), Map.of("amod:Iron", 0));
+
+        assertEquals(Map.of("amod:Iron", 0), MaterialIdStore.read(file()));
+    }
 }

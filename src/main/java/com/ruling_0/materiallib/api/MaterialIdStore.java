@@ -15,9 +15,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /// The instance-global store of the material -> index assignment, a JSON file under `config/materiallib`.
 ///
@@ -27,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 /// is what stops stored item stacks from changing material when the material set changes.
 public final class MaterialIdStore {
 
-    private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final String FILE_NAME = "material-ids.json";
     private static final int FORMAT_VERSION = 1;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
@@ -47,17 +46,18 @@ public final class MaterialIdStore {
 
     static Map<String, Integer> read(File file) {
         if (!file.isFile()) return new LinkedHashMap<>();
+        Data data;
         try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            Data data = GSON.fromJson(reader, Data.class);
-            if (data == null || data.materials == null) return new LinkedHashMap<>();
-            return data.materials;
+            data = GSON.fromJson(reader, Data.class);
         }
         catch (IOException | JsonParseException e) {
-            throw new IllegalStateException(
-                "Could not read the material id assignment at " + file +
-                    ". Fix or remove the file; deleting it reassigns ids and may change stored items.",
-                e);
+            throw new IllegalStateException(corrupt(file), e);
         }
+        if (data == null || data.materials == null) {
+            throw new IllegalStateException(corrupt(file));
+        }
+        validateIndices(file, data.materials);
+        return data.materials;
     }
 
     static void write(File file, Map<String, Integer> indices) {
@@ -74,8 +74,34 @@ public final class MaterialIdStore {
             Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
         catch (IOException e) {
-            LOG.error("Could not write the material id assignment to {}", file, e);
+            throw new IllegalStateException(
+                "Could not write the material id assignment to " + file +
+                    ". Stored item stacks would change material on the next launch; refusing to continue.",
+                e);
         }
+    }
+
+    /// Rejects an assignment whose indices are negative, null, or shared by two materials -- a hand-edited or
+    /// corrupt file that would make item stacks decode to the wrong material or break array indexing.
+    private static void validateIndices(File file, Map<String, Integer> materials) {
+        IntSet used = new IntOpenHashSet();
+        for (Map.Entry<String, Integer> entry : materials.entrySet()) {
+            Integer index = entry.getValue();
+            if (index == null || index < 0) {
+                throw new IllegalStateException(
+                    corrupt(file) + " (" + entry.getKey() + " has an invalid index " + index + ")");
+            }
+            if (!used.add((int) index)) {
+                throw new IllegalStateException(
+                    corrupt(file) + " (index " + index + " is assigned to more than one material)");
+            }
+        }
+    }
+
+    private static String corrupt(File file) {
+        return "The material id assignment at " + file +
+            " is unreadable or malformed. Fix or remove the file; deleting it reassigns ids and may change " +
+            "stored items.";
     }
 
     private static LinkedHashMap<String, Integer> sortByIndex(Map<String, Integer> indices) {

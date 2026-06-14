@@ -11,11 +11,12 @@ import com.ruling_0.materiallib.api.ShapeItem;
 ///
 /// A Postea transformer is registered for every item shape during postInit; at world load the active migration is
 /// set from the per-world reconciliation. Each stored stack of an item shape then has its damage (the material
-/// index) rewritten to the instance index as it deserializes, or is dropped when the material no longer exists. A
-/// world that matches the instance sets no migration, so the transformers stay inert.
+/// index) rewritten to the instance index as it deserializes, or is dropped when the migration marks its material
+/// for deletion (see [MaterialMigration]). A world that matches the instance sets no migration, so the
+/// transformers stay inert.
 public final class PosteaMigration {
 
-    private static MaterialMigration active;
+    private static volatile MaterialMigration active;
 
     private PosteaMigration() {}
 
@@ -34,7 +35,7 @@ public final class PosteaMigration {
 
     private static boolean transform(String originalId, NBTTagCompound tag) {
         MaterialMigration migration = active;
-        if (migration == null) return false;
+        if (migration == null || !tag.hasKey("Damage")) return false;
         int result = migration.lookup(tag.getShort("Damage"));
         if (result == MaterialMigration.UNCHANGED) return false;
         if (result == MaterialMigration.DELETE) {

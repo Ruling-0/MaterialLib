@@ -104,4 +104,25 @@ class WorldMaterialIdsTest {
         assertEquals(0, migration.lookup(7));
         assertEquals(assignment, MaterialIdStore.read(worldFile()));
     }
+
+    @Test
+    void checkMigratesAMixOfMovedAndRemovedMaterials() {
+        Map<String, Integer> assignment = new LinkedHashMap<>();
+        assignment.put("amod:Iron", 0);
+        assignment.put("amod:Gold", 3);
+        MaterialRegistry resolved = resolvedWith(assignment);
+        Map<String, Integer> stale = new LinkedHashMap<>();
+        stale.put("amod:Iron", 0);
+        stale.put("amod:Gold", 1);
+        stale.put("amod:Gone", 2);
+        MaterialIdStore.write(worldFile(), stale);
+
+        MaterialMigration migration = WorldMaterialIds.check(resolved, worldFile());
+
+        assertNotNull(migration);
+        assertEquals(MaterialMigration.UNCHANGED, migration.lookup(0));
+        assertEquals(3, migration.lookup(1));
+        assertEquals(MaterialMigration.DELETE, migration.lookup(2));
+        assertEquals(assignment, MaterialIdStore.read(worldFile()));
+    }
 }
