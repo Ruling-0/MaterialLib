@@ -2,6 +2,8 @@ package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
@@ -73,8 +75,7 @@ class WorldMaterialIdsTest {
         assignment.put("amod:Gold", 1);
         MaterialRegistry resolved = resolvedWith(assignment);
 
-        WorldMaterialIds.check(resolved, worldFile());
-
+        assertNull(WorldMaterialIds.check(resolved, worldFile()));
         assertEquals(assignment, MaterialIdStore.read(worldFile()));
     }
 
@@ -86,21 +87,21 @@ class WorldMaterialIdsTest {
         MaterialRegistry resolved = resolvedWith(assignment);
         MaterialIdStore.write(worldFile(), Map.of("amod:Iron", 0));
 
-        WorldMaterialIds.check(resolved, worldFile());
-
+        assertNull(WorldMaterialIds.check(resolved, worldFile()));
         assertEquals(assignment, MaterialIdStore.read(worldFile()));
     }
 
     @Test
-    void checkLeavesAMismatchedWorldCopyUntouched() {
+    void checkMigratesAndAdvancesTheCopyOnMismatch() {
         Map<String, Integer> assignment = new LinkedHashMap<>();
         assignment.put("amod:Iron", 0);
         MaterialRegistry resolved = resolvedWith(assignment);
-        Map<String, Integer> stale = Map.of("amod:Iron", 7);
-        MaterialIdStore.write(worldFile(), stale);
+        MaterialIdStore.write(worldFile(), Map.of("amod:Iron", 7));
 
-        WorldMaterialIds.check(resolved, worldFile());
+        MaterialMigration migration = WorldMaterialIds.check(resolved, worldFile());
 
-        assertEquals(stale, MaterialIdStore.read(worldFile()));
+        assertNotNull(migration);
+        assertEquals(0, migration.lookup(7));
+        assertEquals(assignment, MaterialIdStore.read(worldFile()));
     }
 }

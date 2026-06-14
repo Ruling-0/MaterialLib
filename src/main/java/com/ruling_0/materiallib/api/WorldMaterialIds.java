@@ -13,33 +13,40 @@ import org.apache.logging.log4j.Logger;
 /// The instance assignment is append-only, so a world loaded on the instance that created it always agrees; its
 /// saved copy is just brought up to date as new materials are added. A world moved from another instance can
 /// disagree -- a material now sits at a different index, or no longer exists -- which would make stored item
-/// stacks read as the wrong material. Such a mismatch is logged prominently so it is never silent.
+/// stacks read as the wrong material. Such a mismatch produces a [MaterialMigration] that the caller hands to
+/// Postea to remap stored stacks as they load, and is logged so it is never silent.
 public final class WorldMaterialIds {
 
     private static final Logger LOG = LogManager.getLogger("materiallib");
 
     private WorldMaterialIds() {}
 
-    /// Compares the assignment saved in `worldFile` against the registry's resolved assignment. A world with no
-    /// saved assignment yet is stamped with the current one; a world that only lacks newly added materials has its
-    /// saved copy refreshed; a genuine mismatch is logged, naming the moved and removed materials.
-    public static void check(MaterialRegistry registry, File worldFile) {
+    /// Compares the assignment saved in `worldFile` against the registry's resolved assignment, and returns the
+    /// migration to apply to the world's stored stacks, or null when none is needed. A world with no saved
+    /// assignment yet is stamped with the current one; a world that only lacks newly added materials has its saved
+    /// copy refreshed; a genuine mismatch is logged, the saved copy advanced to the instance assignment, and the
+    /// migration returned so stored stacks are remapped as they load.
+    public static MaterialMigration check(MaterialRegistry registry, File worldFile) {
         Map<String, Integer> instance = registry.getAssignedIndices();
         Map<String, Integer> world = MaterialIdStore.read(worldFile);
         if (world.isEmpty()) {
             MaterialIdStore.write(worldFile, instance);
-            return;
+            return null;
         }
         Diff diff = diff(world, instance);
         if (!diff.isMismatch()) {
             if (!world.equals(instance)) MaterialIdStore.write(worldFile, instance);
-            return;
+            return null;
         }
         LOG.warn(
-            "This world's material ids differ from the instance, so stored items may show the wrong material. " +
-                "Moved: {}. Removed: {}.",
+            "This world was saved under a different material id assignment; migrating stored items to this " +
+                "instance as their chunks load. Moved: {}. Deleted: {}. Items in areas not loaded this session " +
+                "keep the outdated ids.",
             diff.moved(),
             diff.removed());
+        MaterialMigration migration = new MaterialMigration(world, instance);
+        MaterialIdStore.write(worldFile, instance);
+        return migration;
     }
 
     /// Compares a world assignment against the instance assignment by material key: a key the instance maps to a

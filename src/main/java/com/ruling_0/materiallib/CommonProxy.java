@@ -38,7 +38,9 @@ public class CommonProxy {
         ItemShapeRegistry.instance().resolve();
     }
 
-    public void postInit(FMLPostInitializationEvent event) {}
+    public void postInit(FMLPostInitializationEvent event) {
+        PosteaMigration.registerHandlers();
+    }
 
     // Before the worlds load, so the per-world id copy is reconciled against the instance before any item loads.
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {
@@ -46,7 +48,7 @@ public class CommonProxy {
         ISaveHandler save = server.getActiveAnvilConverter()
             .getSaveLoader(server.getFolderName(), false);
         File worldFile = new File(new File(save.getWorldDirectory(), MaterialLib.MODID), "material-ids.json");
-        WorldMaterialIds.check(MaterialRegistry.instance(), worldFile);
+        PosteaMigration.setActiveMigration(WorldMaterialIds.check(MaterialRegistry.instance(), worldFile));
     }
 
     public void serverStarting(FMLServerStartingEvent event) {}
