@@ -67,7 +67,7 @@ public final class MaterialIdStore {
         try {
             File parent = file.getParentFile();
             if (parent != null) Files.createDirectories(parent.toPath());
-            File temp = new File(parent, FILE_NAME + ".tmp");
+            File temp = new File(parent, file.getName() + ".tmp");
             try (Writer writer = Files.newBufferedWriter(temp.toPath(), StandardCharsets.UTF_8)) {
                 GSON.toJson(data, writer);
             }

@@ -1,0 +1,106 @@
+package com.ruling_0.materiallib.api;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.io.File;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+class WorldMaterialIdsTest {
+
+    @TempDir
+    File dir;
+
+    private final MaterialRegistry registry = new MaterialRegistry();
+    private final TextureSet texture = TextureSet.of("testmod", "shiny");
+
+    private File worldFile() {
+        return new File(dir, "material-ids.json");
+    }
+
+    private MaterialRegistry resolvedWith(Map<String, Integer> assignment) {
+        registry.setPersistedIndices(assignment);
+        for (String key : assignment.keySet()) {
+            int colon = key.indexOf(':');
+            registry.newMaterial(key.substring(0, colon), key.substring(colon + 1), texture)
+                .build();
+        }
+        registry.resolve();
+        return registry;
+    }
+
+    @Test
+    void diffReportsNothingWhenWorldAgreesWithInstance() {
+        Map<String, Integer> world = Map.of("amod:Iron", 0, "amod:Gold", 1);
+        Map<String, Integer> instance = Map.of("amod:Iron", 0, "amod:Gold", 1, "amod:Tin", 2);
+
+        assertFalse(WorldMaterialIds.diff(world, instance)
+            .isMismatch());
+    }
+
+    @Test
+    void diffReportsAMovedMaterial() {
+        WorldMaterialIds.Diff diff = WorldMaterialIds.diff(Map.of("amod:Iron", 0), Map.of("amod:Iron", 5));
+
+        assertTrue(diff.isMismatch());
+        assertEquals(1, diff.moved()
+            .size());
+        assertTrue(diff.removed()
+            .isEmpty());
+    }
+
+    @Test
+    void diffReportsARemovedMaterial() {
+        WorldMaterialIds.Diff diff = WorldMaterialIds
+            .diff(Map.of("amod:Iron", 0, "amod:Gone", 1), Map.of("amod:Iron", 0));
+
+        assertTrue(diff.isMismatch());
+        assertEquals(1, diff.removed()
+            .size());
+        assertTrue(diff.moved()
+            .isEmpty());
+    }
+
+    @Test
+    void checkStampsAFreshWorldWithTheInstanceAssignment() {
+        Map<String, Integer> assignment = new LinkedHashMap<>();
+        assignment.put("amod:Iron", 0);
+        assignment.put("amod:Gold", 1);
+        MaterialRegistry resolved = resolvedWith(assignment);
+
+        WorldMaterialIds.check(resolved, worldFile());
+
+        assertEquals(assignment, MaterialIdStore.read(worldFile()));
+    }
+
+    @Test
+    void checkRefreshesAWorldMissingNewMaterials() {
+        Map<String, Integer> assignment = new LinkedHashMap<>();
+        assignment.put("amod:Iron", 0);
+        assignment.put("amod:Gold", 1);
+        MaterialRegistry resolved = resolvedWith(assignment);
+        MaterialIdStore.write(worldFile(), Map.of("amod:Iron", 0));
+
+        WorldMaterialIds.check(resolved, worldFile());
+
+        assertEquals(assignment, MaterialIdStore.read(worldFile()));
+    }
+
+    @Test
+    void checkLeavesAMismatchedWorldCopyUntouched() {
+        Map<String, Integer> assignment = new LinkedHashMap<>();
+        assignment.put("amod:Iron", 0);
+        MaterialRegistry resolved = resolvedWith(assignment);
+        Map<String, Integer> stale = Map.of("amod:Iron", 7);
+        MaterialIdStore.write(worldFile(), stale);
+
+        WorldMaterialIds.check(resolved, worldFile());
+
+        assertEquals(stale, MaterialIdStore.read(worldFile()));
+    }
+}
