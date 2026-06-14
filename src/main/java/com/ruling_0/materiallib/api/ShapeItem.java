@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
@@ -19,7 +20,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// ([Material#getIndex]), so a single item carries every material that generates the shape.
 ///
 /// Simple shapes are created through [MaterialLibAPI#newItemShape] and need no subclass. A mod that wants custom
-/// item behavior (renderers, use logic, tooltips) subclasses this and registers the instance through
+/// item behavior (right click logic, NBT) subclasses this and registers the instance through
 /// [MaterialLibAPI#registerItemShape]; the base handles subtypes, textures from each material's [TextureSet],
 /// the [StandardProperties#TINT] color, display names, and oredict. The item must be created and registered
 /// during the owning mod's preInit so FML attributes it to that mod.
@@ -30,8 +31,7 @@ public class ShapeItem extends Item implements Shape {
     private final String oreDict;
     private final String displayNameFormat;
 
-    /// Materials that generate this shape, ascending by index. Set when the registry resolves and read on both
-    /// sides for the creative list and oredict.
+    /// Materials that generate this shape, ascending by index. Set when the registry resolves.
     private Material[] servedMaterials = new Material[0];
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
@@ -94,6 +94,26 @@ public class ShapeItem extends Item implements Shape {
             return StatCollector.translateToLocal(overrideKey);
         }
         return ShapeNaming.format(displayNameFormat, localizedMaterialName(material));
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public void addInformation(ItemStack stack, EntityPlayer player, List<String> lines, boolean aF3_H) {
+        super.addInformation(stack, player, lines, aF3_H);
+        Material material = materialFor(stack);
+        if (material == null) return;
+        if (material.hasCustomTooltip()) {
+            for (String line : material.getTooltip()) {
+                lines.add(StatCollector.translateToLocal(line));
+            }
+        }
+        for (Family family : material.getFamilies()) {
+            if (family.hasCustomTooltip()) {
+                for (String line : family.getTooltip()) {
+                    lines.add(StatCollector.translateToLocal(line));
+                }
+            }
+        }
     }
 
     /// The material a stack of this shape represents, decoding the damage value, or null if the damage maps to no

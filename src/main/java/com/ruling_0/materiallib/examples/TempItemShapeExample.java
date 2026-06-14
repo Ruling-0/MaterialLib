@@ -24,11 +24,13 @@ public final class TempItemShapeExample {
 
         MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestIron", test)
             .generateShape(testGear)
+            .addTooltip("Iron strong")
             .build();
 
         MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestGold", test)
             .setTint(0xFFFFD700)
             .generateShape(testGear)
+            .addTooltip("Shiny gold", "so shiny")
             .build();
     }
 }

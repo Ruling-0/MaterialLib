@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -19,6 +20,7 @@ public final class FamilyBuilder {
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private final Set<Shape> shapes = new ReferenceLinkedOpenHashSet<>();
     private final List<String[]> memberKeys = new ArrayList<>();
+    private final List<String> tooltipLines = new ArrayList<>(2);
     private boolean built;
 
     FamilyBuilder(MaterialRegistry registry, String modid, String name) {
@@ -78,13 +80,20 @@ public final class FamilyBuilder {
         return this;
     }
 
+    /// Add tooltip lines which will appear on all [Shape]s of this [Material].
+    /// [Material] tooltips appear before [Family] tooltips.
+    public FamilyBuilder addTooltip(String... lines) {
+        tooltipLines.addAll(Arrays.asList(lines));
+        return this;
+    }
+
     /// Registers the family and returns it. Fails if a family with the same modid and name already exists or the
     /// registry has already resolved.
     public Family build() {
         if (built) {
             throw new IllegalStateException("Family " + Names.key(modid, name) + " was already built");
         }
-        Family family = new Family(registry, modid, name, properties, shapes);
+        Family family = new Family(registry, modid, name, properties, shapes, tooltipLines);
         registry.register(family);
         for (String[] memberKey : memberKeys) {
             registry.enqueueAddToFamily(memberKey[0], memberKey[1], modid, name);

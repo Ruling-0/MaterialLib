@@ -1,5 +1,6 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /// Queued cross-mod changes to a [Material] identified by key, obtained from [MaterialLibAPI#editMaterial].
@@ -82,6 +83,29 @@ public final class MaterialEdit {
         for (Shape shape : shapes) {
             removeShape(shape);
         }
+        return this;
+    }
+
+    /// Add tooltip lines which will appear on all [Shape]s of this [Material].
+    /// [Material] tooltips appear before [Family] tooltips.
+    /// Tooltips added via this appear after existing [Material] tooltips.
+    public MaterialEdit addTooltip(String... tooltip) {
+        Objects.requireNonNull(tooltip, "line must not be null");
+        registry.enqueueMaterialOp(
+            modid,
+            name,
+            "add tooltip to material: " + Arrays.toString(tooltip),
+            material -> material.addTooltip(tooltip));
+        return this;
+    }
+
+    /// Remove the tooltip from a [Material]
+    public MaterialEdit removeTooltip() {
+        registry.enqueueMaterialOp(
+            modid,
+            name,
+            "remove tooltip from material",
+            Material::clearTooltip);
         return this;
     }
 

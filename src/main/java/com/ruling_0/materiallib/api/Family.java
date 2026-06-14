@@ -1,6 +1,9 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,19 +27,21 @@ public final class Family {
     private final String key;
     private final Map<Property<?>, Object> properties;
     private final Set<Shape> shapes;
+    private final List<String> tooltipLines = new ArrayList<>(2);
 
     private Set<Material> members;
     private Set<Shape> shapesView;
     private Map<Property<?>, Object> propertiesView;
 
     Family(MaterialRegistry registry, String modid, String name, Map<Property<?>, Object> properties,
-           Set<Shape> shapes) {
+           Set<Shape> shapes, List<String> tooltipLines) {
         this.registry = registry;
         this.modid = modid;
         this.name = name;
         this.key = Names.key(modid, name);
         this.properties = new Reference2ObjectLinkedOpenHashMap<>(properties);
         this.shapes = new ReferenceLinkedOpenHashSet<>(shapes);
+        this.tooltipLines.addAll(tooltipLines);
     }
 
     public String getModId() { return modid; }
@@ -81,6 +86,17 @@ public final class Family {
         return propertiesView;
     }
 
+    /// True if this family has a custom tooltip.
+    public boolean hasCustomTooltip() {
+        return !tooltipLines.isEmpty();
+    }
+
+    /// The added tooltip lines of this family.
+    public List<String> getTooltip() {
+        registry.requireResolved("query the tooltip of ", key);
+        return tooltipLines;
+    }
+
     void setPropertyValue(Property<?> property, Object value) {
         requireMutable();
         properties.put(property, value);
@@ -99,6 +115,14 @@ public final class Family {
     void removeShape(Shape shape) {
         requireMutable();
         shapes.remove(shape);
+    }
+
+    void addTooltip(String... lines) {
+        tooltipLines.addAll(Arrays.asList(lines));
+    }
+
+    void clearTooltip() {
+        tooltipLines.clear();
     }
 
     Set<Shape> getShapesInternal() { return shapes; }
