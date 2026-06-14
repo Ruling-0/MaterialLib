@@ -1,7 +1,9 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,12 +32,15 @@ public final class MaterialRegistry {
     private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final MaterialRegistry INSTANCE = new MaterialRegistry();
 
+    private static final Comparator<Material> MATERIAL_KEY_ORDER = Comparator.comparing(Material::getKey);
+
     private final Map<String, Material> materials = new Object2ObjectLinkedOpenHashMap<>();
     private final Map<String, Family> families = new Object2ObjectLinkedOpenHashMap<>();
     private final List<PendingOp> pendingOps = new ObjectArrayList<>();
     private boolean resolved;
     private Collection<Material> materialsView;
     private Collection<Family> familiesView;
+    private Material[] materialsByIndex;
 
     MaterialRegistry() {}
 
@@ -72,6 +77,14 @@ public final class MaterialRegistry {
         return families.get(Names.key(modid, name));
     }
 
+    /// The material assigned the given global index (see [Material#getIndex]), or null if no material has it.
+    /// Resolves an item damage value back to its material for rendering, naming, and worldgen. Only available
+    /// after the registry has resolved.
+    public Material getMaterialByIndex(int index) {
+        requireResolved("look up a material by index", "");
+        return index >= 0 && index < materialsByIndex.length ? materialsByIndex[index] : null;
+    }
+
     /// All registered materials. Only available after the registry has resolved; during registration the view
     /// would be incomplete.
     public Collection<Material> getMaterials() {
@@ -106,6 +119,8 @@ public final class MaterialRegistry {
         }
         pendingOps.clear();
 
+        assignMaterialIndices();
+
         Map<Family, Set<Material>> membership = new Reference2ObjectLinkedOpenHashMap<>();
         for (Family family : families.values()) {
             membership.put(family, new ReferenceLinkedOpenHashSet<>());
@@ -128,6 +143,17 @@ public final class MaterialRegistry {
 
         resolved = true;
         LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
+    }
+
+    /// Numbers every registered material from 0 in ascending `modid:name` key order. The index becomes the item
+    /// damage in every shape and the worldgen id, so the ordering must be deterministic; sorting by key gives the
+    /// same assignment on every launch from the same material set.
+    private void assignMaterialIndices() {
+        materialsByIndex = materials.values().toArray(new Material[0]);
+        Arrays.sort(materialsByIndex, MATERIAL_KEY_ORDER);
+        for (int i = 0; i < materialsByIndex.length; i++) {
+            materialsByIndex[i].resolveIndex(i);
+        }
     }
 
     /// Logs each property whose resolved value is ambiguous for a material: the material does not set it, and

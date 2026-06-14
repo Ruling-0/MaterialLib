@@ -1,5 +1,6 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Arrays;
 import java.util.Objects;
 
 /// Queued cross-mod changes to a [Family] identified by key, obtained from [MaterialLibAPI#editFamily].
@@ -100,6 +101,29 @@ public final class FamilyEdit {
             Names.validate("material name", materialName),
             modid,
             name);
+        return this;
+    }
+
+    /// Add tooltip lines which will appear on all [Shape]s of this [Material].
+    /// [Material] tooltips appear before [Family] tooltips.
+    /// Tooltips added via this appear after existing tooltips of this family.
+    public FamilyEdit addTooltip(String... tooltip) {
+        Objects.requireNonNull(tooltip, "line must not be null");
+        registry.enqueueFamilyOp(
+            modid,
+            name,
+            "add tooltip to family: " + Arrays.toString(tooltip),
+            family -> family.addTooltip(tooltip));
+        return this;
+    }
+
+    /// Remove the tooltip from this family.
+    public FamilyEdit removeTooltip() {
+        registry.enqueueFamilyOp(
+            modid,
+            name,
+            "remove tooltip from family",
+            Family::clearTooltip);
         return this;
     }
 }

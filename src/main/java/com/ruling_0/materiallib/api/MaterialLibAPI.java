@@ -2,6 +2,8 @@ package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
 
+import net.minecraft.item.ItemStack;
+
 /// The public entry point of MaterialLib, wrapping the game's [MaterialRegistry] instance.
 ///
 /// During preInit, mods create materials and families through [#newMaterial] and [#newFamily], and alter ones
@@ -22,6 +24,24 @@ public final class MaterialLibAPI {
         return MaterialRegistry.instance().newFamily(modid, name);
     }
 
+    /// Starts building a simple item shape owned by `modid`. Finish with [ItemShapeBuilder#build] during the
+    /// owning mod's preInit. For custom item behavior, subclass [ShapeItem] and use [#registerItemShape].
+    public static ItemShapeBuilder newItemShape(String modid, String name) {
+        return new ItemShapeBuilder(modid, name);
+    }
+
+    /// Registers a [ShapeItem] subclass and returns the canonical shape to generate (see
+    /// [ItemShapeRegistry#register]). Call during the owning mod's preInit.
+    public static Shape registerItemShape(ShapeItem item) {
+        return ItemShapeRegistry.instance().register(item);
+    }
+
+    /// The itemstack of `material` in `shape`, with the given stack size. The shape must be an item shape that
+    /// the material generates. Only available after item shapes have resolved (during this mod's init).
+    public static ItemStack getStack(Material material, Shape shape, int amount) {
+        return ItemShapeRegistry.instance().getStack(material, shape, amount);
+    }
+
     /// Queues changes to a material registered by any mod; see [MaterialEdit].
     public static MaterialEdit editMaterial(String modid, String name) {
         return MaterialRegistry.instance().editMaterial(modid, name);
@@ -40,6 +60,13 @@ public final class MaterialLibAPI {
     /// The family with the given key, or null if none exists.
     public static Family getFamily(String modid, String name) {
         return MaterialRegistry.instance().getFamily(modid, name);
+    }
+
+    /// The material assigned the given global metadata index (see [Material#getIndex]), or null if none has it.
+    /// Lets worldgen and other consumers map an item damage value back to its material. Only available after the
+    /// registry has resolved.
+    public static Material getMaterialByIndex(int index) {
+        return MaterialRegistry.instance().getMaterialByIndex(index);
     }
 
     /// All registered materials; only available after the registry has resolved.

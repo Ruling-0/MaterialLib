@@ -1,8 +1,10 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.List;
+
 /// A form a material can take, such as an ingot, gear, block, or fluid.
 ///
-/// A shape is identified by its owning mod and name, and contributes the prefix of the oredict entries for every
+/// A shape is identified by its owning mod and name, and contributes the prefixes of the oredict entries for every
 /// material generating it. Materials declare which shapes they generate through [MaterialBuilder#generateShape]
 /// (or at the group level through [FamilyBuilder#generateShape]), and the resulting per-material set is available
 /// from [Material#getShapes] once the registry has resolved.
@@ -19,7 +21,8 @@ public interface Shape {
     /// [TextureSet] folder.
     String getName();
 
-    /// The oredict prefix for this shape. The full oredict entry for a material is this prefix followed by the
-    /// material name, e.g. "gear" + "TestIron" -> "gearTestIron".
-    String getOreDict();
+    /// The oredict prefixes for this shape. The full oredict entry for a material is each prefix followed by the
+    /// material name, e.g. "gear" + "TestIron" -> "gearTestIron". A shape may expose several prefixes, registering
+    /// its item under each (e.g. "gear" and "cog" give both "gearTestIron" and "cogTestIron"). At least one.
+    List<String> getOreDicts();
 }

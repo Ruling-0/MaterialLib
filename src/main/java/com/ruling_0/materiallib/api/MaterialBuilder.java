@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,6 +21,7 @@ public final class MaterialBuilder {
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private final Set<Shape> shapes = new ReferenceLinkedOpenHashSet<>();
     private final List<String[]> familyKeys = new ArrayList<>();
+    private final List<String> tooltipLines = new ArrayList<>(2);
     private boolean built;
 
     MaterialBuilder(MaterialRegistry registry, String modid, String name, TextureSet textureSet) {
@@ -73,6 +75,13 @@ public final class MaterialBuilder {
         return this;
     }
 
+    /// Add tooltip lines which will appear on all [Shape]s of this [Material].
+    /// [Material] tooltips appear before [Family] tooltips.
+    public MaterialBuilder addTooltip(String... lines) {
+        tooltipLines.addAll(Arrays.asList(lines));
+        return this;
+    }
+
     /// Registers the material and returns it. Fails if a material with the same modid and name already exists or
     /// the registry has already resolved.
     public Material build() {
@@ -81,7 +90,7 @@ public final class MaterialBuilder {
         }
         properties.put(StandardProperties.NAME, name);
         properties.put(StandardProperties.TEXTURE_SET, textureSet);
-        Material material = new Material(registry, modid, name, properties, shapes);
+        Material material = new Material(registry, modid, name, properties, shapes, tooltipLines);
         registry.register(material);
         for (String[] familyKey : familyKeys) {
             registry.enqueueAddToFamily(modid, name, familyKey[0], familyKey[1]);
