@@ -9,8 +9,7 @@ import com.ruling_0.materiallib.api.TextureSet;
 ///
 /// Registered from MaterialLib's own preInit so a dev `runClient` shows the gears in the Materials creative tab,
 /// confirming icon binding, tint, display names (format and lang override), and oredict. The grayscale gear
-/// texture makes the gold tint on `TestGold` obvious. This is scaffolding for feature 2 only and will be removed
-/// when the full examples land in feature 8.
+/// texture makes the gold tint on `TestGold` obvious. Temporary scaffolding, removed when the full examples land.
 public final class TempItemShapeExample {
 
     private TempItemShapeExample() {}

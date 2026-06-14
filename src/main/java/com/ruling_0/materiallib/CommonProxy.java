@@ -16,7 +16,7 @@ public class CommonProxy {
 
         MaterialLib.LOG.info("MaterialLib version " + Tags.VERSION);
 
-        // Temporary feature-2 verification scaffolding; removed when feature 8's examples land.
+        // Temporary verification scaffolding; removed when the full examples land.
         TempItemShapeExample.register();
     }
 

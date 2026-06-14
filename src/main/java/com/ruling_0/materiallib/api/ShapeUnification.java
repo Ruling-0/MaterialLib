@@ -15,9 +15,7 @@ import org.apache.logging.log4j.Logger;
 /// the canonical shape so the registrant uses it directly, which keeps every material's shape set holding
 /// canonical shapes; [#canonical] still maps any alias back, in case a mod kept its own reference.
 ///
-/// The first-registered shape wins within a launch. Making the winner deterministic across launches (so the
-/// owning item does not change when mods are added or removed) is the persistence concern handled in a later
-/// feature; until then ordering follows mod load order.
+/// Which shape wins a name is decided by registration order, which follows mod load order.
 final class ShapeUnification {
 
     private static final Logger LOG = LogManager.getLogger("materiallib");

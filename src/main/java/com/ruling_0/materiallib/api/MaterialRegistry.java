@@ -147,8 +147,7 @@ public final class MaterialRegistry {
 
     /// Numbers every registered material from 0 in ascending `modid:name` key order. The index becomes the item
     /// damage in every shape and the worldgen id, so the ordering must be deterministic; sorting by key gives the
-    /// same assignment on every launch from the same material set. Feature 3 will make this append-only and
-    /// persistent so the numbering survives materials being added or removed.
+    /// same assignment on every launch from the same material set.
     private void assignMaterialIndices() {
         materialsByIndex = materials.values().toArray(new Material[0]);
         Arrays.sort(materialsByIndex, MATERIAL_KEY_ORDER);
