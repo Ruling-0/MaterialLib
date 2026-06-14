@@ -1,9 +1,13 @@
 package com.ruling_0.materiallib;
 
+import java.io.File;
+
 import com.ruling_0.materiallib.api.ItemShapeRegistry;
+import com.ruling_0.materiallib.api.MaterialIdStore;
 import com.ruling_0.materiallib.api.MaterialRegistry;
 import com.ruling_0.materiallib.examples.TempItemShapeExample;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -22,7 +26,10 @@ public class CommonProxy {
 
     // Mods depending on materiallib register materials in their preInit handlers, which all run before this.
     public void init(FMLInitializationEvent event) {
+        File dir = new File(Loader.instance().getConfigDir(), MaterialLib.MODID);
+        MaterialIdStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialRegistry.instance().resolve();
+        MaterialIdStore.saveFrom(MaterialRegistry.instance(), dir);
         ItemShapeRegistry.instance().resolve();
     }
 
