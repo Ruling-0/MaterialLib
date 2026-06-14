@@ -137,7 +137,10 @@ public final class ItemShapeRegistry {
     private void registerOreDictionary() {
         for (ShapeItem item : canonicalItems) {
             for (Material material : item.getServedMaterials()) {
-                OreDictionary.registerOre(item.getOreDict() + material.getName(), item.getStack(material, 1));
+                ItemStack stack = item.getStack(material, 1);
+                for (String prefix : item.getOreDicts()) {
+                    OreDictionary.registerOre(prefix + material.getName(), stack);
+                }
             }
         }
     }

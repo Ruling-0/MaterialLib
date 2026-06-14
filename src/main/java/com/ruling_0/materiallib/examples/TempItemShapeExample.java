@@ -19,6 +19,7 @@ public final class TempItemShapeExample {
 
         Shape testGear = MaterialLibAPI.newItemShape(MaterialLib.MODID, "testGear")
             .displayName("%s Gear")
+            .oreDict("gear", "cog")
             .build();
 
         MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestIron", test)

@@ -1,5 +1,7 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /// Builds and registers a simple item [Shape] backed by a [ShapeItem]. Obtained from
@@ -10,7 +12,7 @@ public final class ItemShapeBuilder {
 
     private final String modid;
     private final String name;
-    private String oreDict;
+    private List<String> oreDicts;
     private String displayNameFormat;
     private boolean built;
 
@@ -19,10 +21,19 @@ public final class ItemShapeBuilder {
         this.name = Names.validate("item shape name", name);
     }
 
-    /// Sets the oredict prefix; the material name is appended to it (e.g. `gear` -> `gearIron`). Defaults to the
-    /// shape name.
-    public ItemShapeBuilder oreDict(String oreDict) {
-        this.oreDict = Names.validate("item shape oredict", oreDict);
+    /// Sets the oredict prefixes; the material name is appended to each (e.g. `gear` -> `gearIron`). Pass several
+    /// to register the item under each, e.g. `oreDict("gear", "cog")` gives both `gearIron` and `cogIron`.
+    /// Defaults to the shape name. At least one prefix is required.
+    public ItemShapeBuilder oreDict(String... prefixes) {
+        Objects.requireNonNull(prefixes, "oredict prefixes must not be null");
+        if (prefixes.length == 0) {
+            throw new IllegalArgumentException("at least one oredict prefix is required");
+        }
+        List<String> validated = new ArrayList<>(prefixes.length);
+        for (String prefix : prefixes) {
+            validated.add(Names.validate("item shape oredict", prefix));
+        }
+        this.oreDicts = validated;
         return this;
     }
 
@@ -41,10 +52,10 @@ public final class ItemShapeBuilder {
             throw new IllegalStateException("Item shape " + Names.key(modid, name) + " was already built");
         }
         built = true;
-        String prefix = oreDict != null ? oreDict : name;
+        String[] prefixes = oreDicts != null ? oreDicts.toArray(new String[0]) : new String[] { name };
         String format = displayNameFormat != null ? displayNameFormat : "%s " + capitalize(name);
         return ItemShapeRegistry.instance()
-            .register(new ShapeItem(modid, name, prefix, format));
+            .register(new ShapeItem(modid, name, format, prefixes));
     }
 
     private static String capitalize(String value) {

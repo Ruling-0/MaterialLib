@@ -1,5 +1,6 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -28,7 +29,7 @@ public class ShapeItem extends Item implements Shape {
 
     private final String modid;
     private final String name;
-    private final String oreDict;
+    private final List<String> oreDicts;
     private final String displayNameFormat;
 
     /// Materials that generate this shape, ascending by index. Set when the registry resolves.
@@ -36,13 +37,13 @@ public class ShapeItem extends Item implements Shape {
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
 
-    /// Creates an item shape. `oreDict` is the oredict prefix (the material name is appended, e.g. `gear` ->
-    /// `gearIron`); `displayNameFormat` is applied to the material name to build the display name, e.g.
-    /// `"%s Gear"`. Identifiers must be non-empty and free of ':' and whitespace.
-    public ShapeItem(String modid, String name, String oreDict, String displayNameFormat) {
+    /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
+    /// appended (e.g. `gear` -> `gearIron`); `displayNameFormat` is applied to the material name to build the
+    /// display name, e.g. `"%s Gear"`. Identifiers must be non-empty and free of ':' and whitespace.
+    public ShapeItem(String modid, String name, String displayNameFormat, String... oreDicts) {
         this.modid = Names.validate("item shape modid", modid);
         this.name = Names.validate("item shape name", name);
-        this.oreDict = Names.validate("item shape oredict", oreDict);
+        this.oreDicts = validateOreDicts(oreDicts);
         this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
         try {
             ShapeNaming.format(displayNameFormat, "");
@@ -57,6 +58,18 @@ public class ShapeItem extends Item implements Shape {
         setUnlocalizedName(modid + "." + name);
     }
 
+    private static List<String> validateOreDicts(String... oreDicts) {
+        Objects.requireNonNull(oreDicts, "oreDicts must not be null");
+        if (oreDicts.length == 0) {
+            throw new IllegalArgumentException("item shape requires at least one oredict prefix");
+        }
+        List<String> validated = new ArrayList<>(oreDicts.length);
+        for (String oreDict : oreDicts) {
+            validated.add(Names.validate("item shape oredict", oreDict));
+        }
+        return List.copyOf(validated);
+    }
+
     @Override
     public String getModId() { return modid; }
 
@@ -64,7 +77,7 @@ public class ShapeItem extends Item implements Shape {
     public String getName() { return name; }
 
     @Override
-    public String getOreDict() { return oreDict; }
+    public List<String> getOreDicts() { return oreDicts; }
 
     @Override
     public String toString() {

@@ -77,8 +77,17 @@ class ShapeUnificationTest {
 
         assertSame(first, unification.register(second));
         assertSame(first, unification.canonical(second));
-        assertEquals("gear", unification.canonical(second)
-            .getOreDict());
+        assertEquals(List.of("gear"), unification.canonical(second)
+            .getOreDicts());
+    }
+
+    @Test
+    void aShapeCanDeclareMultipleOredictPrefixes() {
+        TestShape gear = new TestShape("amod", "gear", "gear", "cog");
+
+        assertSame(gear, unification.register(gear));
+        assertEquals(List.of("gear", "cog"), unification.canonical(gear)
+            .getOreDicts());
     }
 
     @Test

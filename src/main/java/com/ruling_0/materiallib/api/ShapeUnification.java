@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
+import java.util.Set;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
@@ -35,19 +36,18 @@ final class ShapeUnification {
         if (canonical == shape) {
             return canonical;
         }
-        if (!canonical.getOreDict().equals(shape.getOreDict())) {
+        if (!Set.copyOf(canonical.getOreDicts())
+            .equals(Set.copyOf(shape.getOreDicts()))) {
             LOG.error(
                 "Item shapes {}:{} and {}:{} share a name but declare different oredict prefixes ({} vs {}); " +
-                    "unifying onto the first and registering only \"{}\" entries, so recipes using \"{}\" will " +
-                    "not resolve",
+                    "unifying onto the first and registering only its prefixes, so recipes using the others " +
+                    "will not resolve",
                 canonical.getModId(),
                 canonical.getName(),
                 shape.getModId(),
                 shape.getName(),
-                canonical.getOreDict(),
-                shape.getOreDict(),
-                canonical.getOreDict(),
-                shape.getOreDict());
+                canonical.getOreDicts(),
+                shape.getOreDicts());
         }
         aliasToCanonical.put(shape, canonical);
         return canonical;
