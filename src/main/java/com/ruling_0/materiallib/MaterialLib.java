@@ -5,6 +5,7 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerAboutToStartEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,7 +15,7 @@ import org.apache.logging.log4j.Logger;
      version = Tags.VERSION,
      name = "MaterialLib",
      acceptedMinecraftVersions = "[1.7.10]",
-     dependencies = "required-after:gtnhlib")
+     dependencies = "required-after:gtnhlib;required-after:postea")
 public class MaterialLib {
 
     public static final String MODID = "materiallib";
@@ -37,6 +38,11 @@ public class MaterialLib {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         proxy.postInit(event);
+    }
+
+    @Mod.EventHandler
+    public void serverAboutToStart(FMLServerAboutToStartEvent event) {
+        proxy.serverAboutToStart(event);
     }
 
     @Mod.EventHandler

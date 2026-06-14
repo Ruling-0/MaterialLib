@@ -12,6 +12,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 
+import com.ruling_0.materiallib.MaterialLib;
+
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -27,6 +29,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// during the owning mod's preInit so FML attributes it to that mod.
 public class ShapeItem extends Item implements Shape {
 
+    private static final String MISSING_ICON = MaterialLib.MODID + ":missing_material";
+
     private final String modid;
     private final String name;
     private final List<String> oreDicts;
@@ -36,6 +40,9 @@ public class ShapeItem extends Item implements Shape {
     private Material[] servedMaterials = new Material[0];
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
+
+    /// The placeholder icon shown for a damage value that maps to no live material (a reserved or unknown index).
+    private IIcon missingIcon;
 
     /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
     /// appended (e.g. `gear` -> `gearIron`); `displayNameFormat` is applied to the material name to build the
@@ -100,7 +107,7 @@ public class ShapeItem extends Item implements Shape {
     public String getItemStackDisplayName(ItemStack stack) {
         Material material = materialFor(stack);
         if (material == null) {
-            return super.getItemStackDisplayName(stack);
+            return missingMaterialName(stack.getItemDamage());
         }
         String overrideKey = ShapeNaming.overrideKey(this, material);
         if (StatCollector.canTranslate(overrideKey)) {
@@ -141,6 +148,14 @@ public class ShapeItem extends Item implements Shape {
         return StatCollector.canTranslate(key) ? StatCollector.translateToLocal(key) : material.getName();
     }
 
+    /// The display name for a stack whose damage maps to no live material: the material was removed but its index
+    /// stays reserved, so the stack is preserved under a visible placeholder name rather than transformed.
+    private static String missingMaterialName(int index) {
+        String key = "item.materiallib.missingMaterial";
+        return StatCollector.canTranslate(key) ? StatCollector.translateToLocalFormatted(key, index) :
+            "Missing Material #" + index;
+    }
+
     @Override
     @SideOnly(Side.CLIENT)
     public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> list) {
@@ -157,12 +172,14 @@ public class ShapeItem extends Item implements Shape {
             TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
             iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(name)));
         }
+        missingIcon = register.registerIcon(MISSING_ICON);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamage(int damage) {
-        return iconsByIndex.get(damage);
+        IIcon icon = iconsByIndex.get(damage);
+        return icon != null ? icon : missingIcon;
     }
 
     @Override

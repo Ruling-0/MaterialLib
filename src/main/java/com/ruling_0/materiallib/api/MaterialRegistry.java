@@ -1,9 +1,8 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,8 +31,6 @@ public final class MaterialRegistry {
     private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final MaterialRegistry INSTANCE = new MaterialRegistry();
 
-    private static final Comparator<Material> MATERIAL_KEY_ORDER = Comparator.comparing(Material::getKey);
-
     private final Map<String, Material> materials = new Object2ObjectLinkedOpenHashMap<>();
     private final Map<String, Family> families = new Object2ObjectLinkedOpenHashMap<>();
     private final List<PendingOp> pendingOps = new ObjectArrayList<>();
@@ -41,6 +38,8 @@ public final class MaterialRegistry {
     private Collection<Material> materialsView;
     private Collection<Family> familiesView;
     private Material[] materialsByIndex;
+    private Map<String, Integer> persistedIndices = new LinkedHashMap<>();
+    private Map<String, Integer> assignedIndices = new LinkedHashMap<>();
 
     MaterialRegistry() {}
 
@@ -77,9 +76,10 @@ public final class MaterialRegistry {
         return families.get(Names.key(modid, name));
     }
 
-    /// The material assigned the given global index (see [Material#getIndex]), or null if no material has it.
-    /// Resolves an item damage value back to its material for rendering, naming, and worldgen. Only available
-    /// after the registry has resolved.
+    /// The material assigned the given global index (see [Material#getIndex]), or null if no material has it --
+    /// including an index reserved for a material not registered this session, which renders as a missing-material
+    /// placeholder. Resolves an item damage value back to its material for rendering, naming, and worldgen. Only
+    /// available after the registry has resolved.
     public Material getMaterialByIndex(int index) {
         requireResolved("look up a material by index", "");
         return index >= 0 && index < materialsByIndex.length ? materialsByIndex[index] : null;
@@ -145,14 +145,51 @@ public final class MaterialRegistry {
         LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
     }
 
-    /// Numbers every registered material from 0 in ascending `modid:name` key order. The index becomes the item
-    /// damage in every shape and the worldgen id, so the ordering must be deterministic; sorting by key gives the
-    /// same assignment on every launch from the same material set.
+    /// Sets the persisted index assignment to honor at resolve, loaded from the instance-global store. Existing
+    /// materials keep their stored index; only genuinely new materials are numbered. Must be set before resolve.
+    void setPersistedIndices(Map<String, Integer> indices) {
+        requireRegistration("set persisted material indices");
+        this.persistedIndices = new LinkedHashMap<>(indices);
+    }
+
+    /// The full index assignment after resolve: every persisted entry (including indices reserved for materials
+    /// not registered this session) plus the indices newly assigned this session. Written back to the store.
+    Map<String, Integer> getAssignedIndices() {
+        requireResolved("read assigned material indices", "");
+        return Collections.unmodifiableMap(assignedIndices);
+    }
+
+    /// Assigns each material its global index, append-only against the persisted assignment: a material already in
+    /// the store keeps its index, genuinely new materials take the next free indices in ascending `modid:name` key
+    /// order, and indices of materials no longer present stay reserved (never reused) so existing item stacks do
+    /// not change material. The index becomes the item damage in every shape and the worldgen id.
     private void assignMaterialIndices() {
-        materialsByIndex = materials.values().toArray(new Material[0]);
-        Arrays.sort(materialsByIndex, MATERIAL_KEY_ORDER);
-        for (int i = 0; i < materialsByIndex.length; i++) {
-            materialsByIndex[i].resolveIndex(i);
+        assignedIndices = new LinkedHashMap<>(persistedIndices);
+        int next = 0;
+        for (int index : assignedIndices.values()) {
+            next = Math.max(next, index + 1);
+        }
+        List<String> newKeys = new ObjectArrayList<>();
+        for (String key : materials.keySet()) {
+            if (!assignedIndices.containsKey(key)) newKeys.add(key);
+        }
+        Collections.sort(newKeys);
+        for (String key : newKeys) {
+            assignedIndices.put(key, next++);
+        }
+        if (next - 1 > Short.MAX_VALUE) {
+            throw new IllegalStateException(
+                "Material index " + (next - 1) + " exceeds the item damage limit of " + Short.MAX_VALUE +
+                    "; too many materials have been registered across this instance's history.");
+        }
+
+        materialsByIndex = new Material[next];
+        for (Map.Entry<String, Integer> entry : assignedIndices.entrySet()) {
+            Material material = materials.get(entry.getKey());
+            if (material != null) {
+                material.resolveIndex(entry.getValue());
+                materialsByIndex[entry.getValue()] = material;
+            }
         }
     }
 
