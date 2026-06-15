@@ -9,6 +9,7 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 
@@ -25,8 +26,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// Simple shapes are created through [MaterialLibAPI#newItemShape] and need no subclass. A mod that wants custom
 /// item behavior (right click logic, NBT) subclasses this and registers the instance through
 /// [MaterialLibAPI#registerItemShape]; the base handles subtypes, textures from each material's [TextureSet],
-/// the [StandardProperties#TINT] color, display names, and oredict. The item must be created and registered
-/// during the owning mod's preInit so FML attributes it to that mod.
+/// the [StandardProperties#TINT] color, display names, and oredict. Create and register the item during the
+/// owning mod's preInit; MaterialLib registers the chosen owner's item under its own domain so the shape keeps a
+/// stable identity across instances, and an advanced tooltip names the mod that owns the shape and the mod that
+/// added the material.
 public class ShapeItem extends Item implements Shape {
 
     private static final String MISSING_ICON = MaterialLib.MODID + ":missing_material";
@@ -118,22 +121,38 @@ public class ShapeItem extends Item implements Shape {
 
     @Override
     @SideOnly(Side.CLIENT)
-    public void addInformation(ItemStack stack, EntityPlayer player, List<String> lines, boolean aF3_H) {
-        super.addInformation(stack, player, lines, aF3_H);
+    public void addInformation(ItemStack stack, EntityPlayer player, List<String> lines, boolean advanced) {
+        super.addInformation(stack, player, lines, advanced);
         Material material = materialFor(stack);
-        if (material == null) return;
-        if (material.hasCustomTooltip()) {
-            for (String line : material.getTooltip()) {
-                lines.add(StatCollector.translateToLocal(line));
-            }
-        }
-        for (Family family : material.getFamilies()) {
-            if (family.hasCustomTooltip()) {
-                for (String line : family.getTooltip()) {
+        if (material != null) {
+            if (material.hasCustomTooltip()) {
+                for (String line : material.getTooltip()) {
                     lines.add(StatCollector.translateToLocal(line));
                 }
             }
+            for (Family family : material.getFamilies()) {
+                if (family.hasCustomTooltip()) {
+                    for (String line : family.getTooltip()) {
+                        lines.add(StatCollector.translateToLocal(line));
+                    }
+                }
+            }
         }
+        if (advanced) {
+            lines.add(attribution("tooltip.materiallib.shapeSource", "Shape added by ", modid));
+            if (material != null) {
+                lines.add(attribution("tooltip.materiallib.materialSource", "Material added by ", material.getModId()));
+            }
+        }
+    }
+
+    /// A grayed attribution line naming a contributing mod -- the shape's owner or the material's mod -- shown only
+    /// with advanced tooltips because a shape's saved identity is under MaterialLib's domain rather than the
+    /// contributing mod's.
+    private static String attribution(String key, String fallbackLabel, String modid) {
+        String text = StatCollector.canTranslate(key) ? StatCollector.translateToLocalFormatted(key, modid) :
+            fallbackLabel + modid;
+        return EnumChatFormatting.GRAY + text;
     }
 
     /// The material a stack of this shape represents, decoding the damage value, or null if the damage maps to no
