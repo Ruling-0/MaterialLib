@@ -3,6 +3,7 @@ package com.ruling_0.materiallib.api;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,10 +19,11 @@ import org.apache.logging.log4j.Logger;
 
 /// Holds the item backing every item [Shape] and finishes their setup once the material registry has resolved.
 ///
-/// During preInit, [#register] registers each new shape's item with FML under the owning mod, unifying shapes
-/// that share a name through [ShapeUnification]; the [ShapeItem] itself is built by the caller or the builder.
-/// During MaterialLib's init, after [MaterialRegistry#resolve], [#resolve] tells each item which materials
-/// generate it and registers the oredict entries. The game uses the single [#instance]; like
+/// During preInit, [#register] records each shape as a candidate to own its name (see [ShapeUnification]); the
+/// [ShapeItem] itself is built by the caller or the builder. During MaterialLib's init, after
+/// [MaterialRegistry#resolve], [#resolve] picks one owner per name, registers that owner's item with FML under
+/// MaterialLib's own domain so a shape keeps a stable item identity across instances, tells each item which
+/// materials generate it, and registers the oredict entries. The game uses the single [#instance]; like
 /// [MaterialRegistry#resolve], the lifecycle methods are public only so MaterialLib's own handler can call them
 /// and must not be called by other mods.
 public final class ItemShapeRegistry {
@@ -32,6 +34,8 @@ public final class ItemShapeRegistry {
     private final ShapeUnification unification = new ShapeUnification();
     private final List<ShapeItem> canonicalItems = new ObjectArrayList<>();
     private final List<ShapeItem> canonicalItemsView = Collections.unmodifiableList(canonicalItems);
+    private Map<String, String> persistedOwners = new LinkedHashMap<>();
+    private Map<String, String> assignedOwners = new LinkedHashMap<>();
     private boolean resolved;
 
     ItemShapeRegistry() {}
@@ -40,30 +44,31 @@ public final class ItemShapeRegistry {
         return INSTANCE;
     }
 
-    /// Every registered item shape's backing item, in registration order. Used to attach client renderers; the
-    /// list reflects registrations made so far.
+    /// The backing item of every item shape, in the order their names were first registered. Used to attach client
+    /// renderers and migration handlers; only populated once item shapes resolve.
     public List<ShapeItem> getItemShapes() { return canonicalItemsView; }
 
-    /// Registers an item shape and returns the canonical shape to generate (this shape, or the existing one if
-    /// another mod already registered its name). Only the canonical shape's item is registered with FML, so call
-    /// this from the owning mod's preInit and pass the returned shape to [MaterialBuilder#generateShape] or
-    /// [FamilyBuilder#generateShape].
+    /// Records an item shape as a candidate to own its name and returns the shape to generate. The owner is chosen
+    /// at [#resolve], so the returned shape is unified onto the owner's item then rather than at this call; pass it
+    /// to [MaterialBuilder#generateShape] or [FamilyBuilder#generateShape] regardless. Call from the owning mod's
+    /// preInit.
     Shape register(ShapeItem item) {
         requireRegistration("register item shape " + Names.key(item.getModId(), item.getName()));
-        Shape canonical = unification.register(item);
-        if (canonical == item) {
-            GameRegistry.registerItem(item, item.getName());
-            canonicalItems.add(item);
-        }
-        else {
-            LOG.info(
-                "Unified item shape {}:{} onto {}:{}; the later item is not registered",
-                item.getModId(),
-                item.getName(),
-                canonical.getModId(),
-                canonical.getName());
-        }
-        return canonical;
+        return unification.register(item);
+    }
+
+    /// Sets the persisted shape owners to honor at resolve, loaded from the instance-global store. A name already
+    /// in the store keeps its owner when that mod registers a candidate this session. Must be set before resolve.
+    void setPersistedOwners(Map<String, String> owners) {
+        requireRegistration("set persisted shape owners");
+        this.persistedOwners = new LinkedHashMap<>(owners);
+    }
+
+    /// The full owner assignment after resolve: every persisted entry (including names whose owning mod is absent
+    /// this session) plus the owners chosen this session. Written back to the store.
+    Map<String, String> getAssignedOwners() {
+        requireResolved("read assigned shape owners");
+        return Collections.unmodifiableMap(assignedOwners);
     }
 
     /// The itemstack of `material` in `shape`, with the given stack size, routed to the shape's canonical item.
@@ -81,16 +86,32 @@ public final class ItemShapeRegistry {
         return item.getStack(material, amount);
     }
 
-    /// Binds each item to the materials that generate it and registers the oredict entries. Invoked by
-    /// MaterialLib's init handler after [MaterialRegistry#resolve]; other mods must not call this.
+    /// Picks each name's owner, registers the owner's item, binds it to the materials that generate it, and
+    /// registers the oredict entries. Invoked by MaterialLib's init handler after [MaterialRegistry#resolve];
+    /// other mods must not call this.
     public void resolve() {
         requireRegistration("resolve item shapes");
         MaterialRegistry.instance()
             .requireResolved("resolve item shapes", "");
+        assignedOwners = unification.resolve(persistedOwners);
+        registerCanonicalItems();
         bindServedMaterials();
         registerOreDictionary();
         resolved = true;
         LOG.info("Resolved {} item shapes", canonicalItems.size());
+    }
+
+    /// Registers each name's owning item with FML under MaterialLib's domain (`materiallib:<name>`). The domain is
+    /// MaterialLib's because this runs in MaterialLib's init handler, which fixes the shape's saved identity
+    /// regardless of which mod owns it -- so a world keeps its shape stacks when the owning mod changes.
+    private void registerCanonicalItems() {
+        for (Shape shape : unification.canonicalShapes()) {
+            if (!(shape instanceof ShapeItem item)) {
+                throw new IllegalStateException(shape + " is not an item shape and cannot back an item");
+            }
+            GameRegistry.registerItem(item, item.getName());
+            canonicalItems.add(item);
+        }
     }
 
     private void requireRegistration(String what) {

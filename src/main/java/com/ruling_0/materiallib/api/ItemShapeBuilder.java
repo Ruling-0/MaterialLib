@@ -45,8 +45,8 @@ public final class ItemShapeBuilder {
         return this;
     }
 
-    /// Registers the shape and returns the canonical shape to generate; see [ItemShapeRegistry#register]. Fails
-    /// if called twice.
+    /// Registers the shape and returns the shape to generate; see [ItemShapeRegistry#register]. Fails if called
+    /// twice.
     public Shape build() {
         if (built) {
             throw new IllegalStateException("Item shape " + Names.key(modid, name) + " was already built");

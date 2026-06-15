@@ -30,8 +30,8 @@ public final class MaterialLibAPI {
         return new ItemShapeBuilder(modid, name);
     }
 
-    /// Registers a [ShapeItem] subclass and returns the canonical shape to generate (see
-    /// [ItemShapeRegistry#register]). Call during the owning mod's preInit.
+    /// Registers a [ShapeItem] subclass and returns the shape to generate (see [ItemShapeRegistry#register]). Call
+    /// during the owning mod's preInit.
     public static Shape registerItemShape(ShapeItem item) {
         return ItemShapeRegistry.instance().register(item);
     }

@@ -8,6 +8,7 @@ import net.minecraft.world.storage.ISaveHandler;
 import com.ruling_0.materiallib.api.ItemShapeRegistry;
 import com.ruling_0.materiallib.api.MaterialIdStore;
 import com.ruling_0.materiallib.api.MaterialRegistry;
+import com.ruling_0.materiallib.api.ShapeOwnerStore;
 import com.ruling_0.materiallib.api.WorldMaterialIds;
 import com.ruling_0.materiallib.examples.TempItemShapeExample;
 
@@ -35,7 +36,10 @@ public class CommonProxy {
         MaterialIdStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialRegistry.instance().resolve();
         MaterialIdStore.saveFrom(MaterialRegistry.instance(), dir);
+
+        ShapeOwnerStore.loadInto(ItemShapeRegistry.instance(), dir);
         ItemShapeRegistry.instance().resolve();
+        ShapeOwnerStore.saveFrom(ItemShapeRegistry.instance(), dir);
     }
 
     public void postInit(FMLPostInitializationEvent event) {
