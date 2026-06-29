@@ -49,16 +49,15 @@ public final class ItemShapeRegistry {
     public List<ShapeItem> getItemShapes() { return canonicalItemsView; }
 
     /// Records an item shape as a candidate to own its name and returns the shape to generate. The owner is chosen
-    /// at [#resolve], so the returned shape is unified onto the owner's item then rather than at this call; pass it
-    /// to [MaterialBuilder#generateShape] or [FamilyBuilder#generateShape] regardless. Call from the owning mod's
-    /// preInit.
+    /// at [#resolve], so the returned shape is unified onto the owner's item then. Pass it to
+    /// [MaterialBuilder#generateShape] or [FamilyBuilder#generateShape] regardless. Call from the owning mod's preInit.
     Shape register(ShapeItem item) {
         requireRegistration("register item shape " + Names.key(item.getModId(), item.getName()));
         return unification.register(item);
     }
 
-    /// Sets the persisted shape owners to honor at resolve, loaded from the instance-global store. A name already
-    /// in the store keeps its owner when that mod registers a candidate this session. Must be set before resolve.
+    /// Sets the persisted shape owners to honor at resolve, loaded from the instance-global store. Must be set before
+    /// resolve.
     void setPersistedOwners(Map<String, String> owners) {
         requireRegistration("set persisted shape owners");
         this.persistedOwners = new LinkedHashMap<>(owners);
@@ -102,8 +101,7 @@ public final class ItemShapeRegistry {
     }
 
     /// Registers each name's owning item with FML under MaterialLib's domain (`materiallib:<name>`). The domain is
-    /// MaterialLib's because this runs in MaterialLib's init handler, which fixes the shape's saved identity
-    /// regardless of which mod owns it -- so a world keeps its shape stacks when the owning mod changes.
+    /// MaterialLib's because this runs in MaterialLib's init handler (FML restriction).
     private void registerCanonicalItems() {
         for (Shape shape : unification.canonicalShapes()) {
             if (!(shape instanceof ShapeItem item)) {

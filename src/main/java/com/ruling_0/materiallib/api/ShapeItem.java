@@ -27,8 +27,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// item behavior (right click logic, NBT) subclasses this and registers the instance through
 /// [MaterialLibAPI#registerItemShape]; the base handles subtypes, textures from each material's [TextureSet],
 /// the [StandardProperties#TINT] color, display names, and oredict. Create and register the item during the
-/// owning mod's preInit; MaterialLib registers the chosen owner's item under its own domain so the shape keeps a
-/// stable identity across instances, and an advanced tooltip names the mod that owns the shape and the mod that
+/// owning mod's preInit. MaterialLib registers the chosen owner's item under its own domain so the shape keeps a
+/// stable identity across instances. An advanced tooltip names the mod that owns the shape and the mod that
 /// added the material.
 public class ShapeItem extends Item implements Shape {
 
@@ -147,8 +147,7 @@ public class ShapeItem extends Item implements Shape {
     }
 
     /// A grayed attribution line naming a contributing mod -- the shape's owner or the material's mod -- shown only
-    /// with advanced tooltips because a shape's saved identity is under MaterialLib's domain rather than the
-    /// contributing mod's.
+    /// with advanced tooltips.
     private static String attribution(String key, String fallbackLabel, String modid) {
         String text = StatCollector.canTranslate(key) ? StatCollector.translateToLocalFormatted(key, modid) :
             fallbackLabel + modid;

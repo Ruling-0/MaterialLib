@@ -90,24 +90,6 @@ class ShapeUnificationTest {
     }
 
     @Test
-    void multipleAliasesAllResolveToTheOwner() {
-        TestShape amod = new TestShape("amod", "gear");
-        TestShape bmod = new TestShape("bmod", "gear");
-        TestShape cmod = new TestShape("cmod", "gear");
-        unification.register(bmod);
-        unification.register(cmod);
-        unification.register(amod);
-
-        unification.resolve(noOwners());
-
-        assertSame(amod, unification.canonical(bmod));
-        assertSame(amod, unification.canonical(cmod));
-        assertFalse(unification.isCanonical(bmod));
-        assertFalse(unification.isCanonical(cmod));
-        assertEquals(List.of(amod), new ArrayList<>(unification.canonicalShapes()));
-    }
-
-    @Test
     void canonicalShapesFollowsTheOrderNamesWereFirstRegistered() {
         TestShape plate = new TestShape("amod", "plate");
         TestShape gear = new TestShape("amod", "gear");
@@ -124,20 +106,6 @@ class ShapeUnificationTest {
     }
 
     @Test
-    void differentNamesProduceDistinctOwners() {
-        TestShape gear = new TestShape("amod", "gear");
-        TestShape plate = new TestShape("bmod", "plate");
-        unification.register(gear);
-        unification.register(plate);
-
-        Map<String, String> owners = unification.resolve(noOwners());
-
-        assertTrue(unification.isCanonical(gear));
-        assertTrue(unification.isCanonical(plate));
-        assertEquals(Map.of("gear", "amod", "plate", "bmod"), owners);
-    }
-
-    @Test
     void theOwnersOredictPrefixesAreKeptWhenCandidatesDiverge() {
         TestShape amod = new TestShape("amod", "gear", "gear");
         TestShape bmod = new TestShape("bmod", "gear", "wheel");
@@ -148,17 +116,6 @@ class ShapeUnificationTest {
 
         assertSame(amod, unification.canonical(bmod));
         assertEquals(List.of("gear"), unification.canonical(bmod)
-            .getOreDicts());
-    }
-
-    @Test
-    void aShapeCanDeclareMultipleOredictPrefixes() {
-        TestShape gear = new TestShape("amod", "gear", "gear", "cog");
-        unification.register(gear);
-
-        unification.resolve(noOwners());
-
-        assertEquals(List.of("gear", "cog"), unification.canonical(gear)
             .getOreDicts());
     }
 

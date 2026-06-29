@@ -20,8 +20,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 /// The instance-global store of the shape name -> owning modid assignment, a JSON file under `config/materiallib`.
 ///
 /// Item shapes that share a name unify onto one owner (see [ShapeUnification]). [#loadInto] feeds the saved owners
-/// to the registry before it resolves so an existing name keeps its owner even when a mod that also declares it is
-/// added, and [#saveFrom] writes the resolved assignment back. The shape's saved item identity does not depend on
+/// to the registry before it resolves, so an existing name keeps its owner even when a mod that also declares it is
+/// added. [#saveFrom] writes the resolved assignment back. The shape's saved item identity does not depend on
 /// the owner, so a wrong owner changes only which mod's item backs the shape, never the stored stacks.
 public final class ShapeOwnerStore {
 
@@ -76,8 +76,7 @@ public final class ShapeOwnerStore {
         }
     }
 
-    /// Rejects an assignment whose owner is not a valid modid: null, empty, or containing ':' or whitespace -- a
-    /// hand-edited or corrupt file naming no mod, or one no mod could match, to back the shape.
+    /// Rejects an assignment whose owner is not a valid modid: null, empty, or containing ':' or whitespace.
     private static void validateOwners(File file, Map<String, String> owners) {
         for (Map.Entry<String, String> entry : owners.entrySet()) {
             String owner = entry.getValue();

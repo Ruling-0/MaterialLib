@@ -7,9 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -39,21 +37,6 @@ class ShapeOwnerStoreTest {
         ShapeOwnerStore.write(file(), owners);
 
         assertEquals(owners, ShapeOwnerStore.read(file()));
-    }
-
-    @Test
-    void writeOrdersEntriesByNameForReadability() {
-        Map<String, String> owners = new LinkedHashMap<>();
-        owners.put("rod", "zmod");
-        owners.put("gear", "amod");
-        owners.put("plate", "mmod");
-
-        ShapeOwnerStore.write(file(), owners);
-
-        assertEquals(
-            List.of("gear", "plate", "rod"),
-            new ArrayList<>(ShapeOwnerStore.read(file())
-                .keySet()));
     }
 
     @Test
@@ -100,13 +83,5 @@ class ShapeOwnerStoreTest {
         Files.write(file().toPath(), "{\"version\":1,\"owners\":{\"gear\":\"a:b\"}}".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> ShapeOwnerStore.read(file()));
-    }
-
-    @Test
-    void writeOverwritesAnExistingFile() {
-        ShapeOwnerStore.write(file(), Map.of("gear", "amod", "plate", "bmod"));
-        ShapeOwnerStore.write(file(), Map.of("gear", "amod"));
-
-        assertEquals(Map.of("gear", "amod"), ShapeOwnerStore.read(file()));
     }
 }

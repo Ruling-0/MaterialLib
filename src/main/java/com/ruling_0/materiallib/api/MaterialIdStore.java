@@ -81,8 +81,7 @@ public final class MaterialIdStore {
         }
     }
 
-    /// Rejects an assignment whose indices are negative, null, or shared by two materials -- a hand-edited or
-    /// corrupt file that would make item stacks decode to the wrong material or break array indexing.
+    /// Rejects an assignment whose indices are negative, null, or shared by two materials.
     private static void validateIndices(File file, Map<String, Integer> materials) {
         IntSet used = new IntOpenHashSet();
         for (Map.Entry<String, Integer> entry : materials.entrySet()) {
