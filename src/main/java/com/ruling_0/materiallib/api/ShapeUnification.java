@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 ///
 /// Two mods may each declare an item shape called `gear` without knowing about each other; their gears must end up
 /// as one item so a single `gearIron` oredict entry exists. Every shape registered for a name is a candidate to
-/// own it; the owner is chosen once, at [#resolve], from the persisted assignment: the mod recorded as the name's
+/// own it. The owner is chosen once, at [#resolve], from the persisted assignment: the mod recorded as the name's
 /// owner if it registered a candidate this session, otherwise the candidate whose modid sorts first. Choosing at
 /// resolve rather than by registration order makes the owner independent of mod load order, and honoring the
 /// persisted owner keeps it fixed when another mod that declares the same name is added. [#canonical] maps any
@@ -32,8 +32,8 @@ final class ShapeUnification {
     private final Reference2ObjectOpenHashMap<Shape, Shape> aliasToCanonical = new Reference2ObjectOpenHashMap<>();
     private boolean resolved;
 
-    /// Records a shape as a candidate to own its name and returns it. The owner is not chosen until [#resolve];
-    /// registering the same instance twice records it once.
+    /// Records a shape as a candidate to own its name and returns it. The owner is not chosen until [#resolve].
+    /// Registering the same instance twice records it once.
     Shape register(Shape shape) {
         requireRegistration("register a shape");
         Names.validate(shape);
@@ -96,8 +96,7 @@ final class ShapeUnification {
 
     private static Shape candidateOwnedBy(List<Shape> candidates, String modid) {
         for (Shape candidate : candidates) {
-            if (candidate.getModId()
-                .equals(modid)) {
+            if (candidate.getModId().equals(modid)) {
                 return candidate;
             }
         }
