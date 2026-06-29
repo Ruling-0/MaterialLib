@@ -21,11 +21,13 @@ public final class PosteaMigration {
     private PosteaMigration() {}
 
     /// Registers a Postea transformer for every registered item shape. Call in postInit, once item shapes resolve.
+    /// Every shape item is registered under MaterialLib's domain, so the handler is keyed by `materiallib:<name>`,
+    /// the stack's saved id.
     public static void registerHandlers() {
         for (ShapeItem item : ItemShapeRegistry.instance()
             .getItemShapes()) {
             ItemStackReplacementManager
-                .addTransformationHandler(item.getModId() + ":" + item.getName(), PosteaMigration::transform);
+                .addTransformationHandler(MaterialLib.MODID + ":" + item.getName(), PosteaMigration::transform);
         }
     }
 
