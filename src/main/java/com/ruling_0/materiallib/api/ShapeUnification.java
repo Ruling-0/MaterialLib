@@ -13,9 +13,9 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-/// Collapses item shapes that share a name down to a single canonical shape with one owning mod.
+/// Collapses shapes that share a name down to a single canonical shape with one owning mod.
 ///
-/// Two mods may each declare an item shape called `gear` without knowing about each other; their gears must end up
+/// Two mods may each declare a shape called `gear` without knowing about each other; their gears must end up
 /// as one item so a single `gearIron` oredict entry exists. Every shape registered for a name is a candidate to
 /// own it. The owner is chosen once, at [#resolve], from the persisted assignment: the mod recorded as the name's
 /// owner if it registered a candidate this session, otherwise the candidate whose modid sorts first. Choosing at
@@ -65,7 +65,7 @@ final class ShapeUnification {
             for (Shape candidate : candidates) {
                 if (candidate != canonical) {
                     aliasToCanonical.put(candidate, canonical);
-                    LOG.info("Unified item shape {}:{} onto owner {}", candidate.getModId(), name, ownerModid);
+                    LOG.info("Unified shape {}:{} onto owner {}", candidate.getModId(), name, ownerModid);
                 }
             }
             logOreDictDivergence(name, candidates, canonical);
@@ -86,7 +86,7 @@ final class ShapeUnification {
         String owner = modids.first();
         if (persistedOwner != null) {
             LOG.info(
-                "Item shape {} was owned by {}, which registered no candidate this session; reassigning to {}",
+                "Shape {} was owned by {}, which registered no candidate this session; reassigning to {}",
                 name,
                 persistedOwner,
                 owner);
@@ -109,7 +109,7 @@ final class ShapeUnification {
             if (candidate == canonical) continue;
             if (!ownerPrefixes.equals(Set.copyOf(candidate.getOreDicts()))) {
                 LOG.error(
-                    "Item shapes {}:{} and {}:{} share a name but declare different oredict prefixes ({} vs {}); " +
+                    "Shapes {}:{} and {}:{} share a name but declare different oredict prefixes ({} vs {}); " +
                         "registering only the owner's prefixes, so recipes using the others will not resolve",
                     canonical.getModId(),
                     name,

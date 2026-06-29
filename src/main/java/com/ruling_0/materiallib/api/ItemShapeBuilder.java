@@ -1,6 +1,5 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -25,15 +24,7 @@ public final class ItemShapeBuilder {
     /// to register the item under each, e.g. `oreDict("gear", "cog")` gives both `gearIron` and `cogIron`.
     /// Defaults to the shape name. At least one prefix is required.
     public ItemShapeBuilder oreDict(String... prefixes) {
-        Objects.requireNonNull(prefixes, "oredict prefixes must not be null");
-        if (prefixes.length == 0) {
-            throw new IllegalArgumentException("at least one oredict prefix is required");
-        }
-        List<String> validated = new ArrayList<>(prefixes.length);
-        for (String prefix : prefixes) {
-            validated.add(Names.validate("item shape oredict", prefix));
-        }
-        this.oreDicts = validated;
+        this.oreDicts = Names.validateOreDicts(prefixes);
         return this;
     }
 
@@ -45,7 +36,7 @@ public final class ItemShapeBuilder {
         return this;
     }
 
-    /// Registers the shape and returns the shape to generate; see [ItemShapeRegistry#register]. Fails if called
+    /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called
     /// twice.
     public Shape build() {
         if (built) {
@@ -54,7 +45,7 @@ public final class ItemShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts.toArray(new String[0]) : new String[] { name };
         String format = displayNameFormat != null ? displayNameFormat : "%s " + capitalize(name);
-        return ItemShapeRegistry.instance()
+        return ShapeRegistry.instance()
             .register(new ShapeItem(modid, name, format, prefixes));
     }
 

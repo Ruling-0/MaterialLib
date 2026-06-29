@@ -30,16 +30,31 @@ public final class MaterialLibAPI {
         return new ItemShapeBuilder(modid, name);
     }
 
-    /// Registers a [ShapeItem] subclass and returns the shape to generate (see [ItemShapeRegistry#register]). Call
+    /// Registers a [ShapeItem] subclass and returns the shape to generate (see [ShapeRegistry#register]). Call
     /// during the owning mod's preInit.
     public static Shape registerItemShape(ShapeItem item) {
-        return ItemShapeRegistry.instance().register(item);
+        return ShapeRegistry.instance().register(item);
     }
 
-    /// The itemstack of `material` in `shape`, with the given stack size. The shape must be an item shape that
-    /// the material generates. Only available after item shapes have resolved (during this mod's init).
+    /// Starts building a simple block shape owned by `modid`. Finish with [BlockShapeBuilder#build] during the
+    /// owning mod's preInit. For custom block behavior, subclass [ShapeBlock] and use [#registerBlockShape]. Block
+    /// shapes rely on the EndlessIDs dependency, which widens block metadata once more than sixteen materials are
+    /// registered.
+    public static BlockShapeBuilder newBlockShape(String modid, String name) {
+        return new BlockShapeBuilder(modid, name);
+    }
+
+    /// Registers a [ShapeBlock] subclass and returns the shape to generate (see [ShapeRegistry#register]). Call
+    /// during the owning mod's preInit.
+    public static Shape registerBlockShape(ShapeBlock block) {
+        return ShapeRegistry.instance().register(block);
+    }
+
+    /// The itemstack of `material` in `shape`, with the given stack size. The shape must be a backed (item or
+    /// block) shape that the material generates. Only available after shapes have resolved (during this mod's
+    /// init).
     public static ItemStack getStack(Material material, Shape shape, int amount) {
-        return ItemShapeRegistry.instance().getStack(material, shape, amount);
+        return ShapeRegistry.instance().getStack(material, shape, amount);
     }
 
     /// Queues changes to a material registered by any mod; see [MaterialEdit].

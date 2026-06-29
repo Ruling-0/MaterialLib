@@ -1,10 +1,25 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /// Validation and key formatting for the modid/name pairs that identify materials, families, properties,
 /// shapes, and texture sets.
 final class Names {
 
     private Names() {}
+
+    /// Validates a shape's oredict prefixes -- at least one, each a valid identifier -- and returns an immutable
+    /// copy.
+    static List<String> validateOreDicts(String... oreDicts) {
+        if (oreDicts == null) throw new IllegalArgumentException("oredict prefixes must not be null");
+        if (oreDicts.length == 0) throw new IllegalArgumentException("a shape requires at least one oredict prefix");
+        List<String> validated = new ArrayList<>(oreDicts.length);
+        for (String oreDict : oreDicts) {
+            validated.add(validate("shape oredict", oreDict));
+        }
+        return List.copyOf(validated);
+    }
 
     /// Validates the identifiers of a shape implementation and returns the shape.
     static Shape validate(Shape shape) {

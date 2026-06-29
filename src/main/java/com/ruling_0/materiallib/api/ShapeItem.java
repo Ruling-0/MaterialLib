@@ -1,20 +1,17 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IIcon;
-import net.minecraft.util.StatCollector;
 
 import com.ruling_0.materiallib.MaterialLib;
 
+import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -30,7 +27,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// owning mod's preInit. MaterialLib registers the chosen owner's item under its own domain so the shape keeps a
 /// stable identity across instances. An advanced tooltip names the mod that owns the shape and the mod that
 /// added the material.
-public class ShapeItem extends Item implements Shape {
+public class ShapeItem extends Item implements BackedShape {
 
     private static final String MISSING_ICON = MaterialLib.MODID + ":missing_material";
 
@@ -39,8 +36,9 @@ public class ShapeItem extends Item implements Shape {
     private final List<String> oreDicts;
     private final String displayNameFormat;
 
-    /// Materials that generate this shape, ascending by index. Set when the registry resolves.
+    /// Materials that generate this shape, ascending by index. Set once when the registry resolves.
     private Material[] servedMaterials = new Material[0];
+    private boolean servedMaterialsBound;
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
 
@@ -53,31 +51,12 @@ public class ShapeItem extends Item implements Shape {
     public ShapeItem(String modid, String name, String displayNameFormat, String... oreDicts) {
         this.modid = Names.validate("item shape modid", modid);
         this.name = Names.validate("item shape name", name);
-        this.oreDicts = validateOreDicts(oreDicts);
-        this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
-        try {
-            ShapeNaming.format(displayNameFormat, "");
-        }
-        catch (RuntimeException e) {
-            throw new IllegalArgumentException(
-                "displayNameFormat \"" + displayNameFormat + "\" is not a valid format string", e);
-        }
+        this.oreDicts = Names.validateOreDicts(oreDicts);
+        this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
         setHasSubtypes(true);
         setMaxDamage(0);
         setCreativeTab(CreativeTabs.tabMaterials);
         setUnlocalizedName(modid + "." + name);
-    }
-
-    private static List<String> validateOreDicts(String... oreDicts) {
-        Objects.requireNonNull(oreDicts, "oreDicts must not be null");
-        if (oreDicts.length == 0) {
-            throw new IllegalArgumentException("item shape requires at least one oredict prefix");
-        }
-        List<String> validated = new ArrayList<>(oreDicts.length);
-        for (String oreDict : oreDicts) {
-            validated.add(Names.validate("item shape oredict", oreDict));
-        }
-        return List.copyOf(validated);
     }
 
     @Override
@@ -94,84 +73,38 @@ public class ShapeItem extends Item implements Shape {
         return "ShapeItem[" + Names.key(modid, name) + "]";
     }
 
-    void bindServedMaterials(Material[] materials) {
+    @Override
+    public void registerWithGame() {
+        GameRegistry.registerItem(this, name);
+    }
+
+    @Override
+    public void bindServedMaterials(Material[] materials) {
+        if (servedMaterialsBound) {
+            throw new IllegalStateException(this + " already has its served materials bound");
+        }
+        servedMaterialsBound = true;
         this.servedMaterials = materials;
     }
 
-    Material[] getServedMaterials() { return servedMaterials; }
+    @Override
+    public Material[] getServedMaterials() { return servedMaterials; }
 
-    /// The itemstack of `material` in this shape, with the given stack size. The damage is the material's global
-    /// index, so the stack is the same across launches for the same material set.
+    @Override
     public ItemStack getStack(Material material, int amount) {
         return new ItemStack(this, amount, material.getIndex());
     }
 
     @Override
     public String getItemStackDisplayName(ItemStack stack) {
-        Material material = materialFor(stack);
-        if (material == null) {
-            return missingMaterialName(stack.getItemDamage());
-        }
-        String overrideKey = ShapeNaming.overrideKey(this, material);
-        if (StatCollector.canTranslate(overrideKey)) {
-            return StatCollector.translateToLocal(overrideKey);
-        }
-        return ShapeNaming.format(displayNameFormat, localizedMaterialName(material));
+        return ShapeText.displayName(this, displayNameFormat, stack);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public void addInformation(ItemStack stack, EntityPlayer player, List<String> lines, boolean advanced) {
         super.addInformation(stack, player, lines, advanced);
-        Material material = materialFor(stack);
-        if (material != null) {
-            if (material.hasCustomTooltip()) {
-                for (String line : material.getTooltip()) {
-                    lines.add(StatCollector.translateToLocal(line));
-                }
-            }
-            for (Family family : material.getFamilies()) {
-                if (family.hasCustomTooltip()) {
-                    for (String line : family.getTooltip()) {
-                        lines.add(StatCollector.translateToLocal(line));
-                    }
-                }
-            }
-        }
-        if (advanced) {
-            lines.add(attribution("tooltip.materiallib.shapeSource", "Shape added by ", modid));
-            if (material != null) {
-                lines.add(attribution("tooltip.materiallib.materialSource", "Material added by ", material.getModId()));
-            }
-        }
-    }
-
-    /// A grayed attribution line naming a contributing mod -- the shape's owner or the material's mod -- shown only
-    /// with advanced tooltips.
-    private static String attribution(String key, String fallbackLabel, String modid) {
-        String text = StatCollector.canTranslate(key) ? StatCollector.translateToLocalFormatted(key, modid) :
-            fallbackLabel + modid;
-        return EnumChatFormatting.GRAY + text;
-    }
-
-    /// The material a stack of this shape represents, decoding the damage value, or null if the damage maps to no
-    /// material (a stale or hand-edited stack).
-    private static Material materialFor(ItemStack stack) {
-        return MaterialRegistry.instance()
-            .getMaterialByIndex(stack.getItemDamage());
-    }
-
-    private static String localizedMaterialName(Material material) {
-        String key = ShapeNaming.materialNameKey(material);
-        return StatCollector.canTranslate(key) ? StatCollector.translateToLocal(key) : material.getName();
-    }
-
-    /// The display name for a stack whose damage maps to no live material: the material was removed but its index
-    /// stays reserved, so the stack is preserved under a visible placeholder name rather than transformed.
-    private static String missingMaterialName(int index) {
-        String key = "item.materiallib.missingMaterial";
-        return StatCollector.canTranslate(key) ? StatCollector.translateToLocalFormatted(key, index) :
-            "Missing Material #" + index;
+        ShapeText.appendTooltip(lines, modid, stack, advanced);
     }
 
     @Override
@@ -203,7 +136,7 @@ public class ShapeItem extends Item implements Shape {
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
-        Material material = materialFor(stack);
+        Material material = ShapeText.materialFor(stack);
         return material != null ? material.getProperty(StandardProperties.TINT) : 0xFFFFFFFF;
     }
 }
