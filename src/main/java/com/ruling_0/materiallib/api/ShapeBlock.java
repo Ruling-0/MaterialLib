@@ -23,15 +23,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// The block backing a block [Shape]: one [Block] whose metadata is a material's global index
 /// ([Material#getIndex]), so a single block carries every material that generates the shape.
 ///
-/// A block's metadata is the material's global index, which exceeds vanilla's four metadata bits once more than
-/// sixteen materials are registered, so MaterialLib declares EndlessIDs a hard dependency to widen block metadata
-/// to sixteen bits. Simple shapes are created
-/// through [MaterialLibAPI#newBlockShape]; a mod wanting custom block behavior subclasses this and registers the
-/// instance through [MaterialLibAPI#registerBlockShape]. The base handles per-material textures from each
-/// material's [TextureSet], the [StandardProperties#TINT] color, creative-tab variants, and dropping the placed
-/// metadata. Create and register the block during the owning mod's preInit. MaterialLib registers the chosen
-/// owner's block under its own domain so the shape keeps a stable identity across instances, and the block's item
-/// shows the same display name and advanced-tooltip attribution as an item shape.
+/// Simple shapes are created through [MaterialLibAPI#newBlockShape]; a mod wanting custom block behavior subclasses
+/// this and registers the instance through [MaterialLibAPI#registerBlockShape]. The base handles per-material textures
+/// from each material's [TextureSet], the [StandardProperties#TINT] color, creative-tab variants, and dropping the
+/// placed metadata. Create and register the block during the owning mod's preInit. MaterialLib registers the chosen
+/// owner's block under its own domain so the shape keeps a stable identity across instances, and the block's item shows
+/// the same display name and advanced-tooltip attribution as an item shape.
 public class ShapeBlock extends Block implements BackedShape {
 
     private static final String MISSING_ICON = MaterialLib.MODID + ":missing_material";
@@ -41,7 +38,7 @@ public class ShapeBlock extends Block implements BackedShape {
     private final List<String> oreDicts;
     private final String displayNameFormat;
 
-    /// Materials that generate this shape, ascending by index. Set once when the registry resolves.
+    /// Materials that generate this shape, ascending by index. Set when the registry resolves.
     private Material[] servedMaterials = new Material[0];
     private boolean servedMaterialsBound;
 

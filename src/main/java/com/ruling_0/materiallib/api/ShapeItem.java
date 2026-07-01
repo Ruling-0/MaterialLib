@@ -36,7 +36,7 @@ public class ShapeItem extends Item implements BackedShape {
     private final List<String> oreDicts;
     private final String displayNameFormat;
 
-    /// Materials that generate this shape, ascending by index. Set once when the registry resolves.
+    /// Materials that generate this shape, ascending by index. Set when the registry resolves.
     private Material[] servedMaterials = new Material[0];
     private boolean servedMaterialsBound;
 

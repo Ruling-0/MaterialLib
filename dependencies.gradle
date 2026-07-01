@@ -40,11 +40,9 @@ dependencies {
 
     implementation('com.github.GTNewHorizons:Postea:1.2.5:dev')
 
-    // EndlessIDs is transparent ASM (no compile-time API) that widens block metadata to 16 bits, required once
-    // more than 16 materials are registered (a block's metadata is the material's global index). chunkapi is its
-    // dependency.
-    runtimeOnlyNonPublishable('com.falsepattern:chunkapi-mc1.7.10:0.8.3:dev')
-    runtimeOnlyNonPublishable('com.falsepattern:endlessids-mc1.7.10:1.7.3:dev')
+    // EndlessIDs required for >16 materials
+    runtimeOnly('com.falsepattern:chunkapi-mc1.7.10:0.8.3:dev')
+    runtimeOnly('com.falsepattern:endlessids-mc1.7.10:1.7.3:dev')
 
     testImplementation(platform('org.junit:junit-bom:5.11.4'))
     testImplementation('org.junit.jupiter:junit-jupiter')
