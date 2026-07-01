@@ -73,14 +73,12 @@ public class ShapeFluid implements ServedShape {
     @Override
     public Material[] getServedMaterials() { return served.get(); }
 
-    /// The Forge fluid name for a material in this shape, e.g. `test.testiron`. Forge lowercases fluid names, and
-    /// fluid stacks persist under this name, so it must stay stable.
+    /// The Forge fluid name for a material in this shape, e.g. `test.testiron`.
     String fluidName(Material material) {
         return (name + "." + material.getName()).toLowerCase(Locale.ENGLISH);
     }
 
-    /// Registers one Forge fluid per served material, reusing a fluid another source already registered under the
-    /// same name, since fluid names are global and carry no mod domain.
+    /// Registers one Forge fluid per served material.
     void registerFluids() {
         fluidsByIndex.clear();
         for (Material material : served.get()) {
@@ -109,8 +107,7 @@ public class ShapeFluid implements ServedShape {
     }
 
     /// Binds each material's still and flowing fluid icon from its texture set. Fluid textures live on the block
-    /// atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]). A fluid owned by
-    /// another source is skipped, leaving its icons untouched.
+    /// atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
     @SideOnly(Side.CLIENT)
     void registerIcons(IIconRegister register) {
         for (Material material : served.get()) {

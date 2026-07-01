@@ -14,9 +14,7 @@ import org.apache.logging.log4j.Logger;
 /// maps, per material, from its filled stack to the material's fluid through the [FluidContainerRegistry].
 ///
 /// A material that generates this shape must also generate the [ShapeFluid] it holds; the registry enforces that at
-/// resolve. The filled item renders and reads like any item shape (per-material texture, tint, display name, and
-/// tooltip); the added behavior is the container mapping linking each filled stack to the material's fluid, with an
-/// optional empty container returned when the fluid is drained.
+/// resolve.
 public class ShapeFluidInContainer extends ShapeItem {
 
     private static final Logger LOG = LogManager.getLogger("materiallib");

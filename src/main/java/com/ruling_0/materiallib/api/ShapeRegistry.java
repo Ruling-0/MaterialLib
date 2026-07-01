@@ -20,17 +20,6 @@ import org.apache.logging.log4j.Logger;
 
 /// Holds the item, block, or fluid backing every [Shape] and finishes their setup once the material registry has
 /// resolved.
-///
-/// During preInit, [#register] records each shape -- a [ShapeItem], [ShapeBlock], or [ShapeFluid] -- as a candidate
-/// to own its name (see [ShapeUnification]); the backing object itself is built by the caller or a builder. All
-/// three kinds share one registry, and one name space: an item or block backs the single `materiallib:<name>`
-/// identity and a fluid unifies by name too, so a name backs exactly one kind. During MaterialLib's init, after
-/// [MaterialRegistry#resolve], [#resolve] picks one owner per name, registers each owner's backing object (items and
-/// blocks with FML under MaterialLib's own domain so a shape keeps a stable identity across instances, one Forge
-/// fluid per material for fluid shapes), tells each shape which materials generate it, registers the fluid-container
-/// mappings, and registers the oredict entries. The game uses the single [#instance]; like [MaterialRegistry#resolve],
-/// the lifecycle methods are public only so MaterialLib's own handler can call them and must not be called by other
-/// mods.
 public final class ShapeRegistry {
 
     private static final Logger LOG = LogManager.getLogger("materiallib");
@@ -164,6 +153,10 @@ public final class ShapeRegistry {
         if (!(canonical instanceof ShapeFluid fluid)) {
             throw new IllegalArgumentException(canonical + " is not a fluid shape");
         }
+        if (!serves(fluid, material)) {
+            throw new IllegalArgumentException(
+                "Material " + material.getKey() + " does not generate shape " + canonical);
+        }
         return fluid.fluidStack(material, amount);
     }
 
@@ -177,7 +170,7 @@ public final class ShapeRegistry {
     }
 
     /// Picks each name's owner, registers the owner's backing object, binds each shape to the materials that
-    /// generate it, registers a Forge fluid per material for fluid shapes, and registers the oredict entries.
+    /// generate it, registers fluids and fluid containers, and registers the oredict entries.
     /// Invoked by MaterialLib's init handler after [MaterialRegistry#resolve]; other mods must not call this.
     public void resolve() {
         requireRegistration("resolve shapes");
