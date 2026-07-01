@@ -1,7 +1,9 @@
 package com.ruling_0.materiallib;
 
 import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.common.MinecraftForge;
 
+import com.ruling_0.materiallib.api.ShapeFluidIcons;
 import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.ShapeItemRenderer;
 import com.ruling_0.materiallib.api.ShapeRegistry;
@@ -17,5 +19,6 @@ public class ClientProxy extends CommonProxy {
         for (ShapeItem item : ShapeRegistry.instance().getItemShapes()) {
             MinecraftForgeClient.registerItemRenderer(item, renderer);
         }
+        MinecraftForge.EVENT_BUS.register(new ShapeFluidIcons());
     }
 }
