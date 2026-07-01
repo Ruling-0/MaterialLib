@@ -42,12 +42,8 @@ public final class BlockShapeBuilder {
         }
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts.toArray(new String[0]) : new String[] { name };
-        String format = displayNameFormat != null ? displayNameFormat : "%s " + capitalize(name);
+        String format = displayNameFormat != null ? displayNameFormat : "%s " + ShapeNaming.capitalize(name);
         return ShapeRegistry.instance()
             .register(new ShapeBlock(modid, name, format, prefixes));
-    }
-
-    private static String capitalize(String value) {
-        return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
 }
