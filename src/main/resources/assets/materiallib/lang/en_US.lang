@@ -1,6 +1,7 @@
 item.materiallib.missingMaterial=Missing Material #%d
 material.materiallib.TestGold=Test Gold
 material.materiallib.TestIron=Test Iron
+shape.materiallib.testFrame.materiallib.TestGold=Golden Test Frame
 shape.materiallib.testGear.materiallib.TestGold=Golden Test Cog
 tooltip.materiallib.materialSource=Material added by %s
 tooltip.materiallib.shapeSource=Shape added by %s

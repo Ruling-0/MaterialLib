@@ -19,10 +19,10 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /// The instance-global store of the shape name -> owning modid assignment, a JSON file under `config/materiallib`.
 ///
-/// Item shapes that share a name unify onto one owner (see [ShapeUnification]). [#loadInto] feeds the saved owners
+/// Shapes that share a name unify onto one owner (see [ShapeUnification]). [#loadInto] feeds the saved owners
 /// to the registry before it resolves, so an existing name keeps its owner even when a mod that also declares it is
-/// added. [#saveFrom] writes the resolved assignment back. The shape's saved item identity does not depend on
-/// the owner, so a wrong owner changes only which mod's item backs the shape, never the stored stacks.
+/// added. [#saveFrom] writes the resolved assignment back. The shape's saved identity does not depend on the
+/// owner, so a wrong owner changes only which mod's item or block backs the shape, never the stored stacks.
 public final class ShapeOwnerStore {
 
     private static final String FILE_NAME = "shape-owners.json";
@@ -33,12 +33,12 @@ public final class ShapeOwnerStore {
     private ShapeOwnerStore() {}
 
     /// Loads the saved owners from `<dir>/shape-owners.json` and hands them to the registry to honor at resolve.
-    public static void loadInto(ItemShapeRegistry registry, File dir) {
+    public static void loadInto(ShapeRegistry registry, File dir) {
         registry.setPersistedOwners(read(new File(dir, FILE_NAME)));
     }
 
     /// Writes the registry's resolved owners back to `<dir>/shape-owners.json`.
-    public static void saveFrom(ItemShapeRegistry registry, File dir) {
+    public static void saveFrom(ShapeRegistry registry, File dir) {
         write(new File(dir, FILE_NAME), registry.getAssignedOwners());
     }
 

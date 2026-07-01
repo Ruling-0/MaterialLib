@@ -1,5 +1,7 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Objects;
+
 /// Builds the translation keys and display strings for a [Shape] rendered for a particular [Material].
 ///
 /// Two keys are involved. The material name key names the material on its own, so one translation serves every
@@ -29,5 +31,19 @@ final class ShapeNaming {
     /// Applies a shape's display format to a material name, e.g. `("%s Gear", "Iron")` to `Iron Gear`.
     static String format(String displayFormat, String materialName) {
         return String.format(displayFormat, materialName);
+    }
+
+    /// Validates a shape's display-name format by applying it to an empty material name, and returns it. Rejects a
+    /// null format or one that is not a valid format string.
+    static String requireValidFormat(String displayNameFormat) {
+        Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
+        try {
+            format(displayNameFormat, "");
+        }
+        catch (RuntimeException e) {
+            throw new IllegalArgumentException(
+                "displayNameFormat \"" + displayNameFormat + "\" is not a valid format string", e);
+        }
+        return displayNameFormat;
     }
 }

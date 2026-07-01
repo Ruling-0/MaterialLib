@@ -5,12 +5,12 @@ import java.io.File;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.ISaveHandler;
 
-import com.ruling_0.materiallib.api.ItemShapeRegistry;
 import com.ruling_0.materiallib.api.MaterialIdStore;
 import com.ruling_0.materiallib.api.MaterialRegistry;
 import com.ruling_0.materiallib.api.ShapeOwnerStore;
+import com.ruling_0.materiallib.api.ShapeRegistry;
 import com.ruling_0.materiallib.api.WorldMaterialIds;
-import com.ruling_0.materiallib.examples.TempItemShapeExample;
+import com.ruling_0.materiallib.examples.TempShapeExample;
 
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -27,7 +27,7 @@ public class CommonProxy {
         MaterialLib.LOG.info("MaterialLib version " + Tags.VERSION);
 
         // Temporary verification scaffolding; removed when the full examples land.
-        TempItemShapeExample.register();
+        TempShapeExample.register();
     }
 
     // Mods depending on materiallib register materials in their preInit handlers, which all run before this.
@@ -37,9 +37,9 @@ public class CommonProxy {
         MaterialRegistry.instance().resolve();
         MaterialIdStore.saveFrom(MaterialRegistry.instance(), dir);
 
-        ShapeOwnerStore.loadInto(ItemShapeRegistry.instance(), dir);
-        ItemShapeRegistry.instance().resolve();
-        ShapeOwnerStore.saveFrom(ItemShapeRegistry.instance(), dir);
+        ShapeOwnerStore.loadInto(ShapeRegistry.instance(), dir);
+        ShapeRegistry.instance().resolve();
+        ShapeOwnerStore.saveFrom(ShapeRegistry.instance(), dir);
     }
 
     public void postInit(FMLPostInitializationEvent event) {
