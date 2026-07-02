@@ -37,10 +37,18 @@ class ShapeConsumersTest {
         List<String> calls = new ArrayList<>();
         consumers.register("amod", "plate", (s, m) -> calls.add("first " + s.getName() + " " + m.getName()));
         consumers.register("amod", "gear", (s, m) -> calls.add("second " + s.getName() + " " + m.getName()));
+        consumers.register("bmod", "gear", (s, m) -> calls.add("third " + s.getName() + " " + m.getName()));
 
         consumers.run(Map.of("gear", gear, "plate", plate));
 
-        assertEquals(List.of("first plate Gold", "second gear Iron", "second gear Gold"), calls);
+        assertEquals(
+            List.of(
+                "first plate Gold",
+                "second gear Iron",
+                "second gear Gold",
+                "third gear Iron",
+                "third gear Gold"),
+            calls);
     }
 
     @Test
@@ -58,13 +66,17 @@ class ShapeConsumersTest {
     }
 
     @Test
-    void aThrowingConsumerFailsNamingTheModidShapeAndMaterial() {
+    void aThrowingConsumerFailsNamingTheModidShapeAndMaterialAndAbortsDispatch() {
         Material iron = material("Iron");
-        TestServedShape gear = shape("gear", iron);
+        Material gold = material("Gold");
+        TestServedShape gear = shape("gear", iron, gold);
         RuntimeException boom = new RuntimeException("boom");
+        List<String> calls = new ArrayList<>();
         consumers.register("cmod", "gear", (s, m) -> {
+            calls.add("throwing " + m.getName());
             throw boom;
         });
+        consumers.register("dmod", "gear", (s, m) -> calls.add("later " + m.getName()));
 
         IllegalStateException e = assertThrows(
             IllegalStateException.class,
@@ -73,6 +85,7 @@ class ShapeConsumersTest {
         assertEquals(
             "Failed to run shape consumer from cmod on shape TestServedShape[amod:gear] and material testmod:Iron",
             e.getMessage());
+        assertEquals(List.of("throwing Iron"), calls);
         assertSame(boom, e.getCause());
     }
 
