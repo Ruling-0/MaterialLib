@@ -228,40 +228,31 @@ public final class MaterialRegistry {
     }
 
     void enqueueMaterialOp(String modid, String name, String description, Consumer<Material> op) {
-        String key = Names.key(modid, name);
-        enqueue(description + " " + key, () -> {
-            Material material = materials.get(key);
-            if (material == null) {
-                MaterialLib.LOG.warn("Skipping edit \"{} {}\": no such material is registered", description, key);
-                return;
-            }
-            op.accept(material);
-        });
+        enqueueOp(materials, "Skipping edit \"{} {}\": no such material is registered", modid, name, description, op);
     }
 
     void enqueueFamilyOp(String modid, String name, String description, Consumer<Family> op) {
+        enqueueOp(families, "Skipping edit \"{} {}\": no such family is registered", modid, name, description, op);
+    }
+
+    private <T> void enqueueOp(Map<String, T> table, String missingWarning, String modid, String name,
+                               String description, Consumer<T> op) {
         String key = Names.key(modid, name);
         enqueue(description + " " + key, () -> {
-            Family family = families.get(key);
-            if (family == null) {
-                MaterialLib.LOG.warn("Skipping edit \"{} {}\": no such family is registered", description, key);
+            T target = table.get(key);
+            if (target == null) {
+                MaterialLib.LOG.warn(missingWarning, description, key);
                 return;
             }
-            op.accept(family);
+            op.accept(target);
         });
     }
 
     void enqueueAddToFamily(String materialModid, String materialName, String familyModid, String familyName) {
         String familyKey = Names.key(familyModid, familyName);
         enqueueMaterialOp(materialModid, materialName, "add to family " + familyKey + " material", material -> {
-            Family family = families.get(familyKey);
-            if (family == null) {
-                MaterialLib.LOG.warn(
-                    "Skipping family addition for material {}: no such family {} is registered",
-                    material.getKey(),
-                    familyKey);
-                return;
-            }
+            Family family = familyForEdit(familyKey, "addition", material);
+            if (family == null) return;
             material.addFamilyInternal(family);
         });
     }
@@ -269,14 +260,8 @@ public final class MaterialRegistry {
     void enqueueRemoveFromFamily(String materialModid, String materialName, String familyModid, String familyName) {
         String familyKey = Names.key(familyModid, familyName);
         enqueueMaterialOp(materialModid, materialName, "remove from family " + familyKey + " material", material -> {
-            Family family = families.get(familyKey);
-            if (family == null) {
-                MaterialLib.LOG.warn(
-                    "Skipping family removal for material {}: no such family {} is registered",
-                    material.getKey(),
-                    familyKey);
-                return;
-            }
+            Family family = familyForEdit(familyKey, "removal", material);
+            if (family == null) return;
             if (!material.isMemberOfInternal(family)) {
                 MaterialLib.LOG.warn(
                     "Skipping family removal for material {}: it is not a member of {} at this point in the edit order",
@@ -286,6 +271,20 @@ public final class MaterialRegistry {
             }
             material.removeFamilyInternal(family);
         });
+    }
+
+    /// The family for a queued family membership edit, or null after logging a skip warning when `familyKey` is
+    /// not registered.
+    private Family familyForEdit(String familyKey, String action, Material material) {
+        Family family = families.get(familyKey);
+        if (family == null) {
+            MaterialLib.LOG.warn(
+                "Skipping family {} for material {}: no such family {} is registered",
+                action,
+                material.getKey(),
+                familyKey);
+        }
+        return family;
     }
 
     private void enqueue(String description, Runnable action) {

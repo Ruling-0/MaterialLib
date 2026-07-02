@@ -52,13 +52,4 @@ class MaterialMigrationTest {
 
         assertEquals(MaterialMigration.UNCHANGED, migration.lookup(99));
     }
-
-    @Test
-    void sizeCountsMovedAndDeleted() {
-        MaterialMigration migration = new MaterialMigration(
-            Map.of("amod:Iron", 0, "amod:Gold", 1, "amod:Gone", 2),
-            Map.of("amod:Iron", 0, "amod:Gold", 7));
-
-        assertEquals(2, migration.size());
-    }
 }

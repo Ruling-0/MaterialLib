@@ -1,10 +1,8 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -28,7 +26,6 @@ class ShapeUnificationTest {
 
         Map<String, String> owners = unification.resolve(noOwners());
 
-        assertTrue(unification.isCanonical(gear));
         assertSame(gear, unification.canonical(gear));
         assertEquals(Map.of("gear", "amod"), owners);
     }
@@ -42,8 +39,7 @@ class ShapeUnificationTest {
 
         Map<String, String> owners = unification.resolve(noOwners());
 
-        assertTrue(unification.isCanonical(amod));
-        assertFalse(unification.isCanonical(bmod));
+        assertSame(amod, unification.canonical(amod));
         assertSame(amod, unification.canonical(bmod));
         assertEquals("amod", owners.get("gear"));
     }
@@ -57,7 +53,7 @@ class ShapeUnificationTest {
 
         Map<String, String> owners = unification.resolve(Map.of("gear", "bmod"));
 
-        assertTrue(unification.isCanonical(bmod));
+        assertSame(bmod, unification.canonical(bmod));
         assertSame(bmod, unification.canonical(amod));
         assertEquals("bmod", owners.get("gear"));
     }
@@ -71,7 +67,7 @@ class ShapeUnificationTest {
 
         Map<String, String> owners = unification.resolve(Map.of("gear", "zmod"));
 
-        assertTrue(unification.isCanonical(amod));
+        assertSame(amod, unification.canonical(amod));
         assertEquals("amod", owners.get("gear"));
     }
 
@@ -127,7 +123,7 @@ class ShapeUnificationTest {
 
         unification.resolve(noOwners());
 
-        assertTrue(unification.isCanonical(gear));
+        assertSame(gear, unification.canonical(gear));
         assertEquals(List.of(gear), new ArrayList<>(unification.canonicalShapes()));
     }
 
@@ -152,7 +148,6 @@ class ShapeUnificationTest {
         unification.register(gear);
 
         assertThrows(IllegalStateException.class, () -> unification.canonical(gear));
-        assertThrows(IllegalStateException.class, () -> unification.isCanonical(gear));
         assertThrows(IllegalStateException.class, () -> unification.canonicalShapes());
     }
 }

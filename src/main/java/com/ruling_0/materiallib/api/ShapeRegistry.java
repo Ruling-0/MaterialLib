@@ -57,21 +57,11 @@ public final class ShapeRegistry {
     /// only populated once shapes resolve.
     public List<ShapeFluid> getFluidShapes() { return fluidShapesView; }
 
-    /// Records a backed (item or block) shape as a candidate to own its name and returns the shape to generate. The
-    /// owner is chosen at [#resolve], so the returned shape is unified onto the owner's backing object then. Pass it
-    /// to [MaterialBuilder#generateShape] or [FamilyBuilder#generateShape] regardless. A name backs one kind only,
+    /// Records a shape as a candidate to own its name and returns the shape to generate. The owner is chosen at
+    /// [#resolve], so the returned shape is unified onto the owner's backing object or fluid then. Pass it to
+    /// [MaterialBuilder#generateShape] or [FamilyBuilder#generateShape] regardless. A name backs one kind only,
     /// since shapes that share a name unify onto one owner. Call from the owning mod's preInit.
-    Shape register(BackedShape shape) {
-        return registerShape(shape);
-    }
-
-    /// Records a fluid shape as a candidate to own its name and returns the shape to generate; see
-    /// [#register(BackedShape)]. Call from the owning mod's preInit.
-    Shape register(ShapeFluid shape) {
-        return registerShape(shape);
-    }
-
-    private Shape registerShape(ServedShape shape) {
+    Shape register(ServedShape shape) {
         requireRegistration("register shape " + Names.key(shape.getModId(), shape.getName()));
         recordKind(shape, kindOf(shape));
         return unification.register(shape);
@@ -135,10 +125,7 @@ public final class ShapeRegistry {
         if (!(canonical instanceof BackedShape backed)) {
             throw new IllegalArgumentException(canonical + " is not a backed item or block shape");
         }
-        if (!serves(backed, material)) {
-            throw new IllegalArgumentException(
-                "Material " + material.getKey() + " does not generate shape " + canonical);
-        }
+        requireServes(backed, material);
         return backed.getStack(material, amount);
     }
 
@@ -150,15 +137,19 @@ public final class ShapeRegistry {
         if (!(canonical instanceof ShapeFluid fluid)) {
             throw new IllegalArgumentException(canonical + " is not a fluid shape");
         }
-        if (!serves(fluid, material)) {
-            throw new IllegalArgumentException(
-                "Material " + material.getKey() + " does not generate shape " + canonical);
-        }
+        requireServes(fluid, material);
         return fluid.fluidStack(material, amount);
     }
 
-    /// True if `material` generates `shape`, tested by membership in the shape's bound served materials so it
-    /// holds even when the material declared a non-owning alias of a unified name.
+    /// Rejects a material that does not generate a shape, tested by membership in the shape's bound served
+    /// materials so it holds even when the material declared a non-owning alias of a unified name.
+    private static void requireServes(ServedShape shape, Material material) {
+        if (!serves(shape, material)) {
+            throw new IllegalArgumentException(
+                "Material " + material.getKey() + " does not generate shape " + shape);
+        }
+    }
+
     private static boolean serves(ServedShape shape, Material material) {
         for (Material served : shape.getServedMaterials()) {
             if (served == material) return true;

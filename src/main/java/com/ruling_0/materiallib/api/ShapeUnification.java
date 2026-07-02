@@ -125,12 +125,6 @@ final class ShapeUnification {
         return canonical != null ? canonical : shape;
     }
 
-    /// True if the shape is the canonical one chosen for its name. Only available after [#resolve].
-    boolean isCanonical(Shape shape) {
-        requireResolved("check whether a shape is canonical");
-        return canonicalByName.get(shape.getName()) == shape;
-    }
-
     /// Every canonical shape, in the order their names were first registered. Only available after [#resolve].
     Collection<Shape> canonicalShapes() {
         requireResolved("list canonical shapes");
