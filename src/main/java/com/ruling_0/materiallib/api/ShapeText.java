@@ -6,11 +6,11 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.StatCollector;
 
-/// Display name and tooltip text shared by a [ShapeItem] and a [ShapeBlock]'s item form.
+/// Display name and tooltip text shared by a [ShapeItem], a [ShapeBlock]'s item form, and a [ShapeFluid].
 ///
-/// A shape stack encodes its material as the item damage (the material's global index), so both the name and the
-/// tooltip resolve the same way regardless of which kind backs the shape. The advanced tooltip names the
-/// contributing mods because a shape's saved identity is under MaterialLib's domain rather than theirs.
+/// An item or block shape stack encodes its material as the item damage (the material's global index), while a
+/// fluid resolves its material directly; either way the name and tooltip build the same way. The advanced tooltip
+/// names the contributing mods because a shape's saved identity is under MaterialLib's domain rather than theirs.
 final class ShapeText {
 
     private ShapeText() {}
@@ -22,14 +22,19 @@ final class ShapeText {
             .getMaterialByIndex(stack.getItemDamage());
     }
 
-    /// The display name for a shape stack: a placeholder when the damage maps to no material; otherwise a lang
-    /// override for the exact shape-and-material pair if present, else the shape's format applied to the material
-    /// name.
+    /// The display name for a shape stack: a placeholder when the damage maps to no material; otherwise the name
+    /// for the shape-and-material pair.
     static String displayName(Shape shape, String displayNameFormat, ItemStack stack) {
         Material material = materialFor(stack);
         if (material == null) {
             return missingMaterialName(stack.getItemDamage());
         }
+        return displayName(shape, displayNameFormat, material);
+    }
+
+    /// The display name for a shape-and-material pair: a lang override for the exact pair if present, else the
+    /// shape's format applied to the material name.
+    static String displayName(Shape shape, String displayNameFormat, Material material) {
         String overrideKey = ShapeNaming.overrideKey(shape, material);
         if (StatCollector.canTranslate(overrideKey)) {
             return StatCollector.translateToLocal(overrideKey);

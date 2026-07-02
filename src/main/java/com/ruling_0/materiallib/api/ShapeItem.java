@@ -36,9 +36,7 @@ public class ShapeItem extends Item implements BackedShape {
     private final List<String> oreDicts;
     private final String displayNameFormat;
 
-    /// Materials that generate this shape, ascending by index. Set when the registry resolves.
-    private Material[] servedMaterials = new Material[0];
-    private boolean servedMaterialsBound;
+    private final ServedMaterials served = new ServedMaterials();
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
 
@@ -80,15 +78,11 @@ public class ShapeItem extends Item implements BackedShape {
 
     @Override
     public void bindServedMaterials(Material[] materials) {
-        if (servedMaterialsBound) {
-            throw new IllegalStateException(this + " already has its served materials bound");
-        }
-        servedMaterialsBound = true;
-        this.servedMaterials = materials;
+        served.bind(this, materials);
     }
 
     @Override
-    public Material[] getServedMaterials() { return servedMaterials; }
+    public Material[] getServedMaterials() { return served.get(); }
 
     @Override
     public ItemStack getStack(Material material, int amount) {
@@ -110,7 +104,7 @@ public class ShapeItem extends Item implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> list) {
-        for (Material material : servedMaterials) {
+        for (Material material : served.get()) {
             list.add(getStack(material, 1));
         }
     }
@@ -119,7 +113,7 @@ public class ShapeItem extends Item implements BackedShape {
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister register) {
         iconsByIndex.clear();
-        for (Material material : servedMaterials) {
+        for (Material material : served.get()) {
             TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
             iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(name)));
         }
