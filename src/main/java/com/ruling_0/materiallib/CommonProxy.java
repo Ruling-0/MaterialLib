@@ -11,7 +11,7 @@ import com.ruling_0.materiallib.api.MaterialRegistry;
 import com.ruling_0.materiallib.api.ShapeOwnerStore;
 import com.ruling_0.materiallib.api.ShapeRegistry;
 import com.ruling_0.materiallib.api.WorldMaterialIds;
-import com.ruling_0.materiallib.examples.TempShapeExample;
+import com.ruling_0.materiallib.examples.ExampleContent;
 
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
@@ -27,7 +27,9 @@ public class CommonProxy {
 
         MaterialLib.LOG.info("MaterialLib version " + Tags.VERSION);
 
-        TempShapeExample.register();
+        if (Config.registerExamples) {
+            ExampleContent.register();
+        }
     }
 
     // Mods depending on materiallib register materials in their preInit handlers, which all run before this.
