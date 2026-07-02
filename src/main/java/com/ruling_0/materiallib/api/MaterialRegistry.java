@@ -2,11 +2,14 @@ package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import com.ruling_0.materiallib.MaterialLib;
 
@@ -20,10 +23,10 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 /// The registry has two phases. During registration (all preInit handlers), mods register materials and families
 /// through the builders and queue cross-mod changes through [MaterialEdit] and [FamilyEdit]; key lookups return
 /// the registered objects, but their membership, shapes, and properties cannot be read yet, and neither can the
-/// bulk collection views. During this mod's init handler, [#resolve] applies all queued edits in call order,
-/// derives family membership and effective shape sets, and freezes the registry. From then on everything is
-/// readable and nothing can be registered or edited, which guarantees dependent mods a complete registry in
-/// their init and postInit handlers.
+/// bulk collection views. During this mod's init handler, [#resolve] merges same-name materials onto their
+/// owners, applies all queued edits in call order, derives family membership and per-material shape sets, and
+/// freezes the registry. From then on everything is readable and nothing can be registered or edited, which
+/// guarantees dependent mods a complete registry in their init and postInit handlers.
 ///
 /// The game uses the single [#instance]; tests construct private registries directly.
 public final class MaterialRegistry {
@@ -39,6 +42,9 @@ public final class MaterialRegistry {
     private Material[] materialsByIndex;
     private Map<String, Integer> persistedIndices = new LinkedHashMap<>();
     private Map<String, Integer> assignedIndices = new LinkedHashMap<>();
+    private final Map<String, Material> aliasKeys = new Object2ObjectLinkedOpenHashMap<>();
+    private Map<String, String> persistedOwners = new LinkedHashMap<>();
+    private Map<String, String> assignedOwners = new LinkedHashMap<>();
 
     MaterialRegistry() {}
 
@@ -64,9 +70,10 @@ public final class MaterialRegistry {
     }
 
     /// The material with the given key, or null if none exists. Usable during registration, though the returned
-    /// material is only readable after the registry resolves.
+    /// material is only readable after the registry resolves. A key whose material unified onto another mod's
+    /// returns the unified material.
     public Material getMaterial(String modid, String name) {
-        return materials.get(Names.key(modid, name));
+        return materialByKey(Names.key(modid, name));
     }
 
     /// The family with the given key, or null if none exists. Usable during registration, though the returned
@@ -96,12 +103,13 @@ public final class MaterialRegistry {
 
     public boolean isResolved() { return resolved; }
 
-    /// Applies all queued edits in call order, derives family membership and per-material shape sets, and
-    /// freezes the registry.
+    /// Merges same-name materials onto their owners, applies all queued edits in call order, derives family
+    /// membership and per-material shape sets, and freezes the registry.
     ///
     /// Invoked once by MaterialLib's init handler; other mods must not call it.
     public void resolve() {
         requireRegistration("resolve the registry");
+        unifyMaterials();
         for (PendingOp op : pendingOps) {
             try {
                 op.action.run();
@@ -138,6 +146,58 @@ public final class MaterialRegistry {
         MaterialLib.LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
     }
 
+    /// Collapses materials that share a name down to one canonical material with one owning mod, folding each
+    /// non-owning declaration into the owner and rerouting its key. The owner is chosen here rather than at
+    /// registration so it is independent of mod load order, and the persisted owner keeps the choice stable when
+    /// another mod declaring the same name is added.
+    private void unifyMaterials() {
+        Map<String, List<Material>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();
+        for (Material material : materials.values()) {
+            candidatesByName.computeIfAbsent(material.getName(), name -> new ObjectArrayList<>())
+                .add(material);
+        }
+        assignedOwners = new LinkedHashMap<>(persistedOwners);
+        for (Map.Entry<String, List<Material>> entry : candidatesByName.entrySet()) {
+            String name = entry.getKey();
+            List<Material> candidates = entry.getValue();
+            String ownerModid = chooseOwner(name, candidates, persistedOwners.get(name));
+            assignedOwners.put(name, ownerModid);
+            if (candidates.size() == 1) continue;
+            candidates.sort(Comparator.comparing(Material::getModId));
+            Material winner = null;
+            for (Material candidate : candidates) {
+                if (candidate.getModId()
+                    .equals(ownerModid)) winner = candidate;
+            }
+            for (Material loser : candidates) {
+                if (loser == winner) continue;
+                materials.remove(loser.getKey());
+                aliasKeys.put(loser.getKey(), winner);
+                MaterialLib.LOG.info("Unified material {}:{} onto owner {}", loser.getModId(), name, ownerModid);
+                winner.mergeFrom(loser);
+            }
+        }
+    }
+
+    private static String chooseOwner(String name, List<Material> candidates, String persistedOwner) {
+        TreeSet<String> modids = new TreeSet<>();
+        for (Material candidate : candidates) {
+            modids.add(candidate.getModId());
+        }
+        if (persistedOwner != null && modids.contains(persistedOwner)) {
+            return persistedOwner;
+        }
+        String owner = modids.first();
+        if (persistedOwner != null) {
+            MaterialLib.LOG.info(
+                "Material {} was owned by {}, which declared no candidate this session; reassigning to {}",
+                name,
+                persistedOwner,
+                owner);
+        }
+        return owner;
+    }
+
     /// Sets the persisted index assignment to honor at resolve, loaded from the instance-global store. Existing
     /// materials keep their stored index; only genuinely new materials are numbered. Must be set before resolve.
     void setPersistedIndices(Map<String, Integer> indices) {
@@ -150,6 +210,20 @@ public final class MaterialRegistry {
     Map<String, Integer> getAssignedIndices() {
         requireResolved("read assigned material indices", "");
         return Collections.unmodifiableMap(assignedIndices);
+    }
+
+    /// Sets the persisted material owners to honor at resolve, loaded from the instance-global store. A name
+    /// already in the store keeps its owner when that mod declares it this session. Must be set before resolve.
+    void setPersistedOwners(Map<String, String> owners) {
+        requireRegistration("set persisted material owners");
+        this.persistedOwners = new LinkedHashMap<>(owners);
+    }
+
+    /// The full owner assignment after resolve: every persisted entry (including names with no declaration this
+    /// session) plus the owners chosen this session. Written back to the store.
+    Map<String, String> getAssignedOwners() {
+        requireResolved("read assigned material owners", "");
+        return Collections.unmodifiableMap(assignedOwners);
     }
 
     /// Assigns each material its global index, append-only against the persisted assignment: a material already in
@@ -228,18 +302,30 @@ public final class MaterialRegistry {
     }
 
     void enqueueMaterialOp(String modid, String name, String description, Consumer<Material> op) {
-        enqueueOp(materials, "Skipping edit \"{} {}\": no such material is registered", modid, name, description, op);
+        enqueueOp(
+            this::materialByKey,
+            "Skipping edit \"{} {}\": no such material is registered",
+            modid,
+            name,
+            description,
+            op);
     }
 
     void enqueueFamilyOp(String modid, String name, String description, Consumer<Family> op) {
-        enqueueOp(families, "Skipping edit \"{} {}\": no such family is registered", modid, name, description, op);
+        enqueueOp(families::get, "Skipping edit \"{} {}\": no such family is registered", modid, name, description, op);
     }
 
-    private <T> void enqueueOp(Map<String, T> table, String missingWarning, String modid, String name,
+    /// The material registered under a key, or the unified material a merged key was folded into.
+    private Material materialByKey(String key) {
+        Material material = materials.get(key);
+        return material != null ? material : aliasKeys.get(key);
+    }
+
+    private <T> void enqueueOp(Function<String, T> lookup, String missingWarning, String modid, String name,
                                String description, Consumer<T> op) {
         String key = Names.key(modid, name);
         enqueue(description + " " + key, () -> {
-            T target = table.get(key);
+            T target = lookup.apply(key);
             if (target == null) {
                 MaterialLib.LOG.warn(missingWarning, description, key);
                 return;

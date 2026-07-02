@@ -121,6 +121,7 @@ public final class ShapeRegistry {
     /// object. The shape must be a backed shape that `material` generates.
     ItemStack getStack(Material material, Shape shape, int amount) {
         requireResolved("build an itemstack");
+        material = material.canonical();
         Shape canonical = unification.canonical(shape);
         if (!(canonical instanceof BackedShape backed)) {
             throw new IllegalArgumentException(canonical + " is not a backed item or block shape");
@@ -133,6 +134,7 @@ public final class ShapeRegistry {
     /// canonical fluid. The shape must be a fluid shape that `material` generates.
     FluidStack getFluidStack(Material material, Shape shape, int amount) {
         requireResolved("build a fluid stack");
+        material = material.canonical();
         Shape canonical = unification.canonical(shape);
         if (!(canonical instanceof ShapeFluid fluid)) {
             throw new IllegalArgumentException(canonical + " is not a fluid shape");
