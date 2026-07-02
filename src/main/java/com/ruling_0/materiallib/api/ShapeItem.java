@@ -9,13 +9,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 
-import com.ruling_0.materiallib.MaterialLib;
-
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 /// The item backing an item [Shape]: one [Item] whose damage value is a material's global index
 /// ([Material#getIndex]), so a single item carries every material that generates the shape.
@@ -29,19 +25,13 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// added the material.
 public class ShapeItem extends Item implements BackedShape {
 
-    private static final String MISSING_ICON = MaterialLib.MODID + ":missing_material";
-
     private final String modid;
     private final String name;
     private final List<String> oreDicts;
     private final String displayNameFormat;
 
     private final ServedMaterials served = new ServedMaterials();
-
-    private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
-
-    /// The placeholder icon shown for a damage value that maps to no live material (a reserved or unknown index).
-    private IIcon missingIcon;
+    private final ShapeIcons icons = new ShapeIcons();
 
     /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
     /// appended (e.g. `gear` -> `gearIron`); `displayNameFormat` is applied to the material name to build the
@@ -112,19 +102,13 @@ public class ShapeItem extends Item implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister register) {
-        iconsByIndex.clear();
-        for (Material material : served.get()) {
-            TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
-            iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(name)));
-        }
-        missingIcon = register.registerIcon(MISSING_ICON);
+        icons.bind(register, served.get(), name);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamage(int damage) {
-        IIcon icon = iconsByIndex.get(damage);
-        return icon != null ? icon : missingIcon;
+        return icons.get(damage);
     }
 
     @Override
