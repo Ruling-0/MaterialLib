@@ -47,16 +47,6 @@ class MaterialRegistryTest {
     }
 
     @Test
-    void sameNameUnderDifferentModidsAllowed() {
-        registry.newMaterial("modone", "Iron", texture)
-            .build();
-        registry.newMaterial("modtwo", "Iron", texture)
-            .build();
-        registry.resolve();
-        assertEquals(2, registry.getMaterials().size());
-    }
-
-    @Test
     void invalidIdentifiersThrow() {
         assertThrows(IllegalArgumentException.class, () -> registry.newMaterial(null, "TestIron", texture));
         assertThrows(IllegalArgumentException.class, () -> registry.newMaterial("testmod", "", texture));

@@ -34,7 +34,7 @@ public final class ShapeRegistry {
     private final List<ShapeFluid> fluidShapes = new ObjectArrayList<>();
     private final List<ShapeFluid> fluidShapesView = Collections.unmodifiableList(fluidShapes);
     private final List<ShapeFluidInContainer> containerShapes = new ObjectArrayList<>();
-    private final Object2ObjectOpenHashMap<String, ShapeKind> kindByName = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<String, ShapeType> typeByName = new Object2ObjectOpenHashMap<>();
     private Map<String, String> persistedOwners = new LinkedHashMap<>();
     private Map<String, String> assignedOwners = new LinkedHashMap<>();
     private boolean resolved;
@@ -59,37 +59,37 @@ public final class ShapeRegistry {
 
     /// Records a shape as a candidate to own its name and returns the shape to generate. The owner is chosen at
     /// [#resolve], so the returned shape is unified onto the owner's backing object or fluid then. Pass it to
-    /// [MaterialBuilder#generateShape] or [FamilyBuilder#generateShape] regardless. A name backs one kind only,
+    /// [MaterialBuilder#generateShape] or [FamilyBuilder#generateShape] regardless. A name backs one type only,
     /// since shapes that share a name unify onto one owner. Call from the owning mod's preInit.
     Shape register(ServedShape shape) {
         requireRegistration("register shape " + Names.key(shape.getModId(), shape.getName()));
-        recordKind(shape, kindOf(shape));
+        recordType(shape, typeOf(shape));
         return unification.register(shape);
     }
 
-    /// Records the kind a name backs and rejects a name already declared as a different kind.
-    private void recordKind(Shape shape, ShapeKind kind) {
+    /// Records the type a name backs and rejects a name already declared as a different type.
+    private void recordType(Shape shape, ShapeType type) {
         String name = shape.getName();
-        ShapeKind existing = kindByName.get(name);
-        if (existing != null && existing != kind) {
+        ShapeType existing = typeByName.get(name);
+        if (existing != null && existing != type) {
             throw new IllegalStateException(
-                "Shape name " + name + " is declared as both a " + existing.label + " and a " + kind.label +
-                    " shape; a name backs one kind only");
+                "Shape name " + name + " is declared as both a " + existing.label + " and a " + type.label +
+                    " shape; a name backs one type only");
         }
-        kindByName.put(name, kind);
+        typeByName.put(name, type);
     }
 
-    private static ShapeKind kindOf(Shape shape) {
-        if (shape instanceof ShapeFluid) return ShapeKind.FLUID;
-        if (shape instanceof ShapeBlock) return ShapeKind.BLOCK;
-        if (shape instanceof ShapeFluidInContainer) return ShapeKind.CONTAINER;
-        if (shape instanceof ShapeItem) return ShapeKind.ITEM;
-        throw new IllegalArgumentException(shape + " is not a registerable shape kind");
+    private static ShapeType typeOf(Shape shape) {
+        if (shape instanceof ShapeFluid) return ShapeType.FLUID;
+        if (shape instanceof ShapeBlock) return ShapeType.BLOCK;
+        if (shape instanceof ShapeFluidInContainer) return ShapeType.CONTAINER;
+        if (shape instanceof ShapeItem) return ShapeType.ITEM;
+        throw new IllegalArgumentException(shape + " is not a registerable shape type");
     }
 
-    /// A fluid container is a distinct kind from a plain item even though it is item-backed, so a container never
+    /// A fluid container is a distinct type from a plain item even though it is item-backed, so a container never
     /// unifies with a plain item of the same name -- that merge would silently drop the loser's container mapping.
-    private enum ShapeKind {
+    private enum ShapeType {
 
         ITEM("item"),
         BLOCK("block"),
@@ -98,7 +98,7 @@ public final class ShapeRegistry {
 
         private final String label;
 
-        ShapeKind(String label) {
+        ShapeType(String label) {
             this.label = label;
         }
     }
@@ -121,6 +121,7 @@ public final class ShapeRegistry {
     /// object. The shape must be a backed shape that `material` generates.
     ItemStack getStack(Material material, Shape shape, int amount) {
         requireResolved("build an itemstack");
+        material = material.canonical();
         Shape canonical = unification.canonical(shape);
         if (!(canonical instanceof BackedShape backed)) {
             throw new IllegalArgumentException(canonical + " is not a backed item or block shape");
@@ -133,6 +134,7 @@ public final class ShapeRegistry {
     /// canonical fluid. The shape must be a fluid shape that `material` generates.
     FluidStack getFluidStack(Material material, Shape shape, int amount) {
         requireResolved("build a fluid stack");
+        material = material.canonical();
         Shape canonical = unification.canonical(shape);
         if (!(canonical instanceof ShapeFluid fluid)) {
             throw new IllegalArgumentException(canonical + " is not a fluid shape");
@@ -179,14 +181,14 @@ public final class ShapeRegistry {
             fluidShapes.size());
     }
 
-    /// Sorts every canonical shape into its kind and registers each backing item or block with FML under
+    /// Sorts every canonical shape into its type and registers each backing item or block with FML under
     /// MaterialLib's domain (`materiallib:<name>`). The domain is MaterialLib's because this runs in MaterialLib's
     /// init handler (FML restriction). Fluid shapes register their Forge fluids, and fluid containers their
     /// container mappings, later -- once served materials are known.
     private void collectCanonicalShapes() {
         for (Shape shape : unification.canonicalShapes()) {
             if (!(shape instanceof ServedShape served)) {
-                throw new IllegalStateException(shape + " is not a registerable shape kind");
+                throw new IllegalStateException(shape + " is not a registerable shape type");
             }
             servedShapes.add(served);
             if (served instanceof ShapeFluid fluid) {

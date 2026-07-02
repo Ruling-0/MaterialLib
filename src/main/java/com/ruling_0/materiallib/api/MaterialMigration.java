@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
 /// The damage-value remap that brings a world's stored item shapes onto this instance's index assignment.
 ///
-/// Built by comparing the world's saved assignment to the instance assignment keyed by material: a material the
+/// Built by comparing the world's saved assignment to the instance assignment keyed by material name: a material the
 /// instance places at a different index moves there. A material the world references that this instance's store
 /// has no index for -- which happens only for a world brought from another instance carrying materials this
 /// instance lacks -- is a deletion: its stacks are dropped, since the material cannot be shown. A material removed

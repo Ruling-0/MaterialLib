@@ -13,8 +13,8 @@ class MaterialMigrationTest {
     @Test
     void anIdenticalAssignmentNeedsNoMigration() {
         MaterialMigration migration = new MaterialMigration(
-            Map.of("amod:Iron", 0, "amod:Gold", 1),
-            Map.of("amod:Iron", 0, "amod:Gold", 1));
+            Map.of("Iron", 0, "Gold", 1),
+            Map.of("Iron", 0, "Gold", 1));
 
         assertTrue(migration.isEmpty());
         assertEquals(MaterialMigration.UNCHANGED, migration.lookup(0));
@@ -23,7 +23,7 @@ class MaterialMigrationTest {
 
     @Test
     void aMovedMaterialRemapsItsIndex() {
-        MaterialMigration migration = new MaterialMigration(Map.of("amod:Iron", 0), Map.of("amod:Iron", 5));
+        MaterialMigration migration = new MaterialMigration(Map.of("Iron", 0), Map.of("Iron", 5));
 
         assertFalse(migration.isEmpty());
         assertEquals(5, migration.lookup(0));
@@ -31,9 +31,7 @@ class MaterialMigrationTest {
 
     @Test
     void aVanishedMaterialIsDeleted() {
-        MaterialMigration migration = new MaterialMigration(
-            Map.of("amod:Iron", 0, "amod:Gone", 3),
-            Map.of("amod:Iron", 0));
+        MaterialMigration migration = new MaterialMigration(Map.of("Iron", 0, "Gone", 3), Map.of("Iron", 0));
 
         assertEquals(MaterialMigration.DELETE, migration.lookup(3));
         assertEquals(MaterialMigration.UNCHANGED, migration.lookup(0));
@@ -41,14 +39,14 @@ class MaterialMigrationTest {
 
     @Test
     void aMaterialStillReservedOnThisInstanceMovesRatherThanDeletes() {
-        MaterialMigration migration = new MaterialMigration(Map.of("amod:Gone", 3), Map.of("amod:Gone", 9));
+        MaterialMigration migration = new MaterialMigration(Map.of("Gone", 3), Map.of("Gone", 9));
 
         assertEquals(9, migration.lookup(3));
     }
 
     @Test
     void unrelatedDamageValuesAreUnchanged() {
-        MaterialMigration migration = new MaterialMigration(Map.of("amod:Iron", 0), Map.of("amod:Iron", 5));
+        MaterialMigration migration = new MaterialMigration(Map.of("Iron", 0), Map.of("Iron", 5));
 
         assertEquals(MaterialMigration.UNCHANGED, migration.lookup(99));
     }

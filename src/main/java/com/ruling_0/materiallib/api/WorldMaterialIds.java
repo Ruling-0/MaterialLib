@@ -46,8 +46,8 @@ public final class WorldMaterialIds {
         return migration;
     }
 
-    /// Compares a world assignment against the instance assignment by material key: a key the instance maps to a
-    /// different index is `moved`, a key the instance no longer has is `removed`. New materials the world never saw
+    /// Compares a world assignment against the instance assignment by material name: a name the instance maps to a
+    /// different index is `moved`, a name the instance no longer has is `removed`. New materials the world never saw
     /// are not reported -- no stored stack references them.
     static Diff diff(Map<String, Integer> world, Map<String, Integer> instance) {
         List<String> moved = new ArrayList<>();

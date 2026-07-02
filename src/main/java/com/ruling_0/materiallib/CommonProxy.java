@@ -6,6 +6,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.ISaveHandler;
 
 import com.ruling_0.materiallib.api.MaterialIdStore;
+import com.ruling_0.materiallib.api.MaterialOwnerStore;
 import com.ruling_0.materiallib.api.MaterialRegistry;
 import com.ruling_0.materiallib.api.ShapeOwnerStore;
 import com.ruling_0.materiallib.api.ShapeRegistry;
@@ -33,8 +34,10 @@ public class CommonProxy {
     public void init(FMLInitializationEvent event) {
         File dir = new File(Loader.instance().getConfigDir(), MaterialLib.MODID);
         MaterialIdStore.loadInto(MaterialRegistry.instance(), dir);
+        MaterialOwnerStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialRegistry.instance().resolve();
         MaterialIdStore.saveFrom(MaterialRegistry.instance(), dir);
+        MaterialOwnerStore.saveFrom(MaterialRegistry.instance(), dir);
 
         ShapeOwnerStore.loadInto(ShapeRegistry.instance(), dir);
         ShapeRegistry.instance().resolve();

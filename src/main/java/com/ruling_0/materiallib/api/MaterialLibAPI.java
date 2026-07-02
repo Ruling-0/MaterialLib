@@ -16,7 +16,10 @@ public final class MaterialLibAPI {
     private MaterialLibAPI() {}
 
     /// Starts building a material owned by `modid`, drawing its textures from `textureSet`. Register by calling
-    /// [MaterialBuilder#build] during preInit.
+    /// [MaterialBuilder#build] during preInit. Materials declaring the same name from different mods unify into
+    /// one material when the registry resolves: the owning mod (the persisted owner when it declares the name
+    /// this session, else the alphabetically-first declaring modid) supplies the displayed modid, texture set,
+    /// lang key, and the value of any property declared by both; shapes, families, and tooltip lines union.
     public static MaterialBuilder newMaterial(String modid, String name, TextureSet textureSet) {
         return MaterialRegistry.instance().newMaterial(modid, name, textureSet);
     }
@@ -100,7 +103,8 @@ public final class MaterialLibAPI {
         return MaterialRegistry.instance().editFamily(modid, name);
     }
 
-    /// The material with the given key, or null if none exists.
+    /// The material with the given key, or null if none exists. A key whose material unified onto another mod's
+    /// returns the unified material.
     public static Material getMaterial(String modid, String name) {
         return MaterialRegistry.instance().getMaterial(modid, name);
     }
