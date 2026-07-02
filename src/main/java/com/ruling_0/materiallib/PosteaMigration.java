@@ -17,7 +17,7 @@ import com.ruling_0.materiallib.api.ShapeRegistry;
 /// then has its damage rewritten to the instance index or is dropped when the migration marks its material for
 /// deletion (see [MaterialMigration]).
 ///
-/// FIXME: Postea truncated block metadata to a byte, so in-world blocks with metadata >127 cannot be transformed.
+/// FIXME: Postea truncates block metadata to a byte, so in-world blocks with metadata >127 cannot be transformed.
 public final class PosteaMigration {
 
     private static volatile MaterialMigration active;

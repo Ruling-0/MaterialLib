@@ -76,24 +76,20 @@ public final class MaterialRegistry {
         return families.get(Names.key(modid, name));
     }
 
-    /// The material assigned the given global index (see [Material#getIndex]), or null if no material has it --
-    /// including an index reserved for a material not registered this session, which renders as a missing-material
-    /// placeholder. Resolves an item damage value back to its material for rendering, naming, and worldgen. Only
+    /// The material assigned the given global index (see [Material#getIndex]), or null if none has it. Only
     /// available after the registry has resolved.
     public Material getMaterialByIndex(int index) {
         requireResolved("look up a material by index", "");
         return index >= 0 && index < materialsByIndex.length ? materialsByIndex[index] : null;
     }
 
-    /// All registered materials. Only available after the registry has resolved; during registration the view
-    /// would be incomplete.
+    /// All registered materials. Only available after the registry has resolved.
     public Collection<Material> getMaterials() {
         requireResolved("list registered materials", "");
         return materialsView;
     }
 
-    /// All registered families. Only available after the registry has resolved; during registration the view
-    /// would be incomplete.
+    /// All registered families. Only available after the registry has resolved.
     public Collection<Family> getFamilies() {
         requireResolved("list registered families", "");
         return familiesView;
@@ -104,9 +100,7 @@ public final class MaterialRegistry {
     /// Applies all queued edits in call order, derives family membership and per-material shape sets, and
     /// freezes the registry.
     ///
-    /// This is the lifecycle entry point invoked once by MaterialLib's own init handler. Calling it from any
-    /// other mod freezes the registry early and breaks registration for every mod that has not finished its
-    /// preInit, so other mods must never call it.
+    /// Invoked once by MaterialLib's init handler; other mods must not call it.
     public void resolve() {
         requireRegistration("resolve the registry");
         for (PendingOp op : pendingOps) {

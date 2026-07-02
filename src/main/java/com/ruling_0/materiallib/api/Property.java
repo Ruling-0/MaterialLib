@@ -38,8 +38,7 @@ public final class Property<T> {
 
     public String getName() { return name; }
 
-    /// The value returned where neither a material nor any of its families sets this property, or null if none
-    /// was given.
+    /// The fallback value, or null if none was given.
     public T getDefaultValue() { return defaultValue; }
 
     @Override

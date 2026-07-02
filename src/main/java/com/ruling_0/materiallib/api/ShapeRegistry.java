@@ -78,9 +78,7 @@ public final class ShapeRegistry {
         return unification.register(shape);
     }
 
-    /// Records the kind a name backs and rejects a name already declared as a different kind. Unification merges
-    /// shapes by name onto one owner, so a name backing two kinds would silently merge across kinds (a block onto
-    /// an item, a fluid onto an item) and corrupt one of them.
+    /// Records the kind a name backs and rejects a name already declared as a different kind.
     private void recordKind(Shape shape, ShapeKind kind) {
         String name = shape.getName();
         ShapeKind existing = kindByName.get(name);
@@ -276,8 +274,7 @@ public final class ShapeRegistry {
     }
 
     /// Enforces that every material generating a fluid-in-container shape also generates the fluid that container
-    /// holds. Runs after binding, before any container is registered, so a missing fluid fails loudly rather than
-    /// producing a container mapping to an absent fluid.
+    /// holds.
     private void validateFluidContainers() {
         for (ShapeFluidInContainer container : containerShapes) {
             ShapeFluid fluid = canonicalFluidOf(container);

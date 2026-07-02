@@ -21,8 +21,7 @@ final class ShapeNaming {
     }
 
     /// The translation key overriding the display name of one shape-and-material pair, e.g.
-    /// `shape.examplemod.gear.examplemod.TestIron`. Present only where a lang file needs to replace the name the
-    /// format string would otherwise build.
+    /// `shape.examplemod.gear.examplemod.TestIron`. Present only where a lang file overrides that pair.
     static String overrideKey(Shape shape, Material material) {
         return "shape." + shape.getModId() + "." + shape.getName() + "." + material.getModId() + "." +
             material.getName();

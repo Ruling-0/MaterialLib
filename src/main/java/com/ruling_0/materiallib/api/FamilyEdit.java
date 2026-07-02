@@ -28,7 +28,7 @@ public final class FamilyEdit {
     }
 
     /// Sets a property value for all members that do not set their own. Rejects [StandardProperties#NAME] and
-    /// [StandardProperties#TEXTURE_SET], which every material derives from its own builder arguments.
+    /// [StandardProperties#TEXTURE_SET].
     public <T> FamilyEdit setProperty(Property<T> property, T value) {
         Objects.requireNonNull(property, "property must not be null");
         Objects.requireNonNull(value, "value must not be null");
@@ -82,8 +82,7 @@ public final class FamilyEdit {
         return this;
     }
 
-    /// Adds a material to this family. A material may belong to any number of families; memberships from all
-    /// mods accumulate.
+    /// Adds a material to this family.
     public FamilyEdit addMaterial(String materialModid, String materialName) {
         registry.enqueueAddToFamily(
             Names.validate("material modid", materialModid),
@@ -104,11 +103,10 @@ public final class FamilyEdit {
         return this;
     }
 
-    /// Add tooltip lines which will appear on all [Shape]s of this [Material].
-    /// [Material] tooltips appear before [Family] tooltips.
-    /// Tooltips added via this appear after existing tooltips of this family.
+    /// Adds tooltip lines shown on every [Shape] of the family's member materials, appended after the family's
+    /// existing lines.
     public FamilyEdit addTooltip(String... tooltip) {
-        Objects.requireNonNull(tooltip, "line must not be null");
+        Objects.requireNonNull(tooltip, "tooltip must not be null");
         registry.enqueueFamilyOp(
             modid,
             name,
@@ -117,7 +115,7 @@ public final class FamilyEdit {
         return this;
     }
 
-    /// Remove the tooltip from this family.
+    /// Removes the family's tooltip lines.
     public FamilyEdit removeTooltip() {
         registry.enqueueFamilyOp(
             modid,
