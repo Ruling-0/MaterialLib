@@ -12,13 +12,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
 
-import com.ruling_0.materiallib.MaterialLib;
-
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 /// The block backing a block [Shape]: one [Block] whose metadata is a material's global index
 /// ([Material#getIndex]), so a single block carries every material that generates the shape.
@@ -31,19 +27,13 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// the same display name and advanced-tooltip attribution as an item shape.
 public class ShapeBlock extends Block implements BackedShape {
 
-    private static final String MISSING_ICON = MaterialLib.MODID + ":missing_material";
-
     private final String modid;
     private final String name;
     private final List<String> oreDicts;
     private final String displayNameFormat;
 
     private final ServedMaterials served = new ServedMaterials();
-
-    private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
-
-    /// The placeholder icon shown for a metadata that maps to no live material (a reserved or unknown index).
-    private IIcon missingIcon;
+    private final ShapeIcons icons = new ShapeIcons();
 
     /// Creates a block shape backed by a [net.minecraft.block.material.Material#iron] block. `oreDicts` are the
     /// oredict prefixes, at least one; `displayNameFormat` is applied to the material name to build the display
@@ -115,19 +105,13 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public void registerBlockIcons(IIconRegister register) {
-        iconsByIndex.clear();
-        for (Material material : served.get()) {
-            TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
-            iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(name)));
-        }
-        missingIcon = register.registerIcon(MISSING_ICON);
+        icons.bind(register, served.get(), name);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
-        IIcon icon = iconsByIndex.get(meta);
-        return icon != null ? icon : missingIcon;
+        return icons.get(meta);
     }
 
     @Override

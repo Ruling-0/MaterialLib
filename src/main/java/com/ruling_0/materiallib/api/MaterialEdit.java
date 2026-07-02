@@ -27,12 +27,9 @@ public final class MaterialEdit {
         return setProperty(StandardProperties.TINT, tint);
     }
 
-    /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET], which are
-    /// derived from the [MaterialLibAPI#newMaterial] arguments.
+    /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
     public <T> MaterialEdit setProperty(Property<T> property, T value) {
-        Objects.requireNonNull(property, "property must not be null");
-        Objects.requireNonNull(value, "value must not be null");
-        StandardProperties.requireSettable(property);
+        StandardProperties.requireSettable(property, value);
         registry.enqueueMaterialOp(
             modid,
             name,
@@ -86,11 +83,9 @@ public final class MaterialEdit {
         return this;
     }
 
-    /// Add tooltip lines which will appear on all [Shape]s of this [Material].
-    /// [Material] tooltips appear before [Family] tooltips.
-    /// Tooltips added via this appear after existing [Material] tooltips.
+    /// Adds tooltip lines shown on every [Shape] of this material, appended after the material's existing lines.
     public MaterialEdit addTooltip(String... tooltip) {
-        Objects.requireNonNull(tooltip, "line must not be null");
+        Objects.requireNonNull(tooltip, "tooltip must not be null");
         registry.enqueueMaterialOp(
             modid,
             name,
@@ -99,7 +94,7 @@ public final class MaterialEdit {
         return this;
     }
 
-    /// Remove the tooltip from a [Material]
+    /// Removes the material's tooltip lines.
     public MaterialEdit removeTooltip() {
         registry.enqueueMaterialOp(
             modid,
@@ -109,8 +104,7 @@ public final class MaterialEdit {
         return this;
     }
 
-    /// Adds the material to a family. A material may belong to any number of families; memberships from all
-    /// mods accumulate.
+    /// Adds the material to a family.
     public MaterialEdit addToFamily(String familyModid, String familyName) {
         registry.enqueueAddToFamily(
             modid,

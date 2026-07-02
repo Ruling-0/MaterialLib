@@ -7,11 +7,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.ruling_0.materiallib.MaterialLib;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /// Collapses shapes that share a name down to a single canonical shape with one owning mod.
 ///
@@ -24,8 +24,6 @@ import org.apache.logging.log4j.Logger;
 /// candidate back to the canonical shape, so a material that generated a non-owning shape still resolves to the
 /// one backing item.
 final class ShapeUnification {
-
-    private static final Logger LOG = LogManager.getLogger("materiallib");
 
     private final Object2ObjectLinkedOpenHashMap<String, List<Shape>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectLinkedOpenHashMap<String, Shape> canonicalByName = new Object2ObjectLinkedOpenHashMap<>();
@@ -48,11 +46,9 @@ final class ShapeUnification {
         return shape;
     }
 
-    /// Chooses the owner of every registered name and returns the full `name -> ownerModid` assignment to persist:
-    /// the persisted owner when that mod registered a candidate this session, otherwise the candidate whose modid
-    /// sorts first. A persisted name with no candidate this session keeps its owner in the returned map so it is
-    /// not lost while the declaring mod is absent. Records the canonical shape and the alias mappings, and logs a
-    /// name whose candidates declare differing oredict prefixes, since only the owner's prefixes are registered.
+    /// Chooses the owner of every registered name and returns the full `name -> ownerModid` assignment to persist,
+    /// keeping a persisted name's owner even when it has no candidate this session. Records the canonical shape and
+    /// the alias mappings, and logs a name whose candidates declare differing oredict prefixes.
     Map<String, String> resolve(Map<String, String> persistedOwners) {
         requireRegistration("resolve shape unification");
         Map<String, String> owners = new LinkedHashMap<>(persistedOwners);
@@ -65,7 +61,7 @@ final class ShapeUnification {
             for (Shape candidate : candidates) {
                 if (candidate != canonical) {
                     aliasToCanonical.put(candidate, canonical);
-                    LOG.info("Unified shape {}:{} onto owner {}", candidate.getModId(), name, ownerModid);
+                    MaterialLib.LOG.info("Unified shape {}:{} onto owner {}", candidate.getModId(), name, ownerModid);
                 }
             }
             logOreDictDivergence(name, candidates, canonical);
@@ -85,7 +81,7 @@ final class ShapeUnification {
         }
         String owner = modids.first();
         if (persistedOwner != null) {
-            LOG.info(
+            MaterialLib.LOG.info(
                 "Shape {} was owned by {}, which registered no candidate this session; reassigning to {}",
                 name,
                 persistedOwner,
@@ -108,7 +104,7 @@ final class ShapeUnification {
         for (Shape candidate : candidates) {
             if (candidate == canonical) continue;
             if (!ownerPrefixes.equals(Set.copyOf(candidate.getOreDicts()))) {
-                LOG.error(
+                MaterialLib.LOG.error(
                     "Shapes {}:{} and {}:{} share a name but declare different oredict prefixes ({} vs {}); " +
                         "registering only the owner's prefixes, so recipes using the others will not resolve",
                     canonical.getModId(),
@@ -127,12 +123,6 @@ final class ShapeUnification {
         requireResolved("look up the canonical shape");
         Shape canonical = aliasToCanonical.get(shape);
         return canonical != null ? canonical : shape;
-    }
-
-    /// True if the shape is the canonical one chosen for its name. Only available after [#resolve].
-    boolean isCanonical(Shape shape) {
-        requireResolved("check whether a shape is canonical");
-        return canonicalByName.get(shape.getName()) == shape;
     }
 
     /// Every canonical shape, in the order their names were first registered. Only available after [#resolve].

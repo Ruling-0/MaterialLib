@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.ruling_0.materiallib.MaterialLib;
 
 /// Reconciles a world's saved material -> index assignment with this instance's.
 ///
@@ -16,8 +15,6 @@ import org.apache.logging.log4j.Logger;
 /// stored item stacks read as the wrong material. Such a mismatch produces a [MaterialMigration] that the caller
 /// hands to Postea to remap stored stacks as they are read from disk, and is logged so it is never silent.
 public final class WorldMaterialIds {
-
-    private static final Logger LOG = LogManager.getLogger("materiallib");
 
     private WorldMaterialIds() {}
 
@@ -38,7 +35,7 @@ public final class WorldMaterialIds {
             if (!world.equals(instance)) MaterialIdStore.write(worldFile, instance);
             return null;
         }
-        LOG.warn(
+        MaterialLib.LOG.warn(
             "This world was saved under a different material id assignment; migrating stored items to this " +
                 "instance as they are read from disk. Moved: {}. Deleted: {}. Items in chunks or containers not " +
                 "loaded this session keep the outdated ids.",

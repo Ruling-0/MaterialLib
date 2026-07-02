@@ -8,12 +8,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.ruling_0.materiallib.MaterialLib;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /// The broker holding every registered [Material] and [Family].
 ///
@@ -28,7 +28,6 @@ import org.apache.logging.log4j.Logger;
 /// The game uses the single [#instance]; tests construct private registries directly.
 public final class MaterialRegistry {
 
-    private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final MaterialRegistry INSTANCE = new MaterialRegistry();
 
     private final Map<String, Material> materials = new Object2ObjectLinkedOpenHashMap<>();
@@ -76,24 +75,20 @@ public final class MaterialRegistry {
         return families.get(Names.key(modid, name));
     }
 
-    /// The material assigned the given global index (see [Material#getIndex]), or null if no material has it --
-    /// including an index reserved for a material not registered this session, which renders as a missing-material
-    /// placeholder. Resolves an item damage value back to its material for rendering, naming, and worldgen. Only
+    /// The material assigned the given global index (see [Material#getIndex]), or null if none has it. Only
     /// available after the registry has resolved.
     public Material getMaterialByIndex(int index) {
         requireResolved("look up a material by index", "");
         return index >= 0 && index < materialsByIndex.length ? materialsByIndex[index] : null;
     }
 
-    /// All registered materials. Only available after the registry has resolved; during registration the view
-    /// would be incomplete.
+    /// All registered materials. Only available after the registry has resolved.
     public Collection<Material> getMaterials() {
         requireResolved("list registered materials", "");
         return materialsView;
     }
 
-    /// All registered families. Only available after the registry has resolved; during registration the view
-    /// would be incomplete.
+    /// All registered families. Only available after the registry has resolved.
     public Collection<Family> getFamilies() {
         requireResolved("list registered families", "");
         return familiesView;
@@ -104,9 +99,7 @@ public final class MaterialRegistry {
     /// Applies all queued edits in call order, derives family membership and per-material shape sets, and
     /// freezes the registry.
     ///
-    /// This is the lifecycle entry point invoked once by MaterialLib's own init handler. Calling it from any
-    /// other mod freezes the registry early and breaks registration for every mod that has not finished its
-    /// preInit, so other mods must never call it.
+    /// Invoked once by MaterialLib's init handler; other mods must not call it.
     public void resolve() {
         requireRegistration("resolve the registry");
         for (PendingOp op : pendingOps) {
@@ -142,7 +135,7 @@ public final class MaterialRegistry {
         familiesView = Collections.unmodifiableCollection(families.values());
 
         resolved = true;
-        LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
+        MaterialLib.LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
     }
 
     /// Sets the persisted index assignment to honor at resolve, loaded from the instance-global store. Existing
@@ -205,7 +198,7 @@ public final class MaterialRegistry {
                 if (material.getOwnPropertiesInternal().containsKey(property)) continue;
                 Family first = firstSetters.putIfAbsent(property, family);
                 if (first != null && !entry.getValue().equals(first.getOwnPropertiesInternal().get(property))) {
-                    LOG.warn(
+                    MaterialLib.LOG.warn(
                         "Material {} takes {} = {} from family {}; family {} sets conflicting value {}",
                         material.getKey(),
                         property,
@@ -235,40 +228,31 @@ public final class MaterialRegistry {
     }
 
     void enqueueMaterialOp(String modid, String name, String description, Consumer<Material> op) {
-        String key = Names.key(modid, name);
-        enqueue(description + " " + key, () -> {
-            Material material = materials.get(key);
-            if (material == null) {
-                LOG.warn("Skipping edit \"{} {}\": no such material is registered", description, key);
-                return;
-            }
-            op.accept(material);
-        });
+        enqueueOp(materials, "Skipping edit \"{} {}\": no such material is registered", modid, name, description, op);
     }
 
     void enqueueFamilyOp(String modid, String name, String description, Consumer<Family> op) {
+        enqueueOp(families, "Skipping edit \"{} {}\": no such family is registered", modid, name, description, op);
+    }
+
+    private <T> void enqueueOp(Map<String, T> table, String missingWarning, String modid, String name,
+                               String description, Consumer<T> op) {
         String key = Names.key(modid, name);
         enqueue(description + " " + key, () -> {
-            Family family = families.get(key);
-            if (family == null) {
-                LOG.warn("Skipping edit \"{} {}\": no such family is registered", description, key);
+            T target = table.get(key);
+            if (target == null) {
+                MaterialLib.LOG.warn(missingWarning, description, key);
                 return;
             }
-            op.accept(family);
+            op.accept(target);
         });
     }
 
     void enqueueAddToFamily(String materialModid, String materialName, String familyModid, String familyName) {
         String familyKey = Names.key(familyModid, familyName);
         enqueueMaterialOp(materialModid, materialName, "add to family " + familyKey + " material", material -> {
-            Family family = families.get(familyKey);
-            if (family == null) {
-                LOG.warn(
-                    "Skipping family addition for material {}: no such family {} is registered",
-                    material.getKey(),
-                    familyKey);
-                return;
-            }
+            Family family = familyForEdit(familyKey, "addition", material);
+            if (family == null) return;
             material.addFamilyInternal(family);
         });
     }
@@ -276,16 +260,10 @@ public final class MaterialRegistry {
     void enqueueRemoveFromFamily(String materialModid, String materialName, String familyModid, String familyName) {
         String familyKey = Names.key(familyModid, familyName);
         enqueueMaterialOp(materialModid, materialName, "remove from family " + familyKey + " material", material -> {
-            Family family = families.get(familyKey);
-            if (family == null) {
-                LOG.warn(
-                    "Skipping family removal for material {}: no such family {} is registered",
-                    material.getKey(),
-                    familyKey);
-                return;
-            }
+            Family family = familyForEdit(familyKey, "removal", material);
+            if (family == null) return;
             if (!material.isMemberOfInternal(family)) {
-                LOG.warn(
+                MaterialLib.LOG.warn(
                     "Skipping family removal for material {}: it is not a member of {} at this point in the edit order",
                     material.getKey(),
                     familyKey);
@@ -293,6 +271,20 @@ public final class MaterialRegistry {
             }
             material.removeFamilyInternal(family);
         });
+    }
+
+    /// The family for a queued family membership edit, or null after logging a skip warning when `familyKey` is
+    /// not registered.
+    private Family familyForEdit(String familyKey, String action, Material material) {
+        Family family = families.get(familyKey);
+        if (family == null) {
+            MaterialLib.LOG.warn(
+                "Skipping family {} for material {}: no such family {} is registered",
+                action,
+                material.getKey(),
+                familyKey);
+        }
+        return family;
     }
 
     private void enqueue(String description, Runnable action) {

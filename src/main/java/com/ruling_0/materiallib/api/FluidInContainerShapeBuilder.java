@@ -1,6 +1,5 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.List;
 import java.util.Objects;
 
 import net.minecraft.item.ItemStack;
@@ -18,13 +17,13 @@ public final class FluidInContainerShapeBuilder {
     private Shape fluidShape;
     private ItemStack emptyContainer;
     private int volume = FluidContainerRegistry.BUCKET_VOLUME;
-    private List<String> oreDicts;
+    private String[] oreDicts;
     private String displayNameFormat;
     private boolean built;
 
     FluidInContainerShapeBuilder(String modid, String name) {
-        this.modid = Names.validate("fluid container shape modid", modid);
-        this.name = Names.validate("fluid container shape name", name);
+        this.modid = modid;
+        this.name = name;
     }
 
     /// Sets the fluid this container holds; required. Pass the shape returned by [MaterialLibAPI#newFluidShape].
@@ -50,7 +49,7 @@ public final class FluidInContainerShapeBuilder {
 
     /// Sets the oredict prefixes; the material name is appended to each. Defaults to the shape name. At least one.
     public FluidInContainerShapeBuilder oreDict(String... prefixes) {
-        this.oreDicts = Names.validateOreDicts(prefixes);
+        this.oreDicts = prefixes;
         return this;
     }
 
@@ -77,8 +76,8 @@ public final class FluidInContainerShapeBuilder {
             throw new IllegalArgumentException(fluidShape + " is not a fluid shape");
         }
         built = true;
-        String[] prefixes = oreDicts != null ? oreDicts.toArray(new String[0]) : new String[] { name };
-        String format = displayNameFormat != null ? displayNameFormat : "%s " + ShapeNaming.capitalize(name);
+        String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
+        String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         return ShapeRegistry.instance()
             .register(new ShapeFluidInContainer(modid, name, format, fluid, emptyContainer, volume, prefixes));
     }

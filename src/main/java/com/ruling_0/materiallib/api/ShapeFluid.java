@@ -9,12 +9,12 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.ruling_0.materiallib.MaterialLib;
+
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /// The Forge fluid backing a fluid [Shape]: one registered [Fluid] per material that generates the shape, named
 /// `<shape>.<material>` lowercased (e.g. `test.testiron`).
@@ -32,7 +32,6 @@ import org.apache.logging.log4j.Logger;
 /// fluid block.
 public class ShapeFluid implements ServedShape {
 
-    private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final List<String> NO_OREDICTS = List.of();
 
     private final String modid;
@@ -86,7 +85,7 @@ public class ShapeFluid implements ServedShape {
             Fluid fluid = new MaterialFluid(fluidName, material);
             if (!FluidRegistry.registerFluid(fluid)) {
                 fluid = FluidRegistry.getFluid(fluidName);
-                LOG.warn(
+                MaterialLib.LOG.warn(
                     "Fluid {} of {} is already registered elsewhere; its tint, name, and icons will not apply",
                     fluidName,
                     material.getKey());

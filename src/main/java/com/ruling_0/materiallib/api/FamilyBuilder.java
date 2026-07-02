@@ -31,16 +31,13 @@ public final class FamilyBuilder {
 
     /// Sets [StandardProperties#TINT] for all members that do not set their own.
     public FamilyBuilder setTint(int tint) {
-        properties.put(StandardProperties.TINT, tint);
-        return this;
+        return setProperty(StandardProperties.TINT, tint);
     }
 
     /// Sets a property value for all members that do not set their own. Rejects [StandardProperties#NAME] and
-    /// [StandardProperties#TEXTURE_SET], which every material derives from its own builder arguments.
+    /// [StandardProperties#TEXTURE_SET].
     public <T> FamilyBuilder setProperty(Property<T> property, T value) {
-        Objects.requireNonNull(property, "property must not be null");
-        Objects.requireNonNull(value, "value must not be null");
-        StandardProperties.requireSettable(property);
+        StandardProperties.requireSettable(property, value);
         properties.put(property, value);
         return this;
     }
@@ -57,8 +54,7 @@ public final class FamilyBuilder {
         return this;
     }
 
-    /// Adds a material to this family. A material may belong to any number of families; memberships from all
-    /// mods accumulate.
+    /// Adds a material to this family.
     public FamilyBuilder addMaterial(Material material) {
         Objects.requireNonNull(material, "material must not be null");
         return addMaterial(material.getModId(), material.getName());
@@ -80,8 +76,7 @@ public final class FamilyBuilder {
         return this;
     }
 
-    /// Add tooltip lines which will appear on all [Shape]s of this [Material].
-    /// [Material] tooltips appear before [Family] tooltips.
+    /// Adds tooltip lines shown on every [Shape] of the family's member materials.
     public FamilyBuilder addTooltip(String... lines) {
         tooltipLines.addAll(Arrays.asList(lines));
         return this;

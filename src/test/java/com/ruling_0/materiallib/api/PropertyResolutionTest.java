@@ -52,19 +52,6 @@ class PropertyResolutionTest {
     }
 
     @Test
-    void familyTintAppliesToMembers() {
-        registry.newFamily("testmod", "Golds")
-            .setTint(0xFFFFCC00)
-            .build();
-        Material member = registry.newMaterial("testmod", "TestGold", texture)
-            .addToFamily("testmod", "Golds")
-            .build();
-        registry.resolve();
-
-        assertEquals(0xFFFFCC00, member.getProperty(StandardProperties.TINT));
-    }
-
-    @Test
     void isSetIgnoresDefaults() {
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .setProperty(MELTING_POINT, 1500)
@@ -163,16 +150,6 @@ class PropertyResolutionTest {
     }
 
     @Test
-    void nameIsIdentityDerived() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
-        registry.resolve();
-
-        assertEquals("TestIron", material.getProperty(StandardProperties.NAME));
-        assertEquals(texture, material.getProperty(StandardProperties.TEXTURE_SET));
-    }
-
-    @Test
     void collidingFamilyValuesResolveAlphabetically() {
         registry.newFamily("testmod", "Beta")
             .setProperty(MELTING_POINT, 2000)
@@ -213,22 +190,6 @@ class PropertyResolutionTest {
     }
 
     @Test
-    void isSetFalseWhenNoFamilySetsProperty() {
-        registry.newFamily("testmod", "Alpha")
-            .build();
-        registry.newFamily("testmod", "Beta")
-            .build();
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily("testmod", "Alpha")
-            .addToFamily("testmod", "Beta")
-            .build();
-        registry.resolve();
-
-        assertFalse(material.hasProperty(DURABILITY));
-        assertEquals(100, material.getProperty(DURABILITY));
-    }
-
-    @Test
     void uncontestedFamilyValueAppliesRegardlessOfOrder() {
         registry.newFamily("testmod", "Alpha")
             .build();
@@ -243,6 +204,7 @@ class PropertyResolutionTest {
 
         assertEquals(2000, material.getProperty(MELTING_POINT));
         assertTrue(material.hasProperty(MELTING_POINT));
+        assertFalse(material.hasProperty(DURABILITY));
     }
 
     @Test

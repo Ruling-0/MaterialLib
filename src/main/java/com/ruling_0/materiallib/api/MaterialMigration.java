@@ -45,9 +45,4 @@ public final class MaterialMigration {
 
     /// True if no stored stack needs migrating.
     public boolean isEmpty() { return remap.isEmpty(); }
-
-    /// The number of stored indices that move or are deleted.
-    public int size() {
-        return remap.size();
-    }
 }

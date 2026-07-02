@@ -1,6 +1,5 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.List;
 import java.util.Objects;
 
 /// Builds and registers a simple block [Shape] backed by a [ShapeBlock]. Obtained from
@@ -11,19 +10,19 @@ public final class BlockShapeBuilder {
 
     private final String modid;
     private final String name;
-    private List<String> oreDicts;
+    private String[] oreDicts;
     private String displayNameFormat;
     private boolean built;
 
     BlockShapeBuilder(String modid, String name) {
-        this.modid = Names.validate("block shape modid", modid);
-        this.name = Names.validate("block shape name", name);
+        this.modid = modid;
+        this.name = name;
     }
 
     /// Sets the oredict prefixes; the material name is appended to each (e.g. `block` -> `blockIron`). Pass several
     /// to register the block under each. Defaults to the shape name. At least one prefix is required.
     public BlockShapeBuilder oreDict(String... prefixes) {
-        this.oreDicts = Names.validateOreDicts(prefixes);
+        this.oreDicts = prefixes;
         return this;
     }
 
@@ -41,8 +40,8 @@ public final class BlockShapeBuilder {
             throw new IllegalStateException("Block shape " + Names.key(modid, name) + " was already built");
         }
         built = true;
-        String[] prefixes = oreDicts != null ? oreDicts.toArray(new String[0]) : new String[] { name };
-        String format = displayNameFormat != null ? displayNameFormat : "%s " + ShapeNaming.capitalize(name);
+        String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
+        String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         return ShapeRegistry.instance()
             .register(new ShapeBlock(modid, name, format, prefixes));
     }

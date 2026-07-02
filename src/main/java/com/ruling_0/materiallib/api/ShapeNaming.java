@@ -21,8 +21,7 @@ final class ShapeNaming {
     }
 
     /// The translation key overriding the display name of one shape-and-material pair, e.g.
-    /// `shape.examplemod.gear.examplemod.TestIron`. Present only where a lang file needs to replace the name the
-    /// format string would otherwise build.
+    /// `shape.examplemod.gear.examplemod.TestIron`. Present only where a lang file overrides that pair.
     static String overrideKey(Shape shape, Material material) {
         return "shape." + shape.getModId() + "." + shape.getName() + "." + material.getModId() + "." +
             material.getName();
@@ -47,8 +46,16 @@ final class ShapeNaming {
         return displayNameFormat;
     }
 
-    /// Capitalizes the first character of a shape name for the default display format, e.g. `gear` to `Gear`.
-    static String capitalize(String value) {
+    /// The display format for a shape: the given format, or the material name followed by the capitalized
+    /// shape name (e.g. `gear` to `"%s Gear"`) when none was set.
+    static String formatOrDefault(String shapeName, String displayNameFormat) {
+        return displayNameFormat != null ? displayNameFormat : "%s " + capitalize(shapeName);
+    }
+
+    private static String capitalize(String value) {
+        if (value == null || value.isEmpty()) {
+            throw new IllegalArgumentException("shape name must not be null or empty");
+        }
         return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
 }
