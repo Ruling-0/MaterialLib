@@ -8,7 +8,7 @@ package com.ruling_0.materiallib.api;
 /// [MaterialLibAPI#registerShapeConsumer] during preInit; MaterialLib dispatches during its postInit handler,
 /// once all mods' init handlers have registered their items, blocks, and fluids. A consumer receives the
 /// canonical shape and the unified material and derives stacks through [MaterialLibAPI#getStack] or
-/// [MaterialLibAPI#getFluidStack], which work uniformly across item, block, and fluid shapes. Consumers run in
+/// [MaterialLibAPI#getFluidStack], which between them cover item, block, and fluid shapes. Consumers run in
 /// registration order, and each sees a shape's materials ascending by material index. A consumer that throws
 /// aborts the game load, wrapped in an error naming the registering mod, shape, and material, because a missing
 /// recipe discovered in a running world is harder to diagnose than a crash at load.
