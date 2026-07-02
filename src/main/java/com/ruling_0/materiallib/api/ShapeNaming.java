@@ -53,6 +53,9 @@ final class ShapeNaming {
     }
 
     private static String capitalize(String value) {
+        if (value == null || value.isEmpty()) {
+            throw new IllegalArgumentException("shape name must not be null or empty");
+        }
         return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
 }

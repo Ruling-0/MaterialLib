@@ -30,7 +30,7 @@ public final class StandardProperties {
         }
     }
 
-    /// Validates a property-value pair for [MaterialBuilder#setProperty] and its family and edit counterparts.
+    /// Rejects a null property, a null value, or a property derived from builder arguments.
     static void requireSettable(Property<?> property, Object value) {
         Objects.requireNonNull(property, "property must not be null");
         Objects.requireNonNull(value, "value must not be null");

@@ -46,9 +46,9 @@ final class ShapeUnification {
         return shape;
     }
 
-    /// Chooses the owner of every registered name and returns the full `name -> ownerModid` assignment to persist.
-    /// Records the canonical shape and the alias mappings, and logs a name whose candidates declare differing
-    /// oredict prefixes.
+    /// Chooses the owner of every registered name and returns the full `name -> ownerModid` assignment to persist,
+    /// keeping a persisted name's owner even when it has no candidate this session. Records the canonical shape and
+    /// the alias mappings, and logs a name whose candidates declare differing oredict prefixes.
     Map<String, String> resolve(Map<String, String> persistedOwners) {
         requireRegistration("resolve shape unification");
         Map<String, String> owners = new LinkedHashMap<>(persistedOwners);
