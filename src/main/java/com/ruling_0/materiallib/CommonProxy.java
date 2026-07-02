@@ -64,5 +64,6 @@ public class CommonProxy {
             new CommandDumpMats(
                 event.getServer()
                     .getFile("materiallib-dump.csv")));
+        event.registerServerCommand(new CommandMatInfo());
     }
 }
