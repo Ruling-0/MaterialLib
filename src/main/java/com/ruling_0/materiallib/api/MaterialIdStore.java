@@ -1,23 +1,11 @@
 package com.ruling_0.materiallib.api;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /// The instance-global store of the material -> index assignment, a JSON file under `config/materiallib`.
 ///
@@ -29,8 +17,6 @@ public final class MaterialIdStore {
 
     private static final String FILE_NAME = "material-ids.json";
     private static final int FORMAT_VERSION = 1;
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-        .create();
 
     private MaterialIdStore() {}
 
@@ -46,13 +32,7 @@ public final class MaterialIdStore {
 
     static Map<String, Integer> read(File file) {
         if (!file.isFile()) return new LinkedHashMap<>();
-        Data data;
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            data = GSON.fromJson(reader, Data.class);
-        }
-        catch (IOException | JsonParseException e) {
-            throw new IllegalStateException(corrupt(file), e);
-        }
+        Data data = JsonStore.read(file, Data.class, corrupt(file));
         if (data == null || data.materials == null) {
             throw new IllegalStateException(corrupt(file));
         }
@@ -63,22 +43,12 @@ public final class MaterialIdStore {
     static void write(File file, Map<String, Integer> indices) {
         Data data = new Data();
         data.version = FORMAT_VERSION;
-        data.materials = sortByIndex(indices);
-        try {
-            File parent = file.getParentFile();
-            if (parent != null) Files.createDirectories(parent.toPath());
-            File temp = new File(parent, file.getName() + ".tmp");
-            try (Writer writer = Files.newBufferedWriter(temp.toPath(), StandardCharsets.UTF_8)) {
-                GSON.toJson(data, writer);
-            }
-            Files.move(temp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        }
-        catch (IOException e) {
-            throw new IllegalStateException(
-                "Could not write the material id assignment to " + file +
-                    ". Stored item stacks would change material on the next launch; refusing to continue.",
-                e);
-        }
+        data.materials = JsonStore.sorted(indices, Map.Entry.comparingByValue());
+        JsonStore.write(
+            file,
+            data,
+            "Could not write the material id assignment to " + file +
+                ". Stored item stacks would change material on the next launch; refusing to continue.");
     }
 
     /// Rejects an assignment whose indices are negative, null, or shared by two materials.
@@ -101,16 +71,6 @@ public final class MaterialIdStore {
         return "The material id assignment at " + file +
             " is unreadable or malformed. Fix or remove the file; deleting it reassigns ids and may change " +
             "stored items.";
-    }
-
-    private static LinkedHashMap<String, Integer> sortByIndex(Map<String, Integer> indices) {
-        List<Map.Entry<String, Integer>> entries = new ObjectArrayList<>(indices.entrySet());
-        entries.sort(Map.Entry.comparingByValue());
-        LinkedHashMap<String, Integer> sorted = new LinkedHashMap<>();
-        for (Map.Entry<String, Integer> entry : entries) {
-            sorted.put(entry.getKey(), entry.getValue());
-        }
-        return sorted;
     }
 
     private static final class Data {
