@@ -31,16 +31,13 @@ public final class FamilyBuilder {
 
     /// Sets [StandardProperties#TINT] for all members that do not set their own.
     public FamilyBuilder setTint(int tint) {
-        properties.put(StandardProperties.TINT, tint);
-        return this;
+        return setProperty(StandardProperties.TINT, tint);
     }
 
     /// Sets a property value for all members that do not set their own. Rejects [StandardProperties#NAME] and
     /// [StandardProperties#TEXTURE_SET].
     public <T> FamilyBuilder setProperty(Property<T> property, T value) {
-        Objects.requireNonNull(property, "property must not be null");
-        Objects.requireNonNull(value, "value must not be null");
-        StandardProperties.requireSettable(property);
+        StandardProperties.requireSettable(property, value);
         properties.put(property, value);
         return this;
     }

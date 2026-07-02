@@ -30,9 +30,7 @@ public final class FamilyEdit {
     /// Sets a property value for all members that do not set their own. Rejects [StandardProperties#NAME] and
     /// [StandardProperties#TEXTURE_SET].
     public <T> FamilyEdit setProperty(Property<T> property, T value) {
-        Objects.requireNonNull(property, "property must not be null");
-        Objects.requireNonNull(value, "value must not be null");
-        StandardProperties.requireSettable(property);
+        StandardProperties.requireSettable(property, value);
         registry.enqueueFamilyOp(
             modid,
             name,

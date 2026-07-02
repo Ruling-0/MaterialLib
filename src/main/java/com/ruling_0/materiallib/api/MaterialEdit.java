@@ -29,9 +29,7 @@ public final class MaterialEdit {
 
     /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
     public <T> MaterialEdit setProperty(Property<T> property, T value) {
-        Objects.requireNonNull(property, "property must not be null");
-        Objects.requireNonNull(value, "value must not be null");
-        StandardProperties.requireSettable(property);
+        StandardProperties.requireSettable(property, value);
         registry.enqueueMaterialOp(
             modid,
             name,

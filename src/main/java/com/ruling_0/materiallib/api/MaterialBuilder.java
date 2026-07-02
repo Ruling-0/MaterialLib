@@ -33,15 +33,12 @@ public final class MaterialBuilder {
 
     /// Sets [StandardProperties#TINT], the ARGB tint applied to the material's textures.
     public MaterialBuilder setTint(int tint) {
-        properties.put(StandardProperties.TINT, tint);
-        return this;
+        return setProperty(StandardProperties.TINT, tint);
     }
 
     /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
     public <T> MaterialBuilder setProperty(Property<T> property, T value) {
-        Objects.requireNonNull(property, "property must not be null");
-        Objects.requireNonNull(value, "value must not be null");
-        StandardProperties.requireSettable(property);
+        StandardProperties.requireSettable(property, value);
         properties.put(property, value);
         return this;
     }
