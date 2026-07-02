@@ -13,8 +13,8 @@ public final class FluidShapeBuilder {
     private boolean built;
 
     FluidShapeBuilder(String modid, String name) {
-        this.modid = Names.validate("fluid shape modid", modid);
-        this.name = Names.validate("fluid shape name", name);
+        this.modid = modid;
+        this.name = name;
     }
 
     /// Sets the display-name format applied to the material name (e.g. `"Molten %s"` -> `Molten Iron`). Defaults to
@@ -31,7 +31,7 @@ public final class FluidShapeBuilder {
             throw new IllegalStateException("Fluid shape " + Names.key(modid, name) + " was already built");
         }
         built = true;
-        String format = displayNameFormat != null ? displayNameFormat : "%s " + ShapeNaming.capitalize(name);
+        String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         return ShapeRegistry.instance()
             .register(new ShapeFluid(modid, name, format));
     }

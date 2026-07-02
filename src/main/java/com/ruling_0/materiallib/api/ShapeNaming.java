@@ -46,8 +46,13 @@ final class ShapeNaming {
         return displayNameFormat;
     }
 
-    /// Capitalizes the first character of a shape name for the default display format, e.g. `gear` to `Gear`.
-    static String capitalize(String value) {
+    /// The display format for a shape: the given format, or the material name followed by the capitalized
+    /// shape name (e.g. `gear` to `"%s Gear"`) when none was set.
+    static String formatOrDefault(String shapeName, String displayNameFormat) {
+        return displayNameFormat != null ? displayNameFormat : "%s " + capitalize(shapeName);
+    }
+
+    private static String capitalize(String value) {
         return Character.toUpperCase(value.charAt(0)) + value.substring(1);
     }
 }
