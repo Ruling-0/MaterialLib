@@ -45,6 +45,8 @@ public class CommonProxy {
     }
 
     public void postInit(FMLPostInitializationEvent event) {
+        ShapeRegistry.instance()
+            .runConsumers();
         PosteaMigration.registerHandlers();
     }
 
