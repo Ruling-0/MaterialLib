@@ -3,6 +3,7 @@ package com.ruling_0.materiallib.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -188,6 +189,46 @@ class MaterialUnificationTest {
             2000,
             registry.getMaterial("amod", "testiron")
                 .getProperty(MELTING_POINT));
+    }
+
+    @Test
+    void aUnifiedNameTakesOneIndex() {
+        registry.newMaterial("amod", "testiron", ownerTexture)
+            .build();
+        registry.newMaterial("bmod", "testiron", otherTexture)
+            .build();
+        Material other = registry.newMaterial("amod", "other", TextureSet.of("amod", "plain"))
+            .build();
+        registry.resolve();
+
+        assertEquals(Map.of("other", 0, "testiron", 1), registry.getAssignedIndices());
+        Material merged = registry.getMaterial("amod", "testiron");
+        assertEquals(1, merged.getIndex());
+        assertSame(merged, registry.getMaterialByIndex(1));
+        assertSame(other, registry.getMaterialByIndex(0));
+    }
+
+    @Test
+    void aNameKeepsItsIndexAndOwnerWhenAnotherModJoinsIt() {
+        registry.newMaterial("bmod", "testiron", otherTexture)
+            .build();
+        registry.resolve();
+        Map<String, Integer> indices = new LinkedHashMap<>(registry.getAssignedIndices());
+        Map<String, String> owners = new LinkedHashMap<>(registry.getAssignedOwners());
+
+        MaterialRegistry relaunch = new MaterialRegistry();
+        relaunch.setPersistedIndices(indices);
+        relaunch.setPersistedOwners(owners);
+        relaunch.newMaterial("amod", "testiron", ownerTexture)
+            .build();
+        relaunch.newMaterial("bmod", "testiron", otherTexture)
+            .build();
+        relaunch.resolve();
+
+        assertEquals(indices, relaunch.getAssignedIndices());
+        Material merged = relaunch.getMaterial("amod", "testiron");
+        assertEquals("bmod", merged.getModId());
+        assertEquals(0, merged.getIndex());
     }
 
     @Test
