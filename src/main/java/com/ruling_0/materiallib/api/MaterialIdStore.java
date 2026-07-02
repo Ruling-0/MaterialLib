@@ -7,7 +7,7 @@ import java.util.Map;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
-/// The instance-global store of the material -> index assignment, a JSON file under `config/materiallib`.
+/// The instance-global store of the material name -> index assignment, a JSON file under `config/materiallib`.
 ///
 /// The assignment is append-only and shared by every world on the instance: [#loadInto] feeds the saved indices
 /// to the registry before it resolves so existing materials keep their index, and [#saveFrom] writes the resolved
@@ -16,7 +16,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 public final class MaterialIdStore {
 
     private static final String FILE_NAME = "material-ids.json";
-    private static final int FORMAT_VERSION = 1;
+    private static final int FORMAT_VERSION = 2;
 
     private MaterialIdStore() {}
 
@@ -51,10 +51,16 @@ public final class MaterialIdStore {
                 ". Stored item stacks would change material on the next launch; refusing to continue.");
     }
 
-    /// Rejects an assignment whose indices are negative, null, or shared by two materials.
+    /// Rejects an assignment whose keys are not bare material names or whose indices are negative, null, or
+    /// shared by two materials.
     private static void validateIndices(File file, Map<String, Integer> materials) {
         IntSet used = new IntOpenHashSet();
         for (Map.Entry<String, Integer> entry : materials.entrySet()) {
+            if (entry.getKey()
+                .indexOf(':') >= 0) {
+                throw new IllegalStateException(
+                    corrupt(file) + " (" + entry.getKey() + " is not a bare material name)");
+            }
             Integer index = entry.getValue();
             if (index == null || index < 0) {
                 throw new IllegalStateException(

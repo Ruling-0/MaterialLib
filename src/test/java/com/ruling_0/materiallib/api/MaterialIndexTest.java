@@ -20,19 +20,17 @@ class MaterialIndexTest {
     }
 
     @Test
-    void indicesAreAssignedInAscendingKeyOrder() {
-        Material bIron = material("bmod", "Iron");
-        Material aZinc = material("amod", "Zinc");
-        Material aAaa = material("amod", "Aaa");
+    void indicesAreAssignedInAscendingNameOrder() {
+        Material zebra = material("amod", "Zebra");
+        Material apple = material("bmod", "Apple");
         registry.resolve();
 
-        assertEquals(0, aAaa.getIndex());
-        assertEquals(1, aZinc.getIndex());
-        assertEquals(2, bIron.getIndex());
+        assertEquals(0, apple.getIndex());
+        assertEquals(1, zebra.getIndex());
     }
 
     @Test
-    void keyOrderIsCaseSensitive() {
+    void nameOrderIsCaseSensitive() {
         Material upper = material("testmod", "Zinc");
         Material lower = material("testmod", "aluminium");
         registry.resolve();
@@ -72,8 +70,8 @@ class MaterialIndexTest {
     @Test
     void persistedMaterialsKeepTheirIndex() {
         Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("amod:Zinc", 5);
-        persisted.put("amod:Iron", 2);
+        persisted.put("Zinc", 5);
+        persisted.put("Iron", 2);
         registry.setPersistedIndices(persisted);
         Material zinc = material("amod", "Zinc");
         Material iron = material("amod", "Iron");
@@ -86,7 +84,7 @@ class MaterialIndexTest {
     @Test
     void newMaterialsAppendAfterTheHighestPersistedIndex() {
         Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("amod:Iron", 3);
+        persisted.put("Iron", 3);
         registry.setPersistedIndices(persisted);
         Material iron = material("amod", "Iron");
         Material copper = material("amod", "Copper");
@@ -101,8 +99,8 @@ class MaterialIndexTest {
     @Test
     void removedMaterialsKeepTheirIndexReserved() {
         Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("amod:Ghost", 0);
-        persisted.put("amod:Real", 1);
+        persisted.put("Ghost", 0);
+        persisted.put("Real", 1);
         registry.setPersistedIndices(persisted);
         Material real = material("amod", "Real");
         registry.resolve();
@@ -111,31 +109,31 @@ class MaterialIndexTest {
         assertNull(registry.getMaterialByIndex(0));
         assertEquals(real, registry.getMaterialByIndex(1));
         assertEquals(0, registry.getAssignedIndices()
-            .get("amod:Ghost")
+            .get("Ghost")
             .intValue());
     }
 
     @Test
     void assignedIndicesCombinePersistedAndNew() {
         Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("amod:Old", 0);
+        persisted.put("Old", 0);
         registry.setPersistedIndices(persisted);
         material("amod", "Old");
         material("amod", "New");
         registry.resolve();
 
         Map<String, Integer> assigned = registry.getAssignedIndices();
-        assertEquals(0, assigned.get("amod:Old")
+        assertEquals(0, assigned.get("Old")
             .intValue());
-        assertEquals(1, assigned.get("amod:New")
+        assertEquals(1, assigned.get("New")
             .intValue());
     }
 
     @Test
     void newMaterialAppendsAboveAReservedHighestIndex() {
         Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("amod:A", 0);
-        persisted.put("amod:Z", 10);
+        persisted.put("A", 0);
+        persisted.put("Z", 10);
         registry.setPersistedIndices(persisted);
         material("amod", "A");
         Material added = material("amod", "M");

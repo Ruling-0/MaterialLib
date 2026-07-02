@@ -227,22 +227,26 @@ public final class MaterialRegistry {
     }
 
     /// Assigns each material its global index, append-only against the persisted assignment: a material already in
-    /// the store keeps its index, genuinely new materials take the next free indices in ascending `modid:name` key
-    /// order, and indices of materials no longer present stay reserved (never reused) so existing item stacks do
-    /// not change material. The index becomes the item damage in every shape and the worldgen id.
+    /// the store keeps its index, genuinely new materials take the next free indices in ascending name order, and
+    /// indices of materials no longer present stay reserved (never reused) so existing item stacks do not change
+    /// material. The index becomes the item damage in every shape and the worldgen id.
     private void assignMaterialIndices() {
+        Map<String, Material> byName = new Object2ObjectLinkedOpenHashMap<>();
+        for (Material material : materials.values()) {
+            byName.put(material.getName(), material);
+        }
         assignedIndices = new LinkedHashMap<>(persistedIndices);
         int next = 0;
         for (int index : assignedIndices.values()) {
             next = Math.max(next, index + 1);
         }
-        List<String> newKeys = new ObjectArrayList<>();
-        for (String key : materials.keySet()) {
-            if (!assignedIndices.containsKey(key)) newKeys.add(key);
+        List<String> newNames = new ObjectArrayList<>();
+        for (String name : byName.keySet()) {
+            if (!assignedIndices.containsKey(name)) newNames.add(name);
         }
-        Collections.sort(newKeys);
-        for (String key : newKeys) {
-            assignedIndices.put(key, next++);
+        Collections.sort(newNames);
+        for (String name : newNames) {
+            assignedIndices.put(name, next++);
         }
         if (next - 1 > Short.MAX_VALUE) {
             throw new IllegalStateException(
@@ -252,7 +256,7 @@ public final class MaterialRegistry {
 
         materialsByIndex = new Material[next];
         for (Map.Entry<String, Integer> entry : assignedIndices.entrySet()) {
-            Material material = materials.get(entry.getKey());
+            Material material = byName.get(entry.getKey());
             if (material != null) {
                 material.resolveIndex(entry.getValue());
                 materialsByIndex[entry.getValue()] = material;

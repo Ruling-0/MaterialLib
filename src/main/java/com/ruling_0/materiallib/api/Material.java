@@ -80,8 +80,8 @@ public final class Material {
     }
 
     /// The material's global metadata index: a stable per-material number used as the item damage in every shape
-    /// and as the worldgen/ore id. Assigned at resolve by numbering all registered materials in ascending
-    /// `modid:name` key order from 0. Only available after the registry has resolved.
+    /// and as the worldgen/ore id. Assigned at resolve by numbering all registered materials in ascending name
+    /// order from 0. Only available after the registry has resolved.
     public int getIndex() {
         if (canonical != this) return canonical.getIndex();
         registry.requireResolved("query the index of ", key);

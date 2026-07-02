@@ -27,9 +27,8 @@ class WorldMaterialIdsTest {
 
     private MaterialRegistry resolvedWith(Map<String, Integer> assignment) {
         registry.setPersistedIndices(assignment);
-        for (String key : assignment.keySet()) {
-            int colon = key.indexOf(':');
-            registry.newMaterial(key.substring(0, colon), key.substring(colon + 1), texture)
+        for (String name : assignment.keySet()) {
+            registry.newMaterial("testmod", name, texture)
                 .build();
         }
         registry.resolve();
@@ -38,8 +37,8 @@ class WorldMaterialIdsTest {
 
     @Test
     void diffReportsNothingWhenWorldAgreesWithInstance() {
-        Map<String, Integer> world = Map.of("amod:Iron", 0, "amod:Gold", 1);
-        Map<String, Integer> instance = Map.of("amod:Iron", 0, "amod:Gold", 1, "amod:Tin", 2);
+        Map<String, Integer> world = Map.of("Iron", 0, "Gold", 1);
+        Map<String, Integer> instance = Map.of("Iron", 0, "Gold", 1, "Tin", 2);
 
         assertFalse(WorldMaterialIds.diff(world, instance)
             .isMismatch());
@@ -47,7 +46,7 @@ class WorldMaterialIdsTest {
 
     @Test
     void diffReportsAMovedMaterial() {
-        WorldMaterialIds.Diff diff = WorldMaterialIds.diff(Map.of("amod:Iron", 0), Map.of("amod:Iron", 5));
+        WorldMaterialIds.Diff diff = WorldMaterialIds.diff(Map.of("Iron", 0), Map.of("Iron", 5));
 
         assertTrue(diff.isMismatch());
         assertEquals(1, diff.moved()
@@ -58,8 +57,7 @@ class WorldMaterialIdsTest {
 
     @Test
     void diffReportsARemovedMaterial() {
-        WorldMaterialIds.Diff diff = WorldMaterialIds
-            .diff(Map.of("amod:Iron", 0, "amod:Gone", 1), Map.of("amod:Iron", 0));
+        WorldMaterialIds.Diff diff = WorldMaterialIds.diff(Map.of("Iron", 0, "Gone", 1), Map.of("Iron", 0));
 
         assertTrue(diff.isMismatch());
         assertEquals(1, diff.removed()
@@ -71,8 +69,8 @@ class WorldMaterialIdsTest {
     @Test
     void checkStampsAFreshWorldWithTheInstanceAssignment() {
         Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("amod:Iron", 0);
-        assignment.put("amod:Gold", 1);
+        assignment.put("Iron", 0);
+        assignment.put("Gold", 1);
         MaterialRegistry resolved = resolvedWith(assignment);
 
         assertNull(WorldMaterialIds.check(resolved, worldFile()));
@@ -82,10 +80,10 @@ class WorldMaterialIdsTest {
     @Test
     void checkRefreshesAWorldMissingNewMaterials() {
         Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("amod:Iron", 0);
-        assignment.put("amod:Gold", 1);
+        assignment.put("Iron", 0);
+        assignment.put("Gold", 1);
         MaterialRegistry resolved = resolvedWith(assignment);
-        MaterialIdStore.write(worldFile(), Map.of("amod:Iron", 0));
+        MaterialIdStore.write(worldFile(), Map.of("Iron", 0));
 
         assertNull(WorldMaterialIds.check(resolved, worldFile()));
         assertEquals(assignment, MaterialIdStore.read(worldFile()));
@@ -94,9 +92,9 @@ class WorldMaterialIdsTest {
     @Test
     void checkMigratesAndAdvancesTheCopyOnMismatch() {
         Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("amod:Iron", 0);
+        assignment.put("Iron", 0);
         MaterialRegistry resolved = resolvedWith(assignment);
-        MaterialIdStore.write(worldFile(), Map.of("amod:Iron", 7));
+        MaterialIdStore.write(worldFile(), Map.of("Iron", 7));
 
         MaterialMigration migration = WorldMaterialIds.check(resolved, worldFile());
 
@@ -108,13 +106,13 @@ class WorldMaterialIdsTest {
     @Test
     void checkMigratesAMixOfMovedAndRemovedMaterials() {
         Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("amod:Iron", 0);
-        assignment.put("amod:Gold", 3);
+        assignment.put("Iron", 0);
+        assignment.put("Gold", 3);
         MaterialRegistry resolved = resolvedWith(assignment);
         Map<String, Integer> stale = new LinkedHashMap<>();
-        stale.put("amod:Iron", 0);
-        stale.put("amod:Gold", 1);
-        stale.put("amod:Gone", 2);
+        stale.put("Iron", 0);
+        stale.put("Gold", 1);
+        stale.put("Gone", 2);
         MaterialIdStore.write(worldFile(), stale);
 
         MaterialMigration migration = WorldMaterialIds.check(resolved, worldFile());

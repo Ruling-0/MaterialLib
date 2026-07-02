@@ -33,8 +33,8 @@ class MaterialIdStoreTest {
     @Test
     void writeThenReadRoundTrips() {
         Map<String, Integer> indices = new LinkedHashMap<>();
-        indices.put("amod:Iron", 0);
-        indices.put("bmod:Gold", 1);
+        indices.put("Iron", 0);
+        indices.put("Gold", 1);
 
         MaterialIdStore.write(file(), indices);
 
@@ -44,14 +44,14 @@ class MaterialIdStoreTest {
     @Test
     void writeOrdersEntriesByIndexForReadability() {
         Map<String, Integer> indices = new LinkedHashMap<>();
-        indices.put("zmod:Last", 2);
-        indices.put("amod:First", 0);
-        indices.put("mmod:Middle", 1);
+        indices.put("Last", 2);
+        indices.put("First", 0);
+        indices.put("Middle", 1);
 
         MaterialIdStore.write(file(), indices);
 
         assertEquals(
-            List.of("amod:First", "mmod:Middle", "zmod:Last"),
+            List.of("First", "Middle", "Last"),
             new ArrayList<>(MaterialIdStore.read(file())
                 .keySet()));
     }
@@ -59,7 +59,7 @@ class MaterialIdStoreTest {
     @Test
     void writeCreatesMissingParentDirectories() {
         Map<String, Integer> indices = new LinkedHashMap<>();
-        indices.put("amod:Iron", 0);
+        indices.put("Iron", 0);
         File nested = new File(new File(dir, "nested"), "material-ids.json");
 
         MaterialIdStore.write(nested, indices);
@@ -76,14 +76,14 @@ class MaterialIdStoreTest {
 
     @Test
     void readingAFilePresentButMissingMaterialsFailsLoudly() throws Exception {
-        Files.write(file().toPath(), "{\"version\":1}".getBytes(StandardCharsets.UTF_8));
+        Files.write(file().toPath(), "{\"version\":2}".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
 
     @Test
     void readingAFileWithEmptyMaterialsGivesAnEmptyMap() throws Exception {
-        Files.write(file().toPath(), "{\"version\":1,\"materials\":{}}".getBytes(StandardCharsets.UTF_8));
+        Files.write(file().toPath(), "{\"version\":2,\"materials\":{}}".getBytes(StandardCharsets.UTF_8));
 
         assertTrue(MaterialIdStore.read(file())
             .isEmpty());
@@ -91,7 +91,7 @@ class MaterialIdStoreTest {
 
     @Test
     void readingANegativeIndexFailsLoudly() throws Exception {
-        Files.write(file().toPath(), "{\"version\":1,\"materials\":{\"amod:A\":-1}}".getBytes(StandardCharsets.UTF_8));
+        Files.write(file().toPath(), "{\"version\":2,\"materials\":{\"A\":-1}}".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
@@ -100,16 +100,25 @@ class MaterialIdStoreTest {
     void readingADuplicateIndexFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":1,\"materials\":{\"amod:A\":0,\"amod:B\":0}}".getBytes(StandardCharsets.UTF_8));
+            "{\"version\":2,\"materials\":{\"A\":0,\"B\":0}}".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
+    }
+
+    @Test
+    void readingAKeyWithAColonFailsLoudly() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":2,\"materials\":{\"amod:Iron\":0}}".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
 
     @Test
     void writeOverwritesAnExistingFile() {
-        MaterialIdStore.write(file(), Map.of("amod:Iron", 0, "amod:Gold", 1));
-        MaterialIdStore.write(file(), Map.of("amod:Iron", 0));
+        MaterialIdStore.write(file(), Map.of("Iron", 0, "Gold", 1));
+        MaterialIdStore.write(file(), Map.of("Iron", 0));
 
-        assertEquals(Map.of("amod:Iron", 0), MaterialIdStore.read(file()));
+        assertEquals(Map.of("Iron", 0), MaterialIdStore.read(file()));
     }
 }
