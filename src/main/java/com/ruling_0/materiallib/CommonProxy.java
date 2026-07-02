@@ -59,5 +59,10 @@ public class CommonProxy {
         PosteaMigration.setActiveMigration(WorldMaterialIds.check(MaterialRegistry.instance(), worldFile));
     }
 
-    public void serverStarting(FMLServerStartingEvent event) {}
+    public void serverStarting(FMLServerStartingEvent event) {
+        event.registerServerCommand(
+            new CommandDumpMats(
+                event.getServer()
+                    .getFile("materiallib-dump.csv")));
+    }
 }
