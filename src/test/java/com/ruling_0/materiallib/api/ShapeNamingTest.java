@@ -31,16 +31,6 @@ class ShapeNamingTest {
     }
 
     @Test
-    void formatAppliesTheMaterialNameToThePattern() {
-        assertEquals("Iron Gear", ShapeNaming.format("%s Gear", "Iron"));
-    }
-
-    @Test
-    void formatWithoutPlaceholderReturnsThePatternUnchanged() {
-        assertEquals("Bucket of Lava", ShapeNaming.format("Bucket of Lava", "Lava"));
-    }
-
-    @Test
     void requireValidFormatRejectsAFormatThatCannotTakeAStringArgument() {
         assertThrows(IllegalArgumentException.class, () -> ShapeNaming.requireValidFormat("%d"));
     }

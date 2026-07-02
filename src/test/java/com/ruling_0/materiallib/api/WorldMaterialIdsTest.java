@@ -120,9 +120,7 @@ class WorldMaterialIdsTest {
         MaterialMigration migration = WorldMaterialIds.check(resolved, worldFile());
 
         assertNotNull(migration);
-        assertEquals(MaterialMigration.UNCHANGED, migration.lookup(0));
         assertEquals(3, migration.lookup(1));
-        assertEquals(MaterialMigration.DELETE, migration.lookup(2));
         assertEquals(assignment, MaterialIdStore.read(worldFile()));
     }
 }

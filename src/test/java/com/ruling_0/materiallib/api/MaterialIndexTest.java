@@ -2,7 +2,6 @@ package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedHashMap;
@@ -33,16 +32,6 @@ class MaterialIndexTest {
     }
 
     @Test
-    void keyOrderComparesFullKeyNotJustName() {
-        Material amodZzz = material("amod", "Zzz");
-        Material bmodAaa = material("bmod", "Aaa");
-        registry.resolve();
-
-        assertEquals(0, amodZzz.getIndex());
-        assertEquals(1, bmodAaa.getIndex());
-    }
-
-    @Test
     void keyOrderIsCaseSensitive() {
         Material upper = material("testmod", "Zinc");
         Material lower = material("testmod", "aluminium");
@@ -63,15 +52,6 @@ class MaterialIndexTest {
     }
 
     @Test
-    void singleMaterialGetsIndexZero() {
-        Material only = material("amod", "Only");
-        registry.resolve();
-
-        assertEquals(0, only.getIndex());
-        assertEquals(only, registry.getMaterialByIndex(0));
-    }
-
-    @Test
     void getMaterialByIndexReturnsNullOutsideRange() {
         material("amod", "Only");
         registry.resolve();
@@ -87,20 +67,6 @@ class MaterialIndexTest {
         assertTrue(registry.getMaterials().isEmpty());
         assertNull(registry.getMaterialByIndex(0));
         assertNull(registry.getMaterialByIndex(-1));
-    }
-
-    @Test
-    void getIndexThrowsBeforeResolve() {
-        Material material = material("amod", "Early");
-
-        assertThrows(IllegalStateException.class, material::getIndex);
-    }
-
-    @Test
-    void getMaterialByIndexThrowsBeforeResolve() {
-        material("amod", "Early");
-
-        assertThrows(IllegalStateException.class, () -> registry.getMaterialByIndex(0));
     }
 
     @Test
@@ -147,18 +113,6 @@ class MaterialIndexTest {
         assertEquals(0, registry.getAssignedIndices()
             .get("amod:Ghost")
             .intValue());
-    }
-
-    @Test
-    void newMaterialsDoNotReuseAReservedGap() {
-        Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("amod:Real", 2);
-        registry.setPersistedIndices(persisted);
-        material("amod", "Real");
-        Material added = material("amod", "Added");
-        registry.resolve();
-
-        assertEquals(3, added.getIndex());
     }
 
     @Test

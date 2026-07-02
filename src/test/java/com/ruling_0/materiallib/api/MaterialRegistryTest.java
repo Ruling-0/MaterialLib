@@ -99,19 +99,26 @@ class MaterialRegistryTest {
         assertThrows(IllegalStateException.class, () -> family.getProperty(StandardProperties.TINT));
         assertThrows(IllegalStateException.class, registry::getMaterials);
         assertThrows(IllegalStateException.class, registry::getFamilies);
+        assertThrows(IllegalStateException.class, material::getIndex);
+        assertThrows(IllegalStateException.class, () -> registry.getMaterialByIndex(0));
     }
 
     @Test
     void skippedEditDoesNotStopLaterEdits() {
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .build();
+        Material untouched = registry.newMaterial("testmod", "TestSilver", texture)
+            .build();
         registry.editMaterial("absentmod", "Missing")
+            .setTint(0xFF0000FF);
+        registry.editFamily("absentmod", "Missing")
             .setTint(0xFF0000FF);
         registry.editMaterial("testmod", "TestIron")
             .setTint(0xFF00FF00);
         registry.resolve();
 
         assertEquals(0xFF00FF00, material.getProperty(StandardProperties.TINT));
+        assertEquals(0xFFFFFFFF, untouched.getProperty(StandardProperties.TINT));
     }
 
     @Test
@@ -139,17 +146,5 @@ class MaterialRegistryTest {
     void resolveTwiceThrows() {
         registry.resolve();
         assertThrows(IllegalStateException.class, registry::resolve);
-    }
-
-    @Test
-    void editsOfMissingTargetsAreSkipped() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
-        registry.editMaterial("absentmod", "Missing")
-            .setTint(0xFF0000FF);
-        registry.editFamily("absentmod", "Missing")
-            .setTint(0xFF0000FF);
-        registry.resolve();
-        assertEquals(0xFFFFFFFF, material.getProperty(StandardProperties.TINT));
     }
 }
