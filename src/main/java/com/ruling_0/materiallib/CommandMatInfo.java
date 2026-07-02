@@ -21,9 +21,9 @@ import com.ruling_0.materiallib.api.ShapeBlock;
 import com.ruling_0.materiallib.api.ShapeFluidInContainer;
 import com.ruling_0.materiallib.api.ShapeItem;
 
-/// The /matinfo debug command: prints the shape, material, family membership, and property values
-/// encoded by the held item when it is a MaterialLib shape stack. Usable by any player, since it only
-/// reads registry state.
+/// The /matinfo debug command: prints the shape and material encoded by the held item, plus the
+/// material's family membership and property values, when it is a MaterialLib shape stack. Usable by
+/// any player, since it only reads registry state.
 public class CommandMatInfo extends CommandBase {
 
     @Override
@@ -91,8 +91,8 @@ public class CommandMatInfo extends CommandBase {
         return String.join(", ", keys);
     }
 
-    /// Every property set on the material itself or on any of its families, in material-then-family
-    /// order, each reported with its effective resolved value.
+    /// Every property set on the material itself or on any of its families, material properties first,
+    /// then family properties in alphabetical family order.
     private static Set<Property<?>> declaredProperties(Material material) {
         Set<Property<?>> properties = new LinkedHashSet<>(
             material.getOwnProperties()

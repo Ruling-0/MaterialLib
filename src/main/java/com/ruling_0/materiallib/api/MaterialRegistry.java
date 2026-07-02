@@ -227,8 +227,8 @@ public final class MaterialRegistry {
     }
 
     /// The full index assignment rendered as a CSV table for debugging: one row per assigned index,
-    /// including indices reserved for materials not loaded this session, with each loaded material's
-    /// owner, shapes, and families. Only available after the registry has resolved.
+    /// including indices reserved for materials not loaded this session, with the persisted owner and,
+    /// for loaded materials, shapes and families. Only available after the registry has resolved.
     public String dumpCsv() {
         return MaterialCsv.dump(this);
     }

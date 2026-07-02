@@ -12,9 +12,9 @@ import net.minecraft.util.EnumChatFormatting;
 
 import com.ruling_0.materiallib.api.MaterialRegistry;
 
-/// The /dumpmats debug command: writes the material registry's full index assignment as CSV to a file
-/// in the game directory and reports the path in chat. Requires operator permission since it writes a
-/// file on the server.
+/// The /dumpmats debug command: writes the material registry's full index assignment as CSV to the
+/// configured file and reports the path in chat. Requires operator permission since it writes a file
+/// on the server.
 public class CommandDumpMats extends CommandBase {
 
     private final File dumpFile;
@@ -45,7 +45,7 @@ public class CommandDumpMats extends CommandBase {
             MaterialLib.LOG.error("Could not write the material dump to {}", dumpFile, e);
             sender.addChatMessage(
                 new ChatComponentText(
-                    EnumChatFormatting.RED + "Could not write " + dumpFile.getAbsolutePath() + ": " + e.getMessage()));
+                    EnumChatFormatting.RED + "Could not write " + dumpFile.getAbsolutePath() + ": " + e));
             return;
         }
         sender.addChatMessage(new ChatComponentText("Dumped material indices to " + dumpFile.getAbsolutePath()));
