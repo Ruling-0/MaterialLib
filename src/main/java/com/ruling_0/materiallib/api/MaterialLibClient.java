@@ -4,11 +4,11 @@ import java.util.Objects;
 
 import net.minecraftforge.client.IItemRenderer;
 
+import com.ruling_0.materiallib.MaterialLib;
+
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /// The client-side entry point of MaterialLib, for behavior that exists only on the client.
 ///
@@ -20,7 +20,6 @@ import org.apache.logging.log4j.Logger;
 @SideOnly(Side.CLIENT)
 public final class MaterialLibClient {
 
-    private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final Reference2ObjectOpenHashMap<Material, IItemRenderer> itemRenderers = new Reference2ObjectOpenHashMap<>();
 
     private MaterialLibClient() {}
@@ -38,7 +37,7 @@ public final class MaterialLibClient {
         Material material = MaterialRegistry.instance()
             .getMaterial(modid, name);
         if (material == null) {
-            LOG.warn("Cannot set an item renderer for {}:{}: no such material is registered", modid, name);
+            MaterialLib.LOG.warn("Cannot set an item renderer for {}:{}: no such material is registered", modid, name);
             return;
         }
         setItemRenderer(material, renderer);

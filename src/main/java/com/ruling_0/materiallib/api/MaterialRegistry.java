@@ -8,12 +8,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import com.ruling_0.materiallib.MaterialLib;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /// The broker holding every registered [Material] and [Family].
 ///
@@ -28,7 +28,6 @@ import org.apache.logging.log4j.Logger;
 /// The game uses the single [#instance]; tests construct private registries directly.
 public final class MaterialRegistry {
 
-    private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final MaterialRegistry INSTANCE = new MaterialRegistry();
 
     private final Map<String, Material> materials = new Object2ObjectLinkedOpenHashMap<>();
@@ -136,7 +135,7 @@ public final class MaterialRegistry {
         familiesView = Collections.unmodifiableCollection(families.values());
 
         resolved = true;
-        LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
+        MaterialLib.LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
     }
 
     /// Sets the persisted index assignment to honor at resolve, loaded from the instance-global store. Existing
@@ -199,7 +198,7 @@ public final class MaterialRegistry {
                 if (material.getOwnPropertiesInternal().containsKey(property)) continue;
                 Family first = firstSetters.putIfAbsent(property, family);
                 if (first != null && !entry.getValue().equals(first.getOwnPropertiesInternal().get(property))) {
-                    LOG.warn(
+                    MaterialLib.LOG.warn(
                         "Material {} takes {} = {} from family {}; family {} sets conflicting value {}",
                         material.getKey(),
                         property,
@@ -233,7 +232,7 @@ public final class MaterialRegistry {
         enqueue(description + " " + key, () -> {
             Material material = materials.get(key);
             if (material == null) {
-                LOG.warn("Skipping edit \"{} {}\": no such material is registered", description, key);
+                MaterialLib.LOG.warn("Skipping edit \"{} {}\": no such material is registered", description, key);
                 return;
             }
             op.accept(material);
@@ -245,7 +244,7 @@ public final class MaterialRegistry {
         enqueue(description + " " + key, () -> {
             Family family = families.get(key);
             if (family == null) {
-                LOG.warn("Skipping edit \"{} {}\": no such family is registered", description, key);
+                MaterialLib.LOG.warn("Skipping edit \"{} {}\": no such family is registered", description, key);
                 return;
             }
             op.accept(family);
@@ -257,7 +256,7 @@ public final class MaterialRegistry {
         enqueueMaterialOp(materialModid, materialName, "add to family " + familyKey + " material", material -> {
             Family family = families.get(familyKey);
             if (family == null) {
-                LOG.warn(
+                MaterialLib.LOG.warn(
                     "Skipping family addition for material {}: no such family {} is registered",
                     material.getKey(),
                     familyKey);
@@ -272,14 +271,14 @@ public final class MaterialRegistry {
         enqueueMaterialOp(materialModid, materialName, "remove from family " + familyKey + " material", material -> {
             Family family = families.get(familyKey);
             if (family == null) {
-                LOG.warn(
+                MaterialLib.LOG.warn(
                     "Skipping family removal for material {}: no such family {} is registered",
                     material.getKey(),
                     familyKey);
                 return;
             }
             if (!material.isMemberOfInternal(family)) {
-                LOG.warn(
+                MaterialLib.LOG.warn(
                     "Skipping family removal for material {}: it is not a member of {} at this point in the edit order",
                     material.getKey(),
                     familyKey);

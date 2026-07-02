@@ -12,17 +12,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.oredict.OreDictionary;
 
+import com.ruling_0.materiallib.MaterialLib;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /// Holds the item, block, or fluid backing every [Shape] and finishes their setup once the material registry has
 /// resolved.
 public final class ShapeRegistry {
 
-    private static final Logger LOG = LogManager.getLogger("materiallib");
     private static final ShapeRegistry INSTANCE = new ShapeRegistry();
 
     private final ShapeUnification unification = new ShapeUnification();
@@ -182,7 +181,7 @@ public final class ShapeRegistry {
         registerFluidContainers();
         registerOreDictionary();
         resolved = true;
-        LOG.info(
+        MaterialLib.LOG.info(
             "Resolved {} item shapes, {} block shapes, and {} fluid shapes",
             itemShapes.size(),
             blockShapes.size(),

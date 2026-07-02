@@ -7,8 +7,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.ruling_0.materiallib.MaterialLib;
 
 /// The item backing a fluid-in-container [Shape]: a [ShapeItem] whose damage is a material's global index and that
 /// maps, per material, from its filled stack to the material's fluid through the [FluidContainerRegistry].
@@ -16,8 +15,6 @@ import org.apache.logging.log4j.Logger;
 /// A material that generates this shape must also generate the [ShapeFluid] it holds; the registry enforces that at
 /// resolve.
 public class ShapeFluidInContainer extends ShapeItem {
-
-    private static final Logger LOG = LogManager.getLogger("materiallib");
 
     private final ShapeFluid fluidShape;
     private final ItemStack emptyContainer;
@@ -51,7 +48,7 @@ public class ShapeFluidInContainer extends ShapeItem {
                 FluidContainerRegistry.registerFluidContainer(fluidStack, filled, emptyContainer.copy()) :
                 FluidContainerRegistry.registerFluidContainer(fluidStack, filled);
             if (!registered) {
-                LOG.warn(
+                MaterialLib.LOG.warn(
                     "Fluid container mapping for {} of {} was rejected; the container will not fill or drain",
                     this,
                     material.getKey());
