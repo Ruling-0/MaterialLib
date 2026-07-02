@@ -11,6 +11,9 @@ import net.minecraftforge.fluids.FluidStack;
 /// During preInit, mods create materials and families through [#newMaterial] and [#newFamily], and alter ones
 /// belonging to other mods through [#editMaterial] and [#editFamily]. The registry resolves during this mod's
 /// init handler; from init onwards (in mods depending on materiallib) the contents are readable and immutable.
+///
+/// Shape consumers registered through [#registerShapeConsumer] during preInit run during this mod's postInit,
+/// once per material generating their targeted shape.
 public final class MaterialLibAPI {
 
     private MaterialLibAPI() {}
@@ -78,6 +81,22 @@ public final class MaterialLibAPI {
     /// Call during the owning mod's preInit.
     public static Shape registerFluidInContainerShape(ShapeFluidInContainer container) {
         return ShapeRegistry.instance().register(container);
+    }
+
+    /// Registers a consumer invoked once per material generating the shape named `shapeName`, during MaterialLib's
+    /// postInit. Call during the registering mod's preInit. Targeting is by name so a mod can consume a shape it
+    /// does not declare; a name no mod registered logs a warning and the consumer is skipped, so the target may
+    /// come from an optional mod. See [ShapeConsumer] for the dispatch and error contract.
+    public static void registerShapeConsumer(String modid, String shapeName, ShapeConsumer consumer) {
+        ShapeRegistry.instance()
+            .registerConsumer(modid, shapeName, consumer);
+    }
+
+    /// Registers a consumer for `shape`, targeted by its name; see
+    /// [#registerShapeConsumer(String, String, ShapeConsumer)].
+    public static void registerShapeConsumer(String modid, Shape shape, ShapeConsumer consumer) {
+        ShapeRegistry.instance()
+            .registerConsumer(modid, shape.getName(), consumer);
     }
 
     /// The itemstack of `material` in `shape`, with the given stack size. The shape must be a backed (item or

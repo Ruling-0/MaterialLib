@@ -35,6 +35,8 @@ public final class ShapeRegistry {
     private final List<ShapeFluid> fluidShapesView = Collections.unmodifiableList(fluidShapes);
     private final List<ShapeFluidInContainer> containerShapes = new ObjectArrayList<>();
     private final Object2ObjectOpenHashMap<String, ShapeType> typeByName = new Object2ObjectOpenHashMap<>();
+    private final ShapeConsumers consumers = new ShapeConsumers();
+    private final Object2ObjectOpenHashMap<String, ServedShape> servedByName = new Object2ObjectOpenHashMap<>();
     private Map<String, String> persistedOwners = new LinkedHashMap<>();
     private Map<String, String> assignedOwners = new LinkedHashMap<>();
     private boolean resolved;
@@ -101,6 +103,13 @@ public final class ShapeRegistry {
         ShapeType(String label) {
             this.label = label;
         }
+    }
+
+    /// Records a consumer to invoke at postInit for every material generating the shape named `shapeName`. Call
+    /// from the registering mod's preInit.
+    void registerConsumer(String modid, String shapeName, ShapeConsumer consumer) {
+        requireRegistration("register a shape consumer targeting " + shapeName);
+        consumers.register(modid, shapeName, consumer);
     }
 
     /// Sets the persisted shape owners to honor at resolve, loaded from the instance-global store. A name already
@@ -181,6 +190,13 @@ public final class ShapeRegistry {
             fluidShapes.size());
     }
 
+    /// Runs every registered shape consumer once per (shape, material) pair for the shape it targets.
+    /// Invoked once by MaterialLib's postInit handler; other mods must not call this.
+    public void runConsumers() {
+        requireResolved("run shape consumers");
+        consumers.run(servedByName);
+    }
+
     /// Sorts every canonical shape into its type and registers each backing item or block with FML under
     /// MaterialLib's domain (`materiallib:<name>`). The domain is MaterialLib's because this runs in MaterialLib's
     /// init handler (FML restriction). Fluid shapes register their Forge fluids, and fluid containers their
@@ -191,6 +207,7 @@ public final class ShapeRegistry {
                 throw new IllegalStateException(shape + " is not a registerable shape type");
             }
             servedShapes.add(served);
+            servedByName.put(served.getName(), served);
             if (served instanceof ShapeFluid fluid) {
                 fluidShapes.add(fluid);
             }
