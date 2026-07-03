@@ -15,7 +15,8 @@ import cpw.mods.fml.common.registry.GameRegistry;
 
 /// A demonstration of the MaterialLib API, registered when the registerExamples config option is
 /// enabled: two materials, each of the four shape types, a family, and a shape consumer, registered
-/// through a [MaterialRegistrationEvent] handler the way a dependent mod would.
+/// through a [MaterialRegistrationEvent] handler. A dependent mod registers the same way, except it
+/// subscribes its handler during construction as described in the event doc.
 ///
 /// The materials are TestIron and TestGold (tinted, which the grayscale test texture set makes
 /// obvious). The testFrame block shape reaches both materials through the Test family; the testGear

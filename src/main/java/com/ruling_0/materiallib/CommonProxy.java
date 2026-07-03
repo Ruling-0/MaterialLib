@@ -24,6 +24,8 @@ import cpw.mods.fml.common.event.FMLServerStartingEvent;
 
 public class CommonProxy {
 
+    private LateHandlerCheck lateHandlerCheck;
+
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
 
@@ -32,7 +34,10 @@ public class CommonProxy {
         if (Config.registerExamples) {
             MinecraftForge.EVENT_BUS.register(new ExampleContent());
         }
-        MinecraftForge.EVENT_BUS.post(new MaterialRegistrationEvent());
+        MaterialLib.LOG.info("Collecting registrations from MaterialRegistrationEvent handlers");
+        MaterialRegistrationEvent registration = new MaterialRegistrationEvent();
+        MinecraftForge.EVENT_BUS.post(registration);
+        lateHandlerCheck = LateHandlerCheck.snapshot(registration);
 
         File dir = new File(event.getModConfigurationDirectory(), MaterialLib.MODID);
         MaterialIdStore.loadInto(MaterialRegistry.instance(), dir);
@@ -53,6 +58,9 @@ public class CommonProxy {
     public void postInit(FMLPostInitializationEvent event) {
         ShapeRegistry.instance().runPostInitConsumers();
         PosteaMigration.registerHandlers();
+        if (lateHandlerCheck != null) {
+            lateHandlerCheck.report();
+        }
     }
 
     // Before the worlds load, so the per-world id copy is reconciled against the instance before any item loads.

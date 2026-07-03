@@ -102,22 +102,6 @@ class ShapeConsumersTest {
     }
 
     @Test
-    void runningTwiceFails() {
-        consumers.run(ShapeConsumers.Phase.INIT, Map.of());
-
-        assertThrows(IllegalStateException.class, () -> consumers.run(ShapeConsumers.Phase.INIT, Map.of()));
-    }
-
-    @Test
-    void registeringAfterTheRunFails() {
-        consumers.run(ShapeConsumers.Phase.INIT, Map.of());
-
-        assertThrows(
-            IllegalStateException.class,
-            () -> consumers.register(ShapeConsumers.Phase.INIT, "cmod", "gear", (s, m) -> {}));
-    }
-
-    @Test
     void anInvalidRegistrationIsRejected() {
         assertThrows(
             IllegalArgumentException.class,
@@ -149,16 +133,21 @@ class ShapeConsumersTest {
 
     @Test
     void thePhasesRunAndGuardIndependently() {
-        consumers.run(ShapeConsumers.Phase.INIT, Map.of());
+        Material iron = material("Iron");
+        TestServedShape gear = shape("gear", iron);
+
+        consumers.run(ShapeConsumers.Phase.INIT, Map.of("gear", gear));
 
         assertThrows(
             IllegalStateException.class,
             () -> consumers.register(ShapeConsumers.Phase.INIT, "amod", "gear", (s, m) -> {}));
-        consumers.register(ShapeConsumers.Phase.POST_INIT, "amod", "gear", (s, m) -> {});
+        List<String> calls = new ArrayList<>();
+        consumers.register(ShapeConsumers.Phase.POST_INIT, "amod", "gear", (s, m) -> calls.add("late " + m.getName()));
 
         assertThrows(IllegalStateException.class, () -> consumers.run(ShapeConsumers.Phase.INIT, Map.of()));
 
-        consumers.run(ShapeConsumers.Phase.POST_INIT, Map.of());
+        consumers.run(ShapeConsumers.Phase.POST_INIT, Map.of("gear", gear));
+        assertEquals(List.of("late Iron"), calls);
 
         assertThrows(IllegalStateException.class, () -> consumers.run(ShapeConsumers.Phase.POST_INIT, Map.of()));
     }

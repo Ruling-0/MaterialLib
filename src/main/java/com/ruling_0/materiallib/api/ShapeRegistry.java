@@ -242,7 +242,7 @@ public final class ShapeRegistry {
     private void requireRegistration(String what) {
         if (resolved) {
             throw new IllegalStateException(
-                "Cannot " + what + ": shapes have already resolved. Shapes register inside a " +
+                "Cannot " + what + ": shapes have already resolved. Registration happens inside a " +
                     "MaterialRegistrationEvent handler subscribed during construction");
         }
     }
