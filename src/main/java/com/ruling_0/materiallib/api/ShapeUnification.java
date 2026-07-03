@@ -14,14 +14,11 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 /// Collapses shapes that share a name down to a single canonical shape with one owning mod.
 ///
-/// Two mods may each declare a shape called `gear` without knowing about each other; their gears must end up
-/// as one item so a single `gearIron` oredict entry exists. Every shape registered for a name is a candidate to
-/// own it. The owner is chosen once, at [#resolve], from the persisted assignment: the mod recorded as the name's
-/// owner if it registered a candidate this session, otherwise the candidate whose modid sorts first. Choosing at
-/// resolve rather than by registration order makes the owner independent of mod load order, and honoring the
-/// persisted owner keeps it fixed when another mod that declares the same name is added. [#canonical] maps any
-/// candidate back to the canonical shape, so a material that generated a non-owning shape still resolves to the
-/// one backing item.
+/// Two mods may each declare a shape called `gear` without knowing about each other; their gears should end up
+/// as one item. Every shape registered for a name is a candidate to own it. The owner is chosen once, at [#resolve],
+/// preferring the owner stored in the instance's [ShapeOwnerStore] else the first candidate by alphabetical modid.
+/// [#canonical] maps any candidate back to the canonical shape, so a material that generated a non-owning shape still
+/// resolves to the one backing item.
 final class ShapeUnification {
 
     private final Object2ObjectLinkedOpenHashMap<String, List<Shape>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();

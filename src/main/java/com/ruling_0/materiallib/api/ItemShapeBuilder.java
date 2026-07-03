@@ -44,7 +44,6 @@ public final class ItemShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance()
-            .register(new ShapeItem(modid, name, format, prefixes));
+        return ShapeRegistry.instance().register(new ShapeItem(modid, name, format, prefixes));
     }
 }

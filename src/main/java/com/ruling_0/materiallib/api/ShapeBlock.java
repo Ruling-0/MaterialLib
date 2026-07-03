@@ -19,7 +19,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// The block backing a block [Shape]: one [Block] whose metadata is a material's global index
 /// ([Material#getIndex]), so a single block carries every material that generates the shape.
 ///
-/// Simple shapes are created through [MaterialLibAPI#newBlockShape]; a mod wanting custom block behavior subclasses
+/// Simple shapes are created through [MaterialLibAPI#newBlockShape]. A mod wanting custom block behavior subclasses
 /// this and registers the instance through [MaterialLibAPI#registerBlockShape]. The base handles per-material textures
 /// from each material's [TextureSet], the [StandardProperties#TINT] color, creative-tab variants, and dropping the
 /// placed metadata. Create and register the block inside the owning mod's [MaterialRegistrationEvent] handler.
@@ -130,8 +130,7 @@ public class ShapeBlock extends Block implements BackedShape {
     /// Block render colors carry no alpha, so the material's ARGB [StandardProperties#TINT] is masked to its low
     /// 24 bits.
     private static int tintFor(int meta) {
-        Material material = MaterialRegistry.instance()
-            .getMaterialByIndex(meta);
+        Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         return material != null ? material.getProperty(StandardProperties.TINT) & 0xFFFFFF : 0xFFFFFF;
     }
 

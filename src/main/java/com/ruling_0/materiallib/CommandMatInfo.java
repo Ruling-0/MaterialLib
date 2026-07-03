@@ -23,8 +23,7 @@ import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.StandardProperties;
 
 /// The /matinfo debug command: prints the shape and material encoded by the held item, plus the
-/// material's family membership and property values, when it is a MaterialLib shape stack. Usable by
-/// any player, since it only reads registry state.
+/// material's family membership and property values, when it is a MaterialLib shape stack.
 public class CommandMatInfo extends CommandBase {
 
     @Override
@@ -53,9 +52,8 @@ public class CommandMatInfo extends CommandBase {
             send(sender, stack.getDisplayName() + " is not a MaterialLib shape");
             return;
         }
-        send(sender, "Shape: " + shape.getModId() + ":" + shape.getName() + " (" + kind(shape) + ")");
-        Material material = MaterialRegistry.instance()
-            .getMaterialByIndex(stack.getItemDamage());
+        send(sender, "Shape: " + shape.getModId() + ":" + shape.getName() + " (" + type(shape) + ")");
+        Material material = MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage());
         if (material == null) {
             send(sender, "Material: none loaded at index " + stack.getItemDamage() + " (reserved or unknown)");
             return;
@@ -83,7 +81,7 @@ public class CommandMatInfo extends CommandBase {
         return null;
     }
 
-    private static String kind(Shape shape) {
+    private static String type(Shape shape) {
         if (shape instanceof ShapeFluidInContainer) return "fluid container";
         if (shape instanceof ShapeBlock) return "block";
         return "item";
@@ -100,13 +98,9 @@ public class CommandMatInfo extends CommandBase {
     /// Every property set on the material itself or on any of its families, material properties first,
     /// then family properties in alphabetical family order.
     private static Set<Property<?>> declaredProperties(Material material) {
-        Set<Property<?>> properties = new LinkedHashSet<>(
-            material.getOwnProperties()
-                .keySet());
+        Set<Property<?>> properties = new LinkedHashSet<>(material.getOwnProperties().keySet());
         for (Family family : material.getFamilies()) {
-            properties.addAll(
-                family.getOwnProperties()
-                    .keySet());
+            properties.addAll(family.getOwnProperties().keySet());
         }
         return properties;
     }

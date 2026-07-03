@@ -120,8 +120,7 @@ public final class Material {
         Object value = properties.get(property);
         if (value != null) return (T) value;
         for (Family family : sortedFamilies) {
-            Object inherited = family.getOwnPropertiesInternal()
-                .get(property);
+            Object inherited = family.getOwnPropertiesInternal().get(property);
             if (inherited != null) return (T) inherited;
         }
         return property.getDefaultValue();

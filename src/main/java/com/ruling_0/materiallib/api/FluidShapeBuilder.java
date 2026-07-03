@@ -33,7 +33,6 @@ public final class FluidShapeBuilder {
         }
         built = true;
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance()
-            .register(new ShapeFluid(modid, name, format));
+        return ShapeRegistry.instance().register(new ShapeFluid(modid, name, format));
     }
 }

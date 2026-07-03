@@ -12,11 +12,7 @@ import cpw.mods.fml.common.eventhandler.ListenerList;
 
 /// Detects [MaterialRegistrationEvent] handlers subscribed after the event fired.
 ///
-/// A late handler fails silently everywhere else: the bus accepts the subscription, the handler never runs,
-/// and the mod's content simply does not exist. Comparing the event's listener list between the post and
-/// postInit turns that silence into an error naming each late handler. The bus id needed to read the listener
-/// list is private to [EventBus], so it is read reflectively; if that read fails, the check is skipped with a
-/// warning rather than affecting startup.
+/// Covers the issue that late-registering handlers fail silently, so this logs them.
 final class LateHandlerCheck {
 
     private final int busId;

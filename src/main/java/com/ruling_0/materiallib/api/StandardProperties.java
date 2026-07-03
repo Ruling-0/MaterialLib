@@ -5,7 +5,7 @@ import java.util.Objects;
 import com.ruling_0.materiallib.MaterialLib;
 
 /// The properties this mod defines and uses itself. Other mods define their own [Property] constants for values
-/// their shape and recipe generation consumes (melting point, tool durability, and the like).
+/// their shape and recipe generation consumes (melting point, tool durability, etc.).
 public final class StandardProperties {
 
     private StandardProperties() {}

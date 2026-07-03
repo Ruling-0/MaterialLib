@@ -8,14 +8,8 @@ import com.ruling_0.materiallib.api.ShapeBlock;
 import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.ShapeRegistry;
 
-/// Migrates stored shape stacks onto this instance's material index assignment as they load, through Postea.
-///
-/// A Postea item-stack transformer is registered for every item and block shape during postInit -- item shapes, the
-/// item form of block shapes, and fluid containers -- whose stacks in inventories and containers carry the material
-/// index as their damage. A bare fluid shape needs none, since fluid stacks persist by fluid name rather than a
-/// material index. At world load the active migration is set from the per-world reconciliation; each stored stack
-/// then has its damage rewritten to the instance index or is dropped when the migration marks its material for
-/// deletion (see [MaterialMigration]).
+/// Handles migration of items from the assignment stored in the world to that stored on the instance, as determined
+/// by [MaterialMigration]. Ultimately, either translates metadata on itemstacks/blocks or deletes.
 ///
 /// FIXME: Postea truncates block metadata to a byte, so in-world blocks with metadata >127 cannot be transformed.
 public final class PosteaMigration {

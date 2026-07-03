@@ -14,6 +14,8 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 /// on this instance is never a deletion; the append-only store keeps its reserved index, so its stacks move there
 /// and render as a missing-material placeholder. The remap is by damage value alone because one index means the
 /// same material across every shape.
+///
+///
 public final class MaterialMigration {
 
     /// [#lookup] result: the stored stack should be removed, its material being unknown to this instance.

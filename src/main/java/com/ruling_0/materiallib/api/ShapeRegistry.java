@@ -86,8 +86,6 @@ public final class ShapeRegistry {
         throw new IllegalArgumentException(shape + " is not a registerable shape type");
     }
 
-    /// A fluid container is a distinct type from a plain item even though it is item-backed, so a container never
-    /// unifies with a plain item of the same name -- that merge would silently drop the loser's container mapping.
     private enum ShapeType {
 
         ITEM("item"),
@@ -148,8 +146,7 @@ public final class ShapeRegistry {
         return fluid.fluidStack(material, amount);
     }
 
-    /// Rejects a material that does not generate a shape, tested by membership in the shape's bound served
-    /// materials so it holds even when the material declared a non-owning alias of a unified name.
+    /// Rejects a material that does not generate a shape.
     private static void requireServes(ServedShape shape, Material material) {
         if (!serves(shape, material)) {
             throw new IllegalArgumentException(
@@ -169,8 +166,7 @@ public final class ShapeRegistry {
     /// Invoked by MaterialLib's preInit handler after [MaterialRegistry#resolve]; other mods must not call this.
     public void resolve() {
         requireRegistration("resolve shapes");
-        MaterialRegistry.instance()
-            .requireResolved("resolve shapes", "");
+        MaterialRegistry.instance().requireResolved("resolve shapes", "");
         assignedOwners = unification.resolve(persistedOwners);
         collectCanonicalShapes();
         bindServedMaterials();
@@ -179,11 +175,8 @@ public final class ShapeRegistry {
         registerFluidContainers();
         registerOreDictionary();
         resolved = true;
-        MaterialLib.LOG.info(
-            "Resolved {} item shapes, {} block shapes, and {} fluid shapes",
-            itemShapes.size(),
-            blockShapes.size(),
-            fluidShapes.size());
+        MaterialLib.LOG.info("Resolved {} item shapes, {} block shapes, and {} fluid shapes", itemShapes.size(),
+            blockShapes.size(), fluidShapes.size());
     }
 
     /// Runs every init-phase shape consumer once per (shape, material) pair for the shape it targets.
@@ -228,8 +221,7 @@ public final class ShapeRegistry {
                 }
                 else {
                     throw new IllegalStateException(
-                        backed + " is a backed shape but neither an item nor a block shape, so it would receive " +
-                            "no migration handler or renderer");
+                        backed + " is a backed shape but neither an item nor a block shape.");
                 }
             }
             else {
@@ -273,11 +265,9 @@ public final class ShapeRegistry {
         }
         Comparator<Material> byIndex = Comparator.comparingInt(Material::getIndex);
         for (Map.Entry<ServedShape, List<Material>> entry : served.entrySet()) {
-            Material[] materials = entry.getValue()
-                .toArray(new Material[0]);
+            Material[] materials = entry.getValue().toArray(new Material[0]);
             Arrays.sort(materials, byIndex);
-            entry.getKey()
-                .bindServedMaterials(materials);
+            entry.getKey().bindServedMaterials(materials);
         }
     }
 

@@ -11,9 +11,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// [IItemRenderer] when one is set through [MaterialLibClient].
 ///
 /// [#handleRenderType] returns false for materials with no custom renderer, which leaves the stack to default
-/// item rendering (the material's texture and [StandardProperties#TINT]); a single instance therefore serves
-/// every item shape, since the material is read from the stack's damage. Renderers may be set after this is
-/// installed, so the lookup happens per render rather than at install time.
+/// item rendering (the material's texture and [StandardProperties#TINT]).
 @SideOnly(Side.CLIENT)
 public final class ShapeItemRenderer implements IItemRenderer {
 
@@ -38,8 +36,7 @@ public final class ShapeItemRenderer implements IItemRenderer {
     }
 
     private static IItemRenderer rendererFor(ItemStack stack) {
-        Material material = MaterialRegistry.instance()
-            .getMaterialByIndex(stack.getItemDamage());
+        Material material = MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage());
         return material != null ? MaterialLibClient.getItemRenderer(material) : null;
     }
 }

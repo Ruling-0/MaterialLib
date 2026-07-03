@@ -15,9 +15,7 @@ public class Config {
             "registerExamples",
             Configuration.CATEGORY_GENERAL,
             false,
-            "Register the example content: materials TestIron and TestGold with item, block, fluid, and " +
-                "fluid-container shapes, a Test family, and a gear crafting recipe. A demonstration of the " +
-                "MaterialLib API, intended for development.");
+            "Register example content, for demonstrating design functionality.");
 
         if (configuration.hasChanged()) {
             configuration.save();

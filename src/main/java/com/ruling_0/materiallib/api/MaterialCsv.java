@@ -18,8 +18,7 @@ final class MaterialCsv {
 
     static String dump(MaterialRegistry registry) {
         Map<Integer, String> namesByIndex = new TreeMap<>();
-        for (Map.Entry<String, Integer> entry : registry.getAssignedIndices()
-            .entrySet()) {
+        for (Map.Entry<String, Integer> entry : registry.getAssignedIndices().entrySet()) {
             namesByIndex.put(entry.getValue(), entry.getKey());
         }
         Map<String, String> owners = registry.getAssignedOwners();

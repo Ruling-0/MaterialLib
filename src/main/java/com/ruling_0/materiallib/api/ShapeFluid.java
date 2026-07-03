@@ -19,12 +19,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// The Forge fluid backing a fluid [Shape]: one registered [Fluid] per material that generates the shape, named
 /// `<shape>.<material>` lowercased (e.g. `test.testiron`).
 ///
-/// Forge's fluid registry is keyed by a flat name with no mod domain, and fluid stacks persist in NBT by that name,
-/// so a fluid shape needs no metadata mapping -- only the naming convention. A fluid shape is therefore not a
-/// [BackedShape]: it registers no item or block, carries no oredict, and builds [FluidStack]s rather than item
-/// stacks. Materials declare it through [MaterialBuilder#generateShape]; the registry registers one fluid per
-/// material at resolve and, on the client, binds each fluid's still and flowing icons from the material's
-/// [TextureSet].
+/// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
+/// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve and, on the
+/// client, binds each fluid's still and flowing icons from the material's [TextureSet].
 ///
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see
 /// [ShapeFluidInContainer]). Each fluid takes its display name from the shape's format and its color from the
