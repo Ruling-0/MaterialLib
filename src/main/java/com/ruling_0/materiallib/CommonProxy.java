@@ -5,8 +5,11 @@ import java.io.File;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.ISaveHandler;
 
+import net.minecraftforge.common.MinecraftForge;
+
 import com.ruling_0.materiallib.api.MaterialIdStore;
 import com.ruling_0.materiallib.api.MaterialOwnerStore;
+import com.ruling_0.materiallib.api.MaterialRegistrationEvent;
 import com.ruling_0.materiallib.api.MaterialRegistry;
 import com.ruling_0.materiallib.api.ShapeOwnerStore;
 import com.ruling_0.materiallib.api.ShapeRegistry;
@@ -28,8 +31,9 @@ public class CommonProxy {
         MaterialLib.LOG.info("MaterialLib version " + Tags.VERSION);
 
         if (Config.registerExamples) {
-            ExampleContent.register();
+            MinecraftForge.EVENT_BUS.register(new ExampleContent());
         }
+        MinecraftForge.EVENT_BUS.post(new MaterialRegistrationEvent());
     }
 
     // Mods depending on materiallib register materials in their preInit handlers, which all run before this.

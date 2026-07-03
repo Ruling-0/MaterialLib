@@ -6,13 +6,16 @@ import net.minecraft.item.ItemStack;
 import com.ruling_0.materiallib.MaterialLib;
 import com.ruling_0.materiallib.api.Family;
 import com.ruling_0.materiallib.api.MaterialLibAPI;
+import com.ruling_0.materiallib.api.MaterialRegistrationEvent;
 import com.ruling_0.materiallib.api.Shape;
 import com.ruling_0.materiallib.api.TextureSet;
 
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
 
 /// A demonstration of the MaterialLib API, registered when the registerExamples config option is
-/// enabled: two materials, each of the four shape types, a family, and a shape consumer.
+/// enabled: two materials, each of the four shape types, a family, and a shape consumer, registered
+/// through a [MaterialRegistrationEvent] handler the way a dependent mod would.
 ///
 /// The materials are TestIron and TestGold (tinted, which the grayscale test texture set makes
 /// obvious). The testFrame block shape reaches both materials through the Test family; the testGear
@@ -21,9 +24,12 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// crafting its ingot into its gear, and lang overrides on TestGold show per-pair display names.
 public final class ExampleContent {
 
-    private ExampleContent() {}
+    @SubscribeEvent
+    public void onMaterialRegistration(MaterialRegistrationEvent event) {
+        register();
+    }
 
-    public static void register() {
+    private static void register() {
         TextureSet test = TextureSet.of(MaterialLib.MODID, "test");
 
         Shape testGear = MaterialLibAPI.newItemShape(MaterialLib.MODID, "testGear")
