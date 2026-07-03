@@ -47,22 +47,19 @@ public final class ShapeRegistry {
         return INSTANCE;
     }
 
-    /// The backing item of every item shape, in the order their names were first registered. Used to attach client
-    /// renderers and migration handlers; only populated once shapes resolve.
+    /// The backing item of every item shape, in the order their names were first registered. Only populated once
+    /// shapes resolve.
     public List<ShapeItem> getItemShapes() { return itemShapesView; }
 
-    /// The backing block of every block shape, in the order their names were first registered. Used to attach
-    /// migration handlers for the block's item form; only populated once shapes resolve.
+    /// The backing block of every block shape, in the order their names were first registered. Only populated
+    /// once shapes resolve.
     public List<ShapeBlock> getBlockShapes() { return blockShapesView; }
 
-    /// Every fluid shape, in the order their names were first registered. Used to bind fluid icons on the client;
-    /// only populated once shapes resolve.
+    /// Every fluid shape, in the order their names were first registered. Only populated once shapes resolve.
     public List<ShapeFluid> getFluidShapes() { return fluidShapesView; }
 
     /// Records a shape as a candidate to own its name and returns the shape to generate. The owner is chosen at
-    /// [#resolve], so the returned shape is unified onto the owner's backing object or fluid then. Pass it to
-    /// [MaterialBuilder#generateShape] or [FamilyBuilder#generateShape] regardless. A name backs one type only,
-    /// since shapes that share a name unify onto one owner. Call from the owning mod's preInit.
+    /// [#resolve], so the returned shape is unified onto the owner's backing object or fluid then.
     Shape register(ServedShape shape) {
         requireRegistration("register shape " + Names.key(shape.getModId(), shape.getName()));
         recordType(shape, typeOf(shape));
@@ -105,15 +102,14 @@ public final class ShapeRegistry {
         }
     }
 
-    /// Records a consumer to invoke at postInit for every material generating the shape named `shapeName`. Call
-    /// from the registering mod's preInit.
+    /// Records a consumer to invoke for every material generating the shape named `shapeName`.
     void registerConsumer(String modid, String shapeName, ShapeConsumer consumer) {
         requireRegistration("register a shape consumer targeting " + shapeName);
         consumers.register(modid, shapeName, consumer);
     }
 
-    /// Sets the persisted shape owners to honor at resolve, loaded from the instance-global store. A name already
-    /// in the store keeps its owner when that mod registers a candidate this session. Must be set before resolve.
+    /// Sets the persisted shape owners to honor at resolve, loaded from the instance-global store. Must be set
+    /// before resolve.
     void setPersistedOwners(Map<String, String> owners) {
         requireRegistration("set persisted shape owners");
         this.persistedOwners = new LinkedHashMap<>(owners);

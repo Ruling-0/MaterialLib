@@ -8,85 +8,77 @@ import net.minecraftforge.fluids.FluidStack;
 
 /// The public entry point of MaterialLib, wrapping the game's [MaterialRegistry] instance.
 ///
-/// During preInit, mods create materials and families through [#newMaterial] and [#newFamily], and alter ones
-/// belonging to other mods through [#editMaterial] and [#editFamily]. The registry resolves during this mod's
-/// init handler; from init onwards (in mods depending on materiallib) the contents are readable and immutable.
-///
-/// Shape consumers registered through [#registerShapeConsumer] during preInit run during this mod's postInit,
-/// once per material generating their targeted shape.
+/// All registration happens during the registering mod's preInit: declaring shapes through the shape builders
+/// and register methods, creating materials and families through [#newMaterial] and [#newFamily], altering ones
+/// belonging to other mods through [#editMaterial] and [#editFamily], and registering shape consumers through
+/// [#registerShapeConsumer]. The registry resolves during MaterialLib's init handler; from init onwards (in
+/// mods depending on materiallib) the contents are readable and immutable. Consumers run during MaterialLib's
+/// postInit; see [ShapeConsumer].
 public final class MaterialLibAPI {
 
     private MaterialLibAPI() {}
 
     /// Starts building a material owned by `modid`, drawing its textures from `textureSet`. Register by calling
-    /// [MaterialBuilder#build] during preInit. Materials declaring the same name from different mods unify into
-    /// one material when the registry resolves: the owning mod (the persisted owner when it declares the name
-    /// this session, else the alphabetically-first declaring modid) supplies the displayed modid, texture set,
-    /// lang key, and the value of any property declared by both; shapes, families, and tooltip lines union.
+    /// [MaterialBuilder#build]. Materials declaring the same name from different mods unify into one material
+    /// when the registry resolves; see [Material] for the ownership and merge rules.
     public static MaterialBuilder newMaterial(String modid, String name, TextureSet textureSet) {
         return MaterialRegistry.instance().newMaterial(modid, name, textureSet);
     }
 
-    /// Starts building a family owned by `modid`. Register by calling [FamilyBuilder#build] during preInit.
+    /// Starts building a family owned by `modid`. Register by calling [FamilyBuilder#build].
     public static FamilyBuilder newFamily(String modid, String name) {
         return MaterialRegistry.instance().newFamily(modid, name);
     }
 
-    /// Starts building a simple item shape owned by `modid`. Finish with [ItemShapeBuilder#build] during the
-    /// owning mod's preInit. For custom item behavior, subclass [ShapeItem] and use [#registerItemShape].
+    /// Starts building a simple item shape owned by `modid`. Finish with [ItemShapeBuilder#build]. For custom
+    /// item behavior, subclass [ShapeItem] and use [#registerItemShape].
     public static ItemShapeBuilder newItemShape(String modid, String name) {
         return new ItemShapeBuilder(modid, name);
     }
 
-    /// Registers a [ShapeItem] subclass and returns the shape to generate (see [ShapeRegistry#register]). Call
-    /// during the owning mod's preInit.
+    /// Registers a [ShapeItem] subclass and returns the shape to generate (see [ShapeRegistry#register]).
     public static Shape registerItemShape(ShapeItem item) {
         return ShapeRegistry.instance().register(item);
     }
 
-    /// Starts building a simple block shape owned by `modid`. Finish with [BlockShapeBuilder#build] during the
-    /// owning mod's preInit. For custom block behavior, subclass [ShapeBlock] and use [#registerBlockShape]. Block
-    /// shapes rely on the EndlessIDs dependency, which widens block metadata once more than sixteen materials are
-    /// registered.
+    /// Starts building a simple block shape owned by `modid`. Finish with [BlockShapeBuilder#build]. For custom
+    /// block behavior, subclass [ShapeBlock] and use [#registerBlockShape]. Block shapes rely on the EndlessIDs
+    /// dependency, which widens block metadata once more than sixteen materials are registered.
     public static BlockShapeBuilder newBlockShape(String modid, String name) {
         return new BlockShapeBuilder(modid, name);
     }
 
-    /// Registers a [ShapeBlock] subclass and returns the shape to generate (see [ShapeRegistry#register]). Call
-    /// during the owning mod's preInit.
+    /// Registers a [ShapeBlock] subclass and returns the shape to generate (see [ShapeRegistry#register]).
     public static Shape registerBlockShape(ShapeBlock block) {
         return ShapeRegistry.instance().register(block);
     }
 
-    /// Starts building a simple fluid shape owned by `modid`. Finish with [FluidShapeBuilder#build] during the
-    /// owning mod's preInit. For custom fluid behavior, subclass [ShapeFluid] and use [#registerFluidShape].
+    /// Starts building a simple fluid shape owned by `modid`. Finish with [FluidShapeBuilder#build]. For custom
+    /// fluid behavior, subclass [ShapeFluid] and use [#registerFluidShape].
     public static FluidShapeBuilder newFluidShape(String modid, String name) {
         return new FluidShapeBuilder(modid, name);
     }
 
-    /// Registers a [ShapeFluid] subclass and returns the shape to generate (see [ShapeRegistry#register]). Call
-    /// during the owning mod's preInit.
+    /// Registers a [ShapeFluid] subclass and returns the shape to generate (see [ShapeRegistry#register]).
     public static Shape registerFluidShape(ShapeFluid fluid) {
         return ShapeRegistry.instance().register(fluid);
     }
 
-    /// Starts building a simple fluid-in-container shape owned by `modid`, e.g. a filled bucket or cell. Finish with
-    /// [FluidInContainerShapeBuilder#build] during the owning mod's preInit. For custom behavior, subclass
-    /// [ShapeFluidInContainer] and use [#registerFluidInContainerShape].
+    /// Starts building a simple fluid-in-container shape owned by `modid`, e.g. a filled bucket or cell. Finish
+    /// with [FluidInContainerShapeBuilder#build]. For custom behavior, subclass [ShapeFluidInContainer] and use
+    /// [#registerFluidInContainerShape].
     public static FluidInContainerShapeBuilder newFluidInContainerShape(String modid, String name) {
         return new FluidInContainerShapeBuilder(modid, name);
     }
 
     /// Registers a [ShapeFluidInContainer] subclass and returns the shape to generate (see [ShapeRegistry#register]).
-    /// Call during the owning mod's preInit.
     public static Shape registerFluidInContainerShape(ShapeFluidInContainer container) {
         return ShapeRegistry.instance().register(container);
     }
 
-    /// Registers a consumer invoked once per material generating the shape named `shapeName`, during MaterialLib's
-    /// postInit. Call during the registering mod's preInit. Targeting is by name so a mod can consume a shape it
-    /// does not declare; a name no mod registered logs a warning and the consumer is skipped, so the target may
-    /// come from an optional mod. See [ShapeConsumer] for the dispatch and error contract.
+    /// Registers a consumer invoked once per material generating the shape named `shapeName`; see [ShapeConsumer]
+    /// for the dispatch and error contract. Targeting is by name so the target may come from another, possibly
+    /// absent mod; a name no mod registered is skipped with a warning.
     public static void registerShapeConsumer(String modid, String shapeName, ShapeConsumer consumer) {
         ShapeRegistry.instance()
             .registerConsumer(modid, shapeName, consumer);

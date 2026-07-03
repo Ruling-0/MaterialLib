@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import com.ruling_0.materiallib.MaterialLib;
 
@@ -55,7 +54,8 @@ final class ShapeUnification {
         for (Map.Entry<String, List<Shape>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
             List<Shape> candidates = entry.getValue();
-            String ownerModid = chooseOwner(name, candidates, persistedOwners.get(name));
+            String ownerModid = OwnerElection
+                .choose("Shape", name, candidates, Shape::getModId, persistedOwners.get(name), "registered");
             Shape canonical = candidateOwnedBy(candidates, ownerModid);
             canonicalByName.put(name, canonical);
             for (Shape candidate : candidates) {
@@ -69,25 +69,6 @@ final class ShapeUnification {
         }
         resolved = true;
         return owners;
-    }
-
-    private static String chooseOwner(String name, List<Shape> candidates, String persistedOwner) {
-        TreeSet<String> modids = new TreeSet<>();
-        for (Shape candidate : candidates) {
-            modids.add(candidate.getModId());
-        }
-        if (persistedOwner != null && modids.contains(persistedOwner)) {
-            return persistedOwner;
-        }
-        String owner = modids.first();
-        if (persistedOwner != null) {
-            MaterialLib.LOG.info(
-                "Shape {} was owned by {}, which registered no candidate this session; reassigning to {}",
-                name,
-                persistedOwner,
-                owner);
-        }
-        return owner;
     }
 
     private static Shape candidateOwnedBy(List<Shape> candidates, String modid) {

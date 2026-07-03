@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -103,10 +102,8 @@ public final class MaterialRegistry {
 
     public boolean isResolved() { return resolved; }
 
-    /// Merges same-name materials onto their owners, applies all queued edits in call order, derives family
-    /// membership and per-material shape sets, and freezes the registry.
-    ///
-    /// Invoked once by MaterialLib's init handler; other mods must not call it.
+    /// Ends registration and freezes the registry, as described in the class doc. Invoked once by MaterialLib's
+    /// init handler; other mods must not call it.
     public void resolve() {
         requireRegistration("resolve the registry");
         unifyMaterials();
@@ -160,7 +157,8 @@ public final class MaterialRegistry {
         for (Map.Entry<String, List<Material>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
             List<Material> candidates = entry.getValue();
-            String ownerModid = chooseOwner(name, candidates, persistedOwners.get(name));
+            String ownerModid = OwnerElection
+                .choose("Material", name, candidates, Material::getModId, persistedOwners.get(name), "declared");
             assignedOwners.put(name, ownerModid);
             if (candidates.size() == 1) continue;
             candidates.sort(Comparator.comparing(Material::getModId));
@@ -179,27 +177,8 @@ public final class MaterialRegistry {
         }
     }
 
-    private static String chooseOwner(String name, List<Material> candidates, String persistedOwner) {
-        TreeSet<String> modids = new TreeSet<>();
-        for (Material candidate : candidates) {
-            modids.add(candidate.getModId());
-        }
-        if (persistedOwner != null && modids.contains(persistedOwner)) {
-            return persistedOwner;
-        }
-        String owner = modids.first();
-        if (persistedOwner != null) {
-            MaterialLib.LOG.info(
-                "Material {} was owned by {}, which declared no candidate this session; reassigning to {}",
-                name,
-                persistedOwner,
-                owner);
-        }
-        return owner;
-    }
-
-    /// Sets the persisted index assignment to honor at resolve, loaded from the instance-global store. Existing
-    /// materials keep their stored index; only genuinely new materials are numbered. Must be set before resolve.
+    /// Sets the persisted index assignment to honor at resolve, loaded from the instance-global store. Must be
+    /// set before resolve.
     void setPersistedIndices(Map<String, Integer> indices) {
         requireRegistration("set persisted material indices");
         this.persistedIndices = new LinkedHashMap<>(indices);
@@ -212,8 +191,8 @@ public final class MaterialRegistry {
         return Collections.unmodifiableMap(assignedIndices);
     }
 
-    /// Sets the persisted material owners to honor at resolve, loaded from the instance-global store. A name
-    /// already in the store keeps its owner when that mod declares it this session. Must be set before resolve.
+    /// Sets the persisted material owners to honor at resolve, loaded from the instance-global store. Must be
+    /// set before resolve.
     void setPersistedOwners(Map<String, String> owners) {
         requireRegistration("set persisted material owners");
         this.persistedOwners = new LinkedHashMap<>(owners);
@@ -227,7 +206,7 @@ public final class MaterialRegistry {
     }
 
     /// The full index assignment rendered as a CSV table for debugging: one row per assigned index,
-    /// including indices reserved for materials not loaded this session, with the persisted owner and,
+    /// including indices reserved for materials not loaded this session, with the assigned owner and,
     /// for loaded materials, shapes and families. Only available after the registry has resolved.
     public String dumpCsv() {
         return MaterialCsv.dump(this);

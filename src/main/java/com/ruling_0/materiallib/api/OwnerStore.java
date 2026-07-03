@@ -34,12 +34,9 @@ final class OwnerStore {
             if (owner == null || owner.isEmpty()) {
                 throw new IllegalStateException(corruptMessage + " (" + entry.getKey() + " has no owner)");
             }
-            for (int i = 0; i < owner.length(); i++) {
-                char c = owner.charAt(i);
-                if (c == ':' || Character.isWhitespace(c)) {
-                    throw new IllegalStateException(
-                        corruptMessage + " (" + entry.getKey() + " has an invalid owner \"" + owner + "\")");
-                }
+            if (Names.hasInvalidChars(owner)) {
+                throw new IllegalStateException(
+                    corruptMessage + " (" + entry.getKey() + " has an invalid owner \"" + owner + "\")");
             }
         }
     }

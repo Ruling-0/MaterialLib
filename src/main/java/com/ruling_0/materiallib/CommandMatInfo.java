@@ -36,9 +36,6 @@ public class CommandMatInfo extends CommandBase {
     }
 
     @Override
-    public int getRequiredPermissionLevel() { return 0; }
-
-    @Override
     public boolean canCommandSenderUseCommand(ICommandSender sender) {
         return true;
     }

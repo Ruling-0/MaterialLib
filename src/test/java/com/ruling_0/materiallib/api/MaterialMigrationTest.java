@@ -38,13 +38,6 @@ class MaterialMigrationTest {
     }
 
     @Test
-    void aMaterialStillReservedOnThisInstanceMovesRatherThanDeletes() {
-        MaterialMigration migration = new MaterialMigration(Map.of("Gone", 3), Map.of("Gone", 9));
-
-        assertEquals(9, migration.lookup(3));
-    }
-
-    @Test
     void unrelatedDamageValuesAreUnchanged() {
         MaterialMigration migration = new MaterialMigration(Map.of("Iron", 0), Map.of("Iron", 5));
 

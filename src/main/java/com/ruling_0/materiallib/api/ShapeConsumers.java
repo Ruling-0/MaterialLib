@@ -36,7 +36,6 @@ final class ShapeConsumers {
     }
 
     /// Invokes every consumer once per material generating its targeted shape, resolved through `shapesByName`.
-    /// Runs once; rethrows a consumer's failure wrapped with the registering modid, shape, and material.
     void run(Map<String, ServedShape> shapesByName) {
         if (ran) {
             throw new IllegalStateException("Cannot run shape consumers: they have already run");
