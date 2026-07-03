@@ -8,13 +8,13 @@ import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.ShapeItemRenderer;
 import com.ruling_0.materiallib.api.ShapeRegistry;
 
-import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
 public class ClientProxy extends CommonProxy {
 
     @Override
-    public void init(FMLInitializationEvent event) {
-        super.init(event);
+    public void preInit(FMLPreInitializationEvent event) {
+        super.preInit(event);
         ShapeItemRenderer renderer = new ShapeItemRenderer();
         for (ShapeItem item : ShapeRegistry.instance().getItemShapes()) {
             MinecraftForgeClient.registerItemRenderer(item, renderer);

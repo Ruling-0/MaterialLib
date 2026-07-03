@@ -16,7 +16,6 @@ import com.ruling_0.materiallib.api.ShapeRegistry;
 import com.ruling_0.materiallib.api.WorldMaterialIds;
 import com.ruling_0.materiallib.examples.ExampleContent;
 
-import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
@@ -34,11 +33,8 @@ public class CommonProxy {
             MinecraftForge.EVENT_BUS.register(new ExampleContent());
         }
         MinecraftForge.EVENT_BUS.post(new MaterialRegistrationEvent());
-    }
 
-    // Mods depending on materiallib register materials in their preInit handlers, which all run before this.
-    public void init(FMLInitializationEvent event) {
-        File dir = new File(Loader.instance().getConfigDir(), MaterialLib.MODID);
+        File dir = new File(event.getModConfigurationDirectory(), MaterialLib.MODID);
         MaterialIdStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialOwnerStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialRegistry.instance().resolve();
@@ -50,8 +46,11 @@ public class CommonProxy {
         ShapeOwnerStore.saveFrom(ShapeRegistry.instance(), dir);
     }
 
-    public void postInit(FMLPostInitializationEvent event) {
+    public void init(FMLInitializationEvent event) {
         ShapeRegistry.instance().runInitConsumers();
+    }
+
+    public void postInit(FMLPostInitializationEvent event) {
         ShapeRegistry.instance().runPostInitConsumers();
         PosteaMigration.registerHandlers();
     }

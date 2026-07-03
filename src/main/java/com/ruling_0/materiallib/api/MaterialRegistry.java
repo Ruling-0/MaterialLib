@@ -372,7 +372,8 @@ public final class MaterialRegistry {
         if (!resolved) {
             throw new IllegalStateException(
                 "Cannot " + action + target + ": the material registry has not resolved yet. " +
-                    "Registry contents are readable from init onwards in mods depending on materiallib");
+                    "Registry contents are readable once MaterialLib's preInit has resolved the registry; " +
+                    "mods depending on materiallib read from their preInit onwards");
         }
     }
 
@@ -380,7 +381,8 @@ public final class MaterialRegistry {
         if (resolved) {
             throw new IllegalStateException(
                 "Cannot " + what + ": the material registry has already resolved. " +
-                    "Materials, families, and edits must be registered during preInit");
+                    "Materials, families, and edits register inside a MaterialRegistrationEvent handler " +
+                    "subscribed during construction");
         }
     }
 

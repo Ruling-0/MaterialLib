@@ -242,14 +242,16 @@ public final class ShapeRegistry {
     private void requireRegistration(String what) {
         if (resolved) {
             throw new IllegalStateException(
-                "Cannot " + what + ": shapes have already resolved. Shapes register during preInit");
+                "Cannot " + what + ": shapes have already resolved. Shapes register inside a " +
+                    "MaterialRegistrationEvent handler subscribed during construction");
         }
     }
 
     private void requireResolved(String what) {
         if (!resolved) {
             throw new IllegalStateException(
-                "Cannot " + what + ": shapes have not resolved yet. They are available from init onwards");
+                "Cannot " + what + ": shapes have not resolved yet. They are available once MaterialLib's " +
+                    "preInit has resolved them");
         }
     }
 
