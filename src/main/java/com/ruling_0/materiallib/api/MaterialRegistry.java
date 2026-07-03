@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -158,7 +157,12 @@ public final class MaterialRegistry {
         for (Map.Entry<String, List<Material>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
             List<Material> candidates = entry.getValue();
-            String ownerModid = chooseOwner(name, candidates, persistedOwners.get(name));
+            String ownerModid = OwnerElection.choose(
+                name,
+                candidates,
+                Material::getModId,
+                persistedOwners.get(name),
+                "Material {} was owned by {}, which declared no candidate this session; reassigning to {}");
             assignedOwners.put(name, ownerModid);
             if (candidates.size() == 1) continue;
             candidates.sort(Comparator.comparing(Material::getModId));
@@ -175,25 +179,6 @@ public final class MaterialRegistry {
                 winner.mergeFrom(loser);
             }
         }
-    }
-
-    private static String chooseOwner(String name, List<Material> candidates, String persistedOwner) {
-        TreeSet<String> modids = new TreeSet<>();
-        for (Material candidate : candidates) {
-            modids.add(candidate.getModId());
-        }
-        if (persistedOwner != null && modids.contains(persistedOwner)) {
-            return persistedOwner;
-        }
-        String owner = modids.first();
-        if (persistedOwner != null) {
-            MaterialLib.LOG.info(
-                "Material {} was owned by {}, which declared no candidate this session; reassigning to {}",
-                name,
-                persistedOwner,
-                owner);
-        }
-        return owner;
     }
 
     /// Sets the persisted index assignment to honor at resolve, loaded from the instance-global store. Must be
