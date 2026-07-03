@@ -25,9 +25,9 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 /// be read yet, and neither can the bulk collection views. Once every handler has returned, [#resolve] merges
 /// same-name materials onto their owners, applies all queued edits in call order, derives family membership and
 /// per-material shape sets, and freezes the registry. From then on everything is readable and nothing can be
-/// registered or edited, which guarantees dependent mods a complete registry from their preInit onwards.
+/// registered or edited, which guarantees dependent mods a complete registry from their init onwards.
 ///
-/// The game uses the single [#instance]; tests construct private registries directly.
+/// The game uses the single [#instance].
 public final class MaterialRegistry {
 
     private static final MaterialRegistry INSTANCE = new MaterialRegistry();
@@ -102,8 +102,8 @@ public final class MaterialRegistry {
 
     public boolean isResolved() { return resolved; }
 
-    /// Ends registration and freezes the registry, as described in the class doc. Invoked once by MaterialLib's
-    /// preInit handler after the registration event; other mods must not call it.
+    /// Ends registration and freezes the registry. Invoked once by MaterialLib's preInit handler after the
+    /// registration event; other mods must not call it.
     public void resolve() {
         requireRegistration("resolve the registry");
         unifyMaterials();
@@ -143,15 +143,11 @@ public final class MaterialRegistry {
         MaterialLib.LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
     }
 
-    /// Collapses materials that share a name down to one canonical material with one owning mod, folding each
-    /// non-owning declaration into the owner and rerouting its key. The owner is chosen here rather than at
-    /// registration so it is independent of mod load order, and the persisted owner keeps the choice stable when
-    /// another mod declaring the same name is added.
+    /// Unifies materials that share the same name onto a single canonical one, through an [OwnerElection].
     private void unifyMaterials() {
         Map<String, List<Material>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();
         for (Material material : materials.values()) {
-            candidatesByName.computeIfAbsent(material.getName(), name -> new ObjectArrayList<>())
-                .add(material);
+            candidatesByName.computeIfAbsent(material.getName(), name -> new ObjectArrayList<>()).add(material);
         }
         assignedOwners = new LinkedHashMap<>(persistedOwners);
         for (Map.Entry<String, List<Material>> entry : candidatesByName.entrySet()) {
@@ -164,8 +160,7 @@ public final class MaterialRegistry {
             candidates.sort(Comparator.comparing(Material::getModId));
             Material winner = null;
             for (Material candidate : candidates) {
-                if (candidate.getModId()
-                    .equals(ownerModid)) winner = candidate;
+                if (candidate.getModId().equals(ownerModid)) winner = candidate;
             }
             for (Material loser : candidates) {
                 if (loser == winner) continue;
@@ -213,7 +208,7 @@ public final class MaterialRegistry {
     }
 
     /// Assigns each material its global index, append-only against the persisted assignment: a material already in
-    /// the store keeps its index, genuinely new materials take the next free indices in ascending name order, and
+    /// the store keeps its index, new materials take the next free indices in ascending name order, and
     /// indices of materials no longer present stay reserved (never reused) so existing item stacks do not change
     /// material. The index becomes the item damage in every shape and the worldgen id.
     private void assignMaterialIndices() {

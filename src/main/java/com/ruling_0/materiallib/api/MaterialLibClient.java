@@ -13,10 +13,9 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 /// The client-side entry point of MaterialLib, for behavior that exists only on the client.
 ///
 /// A custom [IItemRenderer] can be attached to a material so every item shape of that material renders through
-/// it, the way GregTech gives Universium and similar materials a special look. Renderers are client-only, so they
-/// are registered here from a mod's client proxy rather than through the common [MaterialBuilder]; this keeps the
-/// material definition free of render types and safe to load on a dedicated server. A shape with no custom
-/// renderer for a material falls back to the material's texture and [StandardProperties#TINT].
+/// Renderers are client-only, so they are registered here from a mod's client proxy rather than through the common
+/// [MaterialBuilder]; this keeps the material definition free of render types and safe to load on a dedicated server. A
+/// shape with no custom renderer for a material falls back to the material's texture and [StandardProperties#TINT].
 @SideOnly(Side.CLIENT)
 public final class MaterialLibClient {
 
@@ -34,8 +33,7 @@ public final class MaterialLibClient {
     /// Renders every item shape of the material with the given key through `renderer`. Warns and does nothing if
     /// no such material is registered.
     public static void setItemRenderer(String modid, String name, IItemRenderer renderer) {
-        Material material = MaterialRegistry.instance()
-            .getMaterial(modid, name);
+        Material material = MaterialRegistry.instance().getMaterial(modid, name);
         if (material == null) {
             MaterialLib.LOG.warn("Cannot set an item renderer for {}:{}: no such material is registered", modid, name);
             return;

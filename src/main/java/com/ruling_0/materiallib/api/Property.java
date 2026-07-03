@@ -10,8 +10,7 @@ package com.ruling_0.materiallib.api;
 /// Values are read through [Material#getProperty] and [Family#getProperty]. Resolution for a material checks,
 /// in order: the material's own value, the values of the material's [Family]s (taking the first family that
 /// sets the property, in alphabetical, case-sensitive `modid:name` key order), then [#getDefaultValue()].
-/// Conflicting family values are logged when the registry resolves, compared via `equals`, so value types
-/// shared across families should implement it meaningfully.
+/// Conflicting family values are logged when the registry resolves, compared via `equals`.
 public final class Property<T> {
 
     private final String modid;

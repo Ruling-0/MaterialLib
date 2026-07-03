@@ -8,9 +8,7 @@ import java.util.Map;
 ///
 /// Materials that share a name unify onto one owner (see [MaterialRegistry#resolve]). [#loadInto] feeds the
 /// saved owners to the registry before it resolves, so an existing name keeps its owner even when a mod that
-/// also declares it is added. [#saveFrom] writes the resolved assignment back. The material's saved identity is
-/// its bare name and does not depend on the owner, so a wrong owner changes only displayed attribution,
-/// textures, and property-conflict winners, never the stored stacks.
+/// also declares it is added. [#saveFrom] writes the resolved assignment back.
 public final class MaterialOwnerStore {
 
     private static final String FILE_NAME = "material-owners.json";

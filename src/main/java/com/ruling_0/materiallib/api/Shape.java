@@ -24,6 +24,6 @@ public interface Shape {
     /// The oredict prefixes for this shape. The full oredict entry for a material is each prefix followed by the
     /// material name, e.g. "gear" + "TestIron" -> "gearTestIron". A shape may expose several prefixes, registering
     /// its item under each (e.g. "gear" and "cog" give both "gearTestIron" and "cogTestIron"). At least one for an
-    /// item or block shape; a fluid shape has none, since Forge keys fluids by name rather than the ore dictionary.
+    /// item or block shape; a fluid shape has none..
     List<String> getOreDicts();
 }

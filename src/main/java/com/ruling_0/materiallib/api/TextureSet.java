@@ -1,11 +1,9 @@
 package com.ruling_0.materiallib.api;
 
-/// Identifies a folder of material textures supplied by a mod, holding one texture per shape name.
+/// Defines a set of textures corresponding to shapes, one per shape. Each must be named `<shape>.png`.
 ///
-/// The folder lives in the owning mod's assets under `textures/items/materials/<name>/` for item shapes and
-/// `textures/blocks/materials/<name>/` for block and fluid shapes, with files named `<shape>.png`. [#iconPath] builds
-/// the `modid:path` identifier accepted by icon registration; whether it resolves against the items or blocks texture
-/// directory is decided by what registers it.
+/// The `name` of this corresponds to the folder name holding the textures, either `textures/items/materials/<name>/`
+/// for items or `textures/blocks/materials/<name>/` for blocks and fluids.
 public final class TextureSet {
 
     private final String modid;

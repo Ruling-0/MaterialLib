@@ -37,8 +37,7 @@ public class CommandDumpMats extends CommandBase {
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        String csv = MaterialRegistry.instance()
-            .dumpCsv();
+        String csv = MaterialRegistry.instance().dumpCsv();
         try {
             Files.write(dumpFile.toPath(), csv.getBytes(StandardCharsets.UTF_8));
         }
@@ -50,10 +49,8 @@ public class CommandDumpMats extends CommandBase {
             return;
         }
         ChatComponentText link = new ChatComponentText(dumpFile.getAbsolutePath());
-        link.getChatStyle()
-            .setChatClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, dumpFile.getAbsolutePath()));
-        link.getChatStyle()
-            .setUnderlined(true);
+        link.getChatStyle().setChatClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, dumpFile.getAbsolutePath()));
+        link.getChatStyle().setUnderlined(true);
         sender.addChatMessage(new ChatComponentText("Dumped material indices to ").appendSibling(link));
     }
 }

@@ -7,13 +7,9 @@ import com.ruling_0.materiallib.MaterialLib;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-/// Holds the registered shape consumers and dispatches each one over its targeted shape's materials once
+/// Holds the registered [ShapeConsumer]s and dispatches each one over its targeted shape's materials once
 /// shapes have resolved.
 ///
-/// Consumers target shapes by name rather than by [Shape] reference: requiring a reference would force a
-/// consuming mod to declare its own same-name shape candidate just to obtain a handle, which would make it an
-/// ownership-election candidate as a side effect. The name resolves to the canonical shape at dispatch, and a
-/// name no mod registered is skipped with a warning so a consumer may target a shape from an optional mod.
 /// Consumers register into one of two phases, each dispatched once from [ShapeRegistry]: the init phase for
 /// recipes, and the postInit phase for content that must observe every mod's init.
 final class ShapeConsumers {
@@ -80,8 +76,7 @@ final class ShapeConsumers {
             dispatched++;
             for (Material material : shape.getServedMaterials()) {
                 try {
-                    registration.consumer()
-                        .consume(shape, material);
+                    registration.consumer().consume(shape, material);
                 }
                 catch (RuntimeException e) {
                     throw new IllegalStateException(
@@ -92,11 +87,7 @@ final class ShapeConsumers {
                 pairs++;
             }
         }
-        MaterialLib.LOG.info(
-            "Ran {} {} shape consumers over {} shape-material pairs",
-            dispatched,
-            phase.label,
-            pairs);
+        MaterialLib.LOG.info("Ran {} {} shape consumers over {} shape-material pairs", dispatched, phase.label, pairs);
     }
 
     private boolean ran(Phase phase) {

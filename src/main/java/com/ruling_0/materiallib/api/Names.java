@@ -9,8 +9,7 @@ final class Names {
 
     private Names() {}
 
-    /// Validates a shape's oredict prefixes -- at least one, each a valid identifier -- and returns an immutable
-    /// copy.
+    /// Validates a shape's oredict prefixes and returns an immutable copy.
     static List<String> validateOreDicts(String... oreDicts) {
         if (oreDicts == null) throw new IllegalArgumentException("oredict prefixes must not be null");
         if (oreDicts.length == 0) throw new IllegalArgumentException("a shape requires at least one oredict prefix");

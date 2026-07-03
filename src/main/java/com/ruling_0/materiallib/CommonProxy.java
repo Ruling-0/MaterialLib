@@ -66,17 +66,13 @@ public class CommonProxy {
     // Before the worlds load, so the per-world id copy is reconciled against the instance before any item loads.
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {
         MinecraftServer server = event.getServer();
-        ISaveHandler save = server.getActiveAnvilConverter()
-            .getSaveLoader(server.getFolderName(), false);
+        ISaveHandler save = server.getActiveAnvilConverter().getSaveLoader(server.getFolderName(), false);
         File worldFile = new File(new File(save.getWorldDirectory(), MaterialLib.MODID), "material-ids.json");
         PosteaMigration.setActiveMigration(WorldMaterialIds.check(MaterialRegistry.instance(), worldFile));
     }
 
     public void serverStarting(FMLServerStartingEvent event) {
-        event.registerServerCommand(
-            new CommandDumpMats(
-                event.getServer()
-                    .getFile("materiallib-dump.csv")));
+        event.registerServerCommand(new CommandDumpMats(event.getServer().getFile("materiallib-dump.csv")));
         event.registerServerCommand(new CommandMatInfo());
     }
 }

@@ -18,17 +18,14 @@ final class ShapeText {
     /// The material a stack of a shape represents, decoding the damage value, or null if the damage maps to no
     /// material.
     static Material materialFor(ItemStack stack) {
-        return MaterialRegistry.instance()
-            .getMaterialByIndex(stack.getItemDamage());
+        return MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage());
     }
 
     /// The display name for a shape stack: a placeholder when the damage maps to no material; otherwise the name
     /// for the shape-and-material pair.
     static String displayName(Shape shape, String displayNameFormat, ItemStack stack) {
         Material material = materialFor(stack);
-        if (material == null) {
-            return missingMaterialName(stack.getItemDamage());
-        }
+        if (material == null) return missingMaterialName(stack.getItemDamage());
         return displayName(shape, displayNameFormat, material);
     }
 
@@ -36,9 +33,7 @@ final class ShapeText {
     /// shape's format applied to the material name.
     static String displayName(Shape shape, String displayNameFormat, Material material) {
         String overrideKey = ShapeNaming.overrideKey(shape, material);
-        if (StatCollector.canTranslate(overrideKey)) {
-            return StatCollector.translateToLocal(overrideKey);
-        }
+        if (StatCollector.canTranslate(overrideKey)) return StatCollector.translateToLocal(overrideKey);
         return ShapeNaming.format(displayNameFormat, localizedMaterialName(material));
     }
 

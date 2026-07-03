@@ -22,8 +22,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 /// corrupt-file error, and an atomic write through a temp file so a crash mid-write never truncates the store.
 final class JsonStore {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting()
-        .create();
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private JsonStore() {}
 

@@ -1,6 +1,6 @@
 package com.ruling_0.materiallib.api;
 
-/// A [Shape] the registry binds to the materials that generate it, whether or not the shape has a backing item or
+/// A [Shape] the registry binds to the materials that generate it, whether the shape has a backing item or
 /// block.
 ///
 /// Both a [BackedShape] (an item or block) and a [ShapeFluid] (a name-keyed Forge fluid) need to know their

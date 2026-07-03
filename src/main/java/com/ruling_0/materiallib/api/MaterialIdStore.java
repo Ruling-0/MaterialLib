@@ -11,8 +11,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 ///
 /// The assignment is append-only and shared by every world on the instance: [#loadInto] feeds the saved indices
 /// to the registry before it resolves so existing materials keep their index, and [#saveFrom] writes the resolved
-/// assignment (including indices reserved for removed materials) back. Keeping the mapping fixed across launches
-/// is what stops stored item stacks from changing material when the material set changes.
+/// assignment (including indices reserved for removed materials) back.
 public final class MaterialIdStore {
 
     private static final String FILE_NAME = "material-ids.json";
@@ -20,7 +19,7 @@ public final class MaterialIdStore {
 
     private MaterialIdStore() {}
 
-    /// Loads the saved assignment from `<dir>/material-ids.json` and hands it to the registry to honor at resolve.
+    /// Loads the saved assignment from `<dir>/material-ids.json` and passes it to the registry at resolve.
     public static void loadInto(MaterialRegistry registry, File dir) {
         registry.setPersistedIndices(read(new File(dir, FILE_NAME)));
     }
@@ -56,8 +55,7 @@ public final class MaterialIdStore {
     private static void validateIndices(File file, Map<String, Integer> materials) {
         IntSet used = new IntOpenHashSet();
         for (Map.Entry<String, Integer> entry : materials.entrySet()) {
-            if (entry.getKey()
-                .indexOf(':') >= 0) {
+            if (entry.getKey().indexOf(':') >= 0) {
                 throw new IllegalStateException(
                     corrupt(file) + " (" + entry.getKey() + " is not a bare material name)");
             }

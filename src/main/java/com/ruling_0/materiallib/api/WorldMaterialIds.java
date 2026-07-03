@@ -7,13 +7,10 @@ import java.util.Map;
 
 import com.ruling_0.materiallib.MaterialLib;
 
-/// Reconciles a world's saved material -> index assignment with this instance's.
+/// Reconciles differences between the instance's [MaterialIdStore] and that stored on the world.
 ///
-/// The instance assignment is append-only, so a world loaded on the instance that created it always agrees; its
-/// saved copy is just brought up to date as new materials are added. A world moved from another instance can
-/// disagree -- a material now sits at a different index, or this instance has no index for it -- which would make
-/// stored item stacks read as the wrong material. Such a mismatch produces a [MaterialMigration] that the caller
-/// hands to Postea to remap stored stacks as they are read from disk, and is logged so it is never silent.
+/// Mainly necessary for cases where the instance store is regenerated or a world is migrated across instances. On
+/// detecting a difference, creates a [MaterialMigration] to handle the migration via postea.
 public final class WorldMaterialIds {
 
     private WorldMaterialIds() {}
@@ -21,8 +18,7 @@ public final class WorldMaterialIds {
     /// Compares the assignment saved in `worldFile` against the registry's resolved assignment, and returns the
     /// migration to apply to the world's stored stacks, or null when none is needed. A world with no saved
     /// assignment yet is stamped with the current one; a world that only lacks newly added materials has its saved
-    /// copy refreshed; a genuine mismatch is logged, the saved copy advanced to the instance assignment, and the
-    /// migration returned so stored stacks are remapped as they load.
+    /// copy refreshed.
     public static MaterialMigration check(MaterialRegistry registry, File worldFile) {
         Map<String, Integer> instance = registry.getAssignedIndices();
         Map<String, Integer> world = MaterialIdStore.read(worldFile);

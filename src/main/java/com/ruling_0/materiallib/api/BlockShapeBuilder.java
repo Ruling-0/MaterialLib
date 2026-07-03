@@ -42,7 +42,6 @@ public final class BlockShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance()
-            .register(new ShapeBlock(modid, name, format, prefixes));
+        return ShapeRegistry.instance().register(new ShapeBlock(modid, name, format, prefixes));
     }
 }
