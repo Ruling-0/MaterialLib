@@ -11,9 +11,9 @@ import net.minecraftforge.fluids.FluidStack;
 /// All registration happens during the registering mod's preInit: declaring shapes through the shape builders
 /// and register methods, creating materials and families through [#newMaterial] and [#newFamily], altering ones
 /// belonging to other mods through [#editMaterial] and [#editFamily], and registering shape consumers through
-/// [#registerShapeConsumer]. The registry resolves during this mod's init handler; from init onwards (in mods
-/// depending on materiallib) the contents are readable and immutable. Consumers run during this mod's postInit;
-/// see [ShapeConsumer].
+/// [#registerShapeConsumer]. The registry resolves during MaterialLib's init handler; from init onwards (in
+/// mods depending on materiallib) the contents are readable and immutable. Consumers run during MaterialLib's
+/// postInit; see [ShapeConsumer].
 public final class MaterialLibAPI {
 
     private MaterialLibAPI() {}

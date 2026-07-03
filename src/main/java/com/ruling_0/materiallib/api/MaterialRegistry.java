@@ -157,12 +157,8 @@ public final class MaterialRegistry {
         for (Map.Entry<String, List<Material>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
             List<Material> candidates = entry.getValue();
-            String ownerModid = OwnerElection.choose(
-                name,
-                candidates,
-                Material::getModId,
-                persistedOwners.get(name),
-                "Material {} was owned by {}, which declared no candidate this session; reassigning to {}");
+            String ownerModid = OwnerElection
+                .choose("Material", name, candidates, Material::getModId, persistedOwners.get(name), "declared");
             assignedOwners.put(name, ownerModid);
             if (candidates.size() == 1) continue;
             candidates.sort(Comparator.comparing(Material::getModId));

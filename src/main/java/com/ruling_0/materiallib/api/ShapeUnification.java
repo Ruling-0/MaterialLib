@@ -54,12 +54,8 @@ final class ShapeUnification {
         for (Map.Entry<String, List<Shape>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
             List<Shape> candidates = entry.getValue();
-            String ownerModid = OwnerElection.choose(
-                name,
-                candidates,
-                Shape::getModId,
-                persistedOwners.get(name),
-                "Shape {} was owned by {}, which registered no candidate this session; reassigning to {}");
+            String ownerModid = OwnerElection
+                .choose("Shape", name, candidates, Shape::getModId, persistedOwners.get(name), "registered");
             Shape canonical = candidateOwnedBy(candidates, ownerModid);
             canonicalByName.put(name, canonical);
             for (Shape candidate : candidates) {

@@ -106,6 +106,7 @@ class ShapeConsumersTest {
     @Test
     void anInvalidRegistrationIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> consumers.register("cmod", "gear", null));
+        assertThrows(IllegalArgumentException.class, () -> consumers.register(null, "gear", (s, m) -> {}));
         assertThrows(IllegalArgumentException.class, () -> consumers.register("cmod", "bad name", (s, m) -> {}));
     }
 }
