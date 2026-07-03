@@ -45,8 +45,7 @@ public class ShapeFluidInContainer extends ShapeItem {
         this.volume = volume;
     }
 
-    /// The fluid shape this container was built with. The registry follows unification to the canonical fluid at
-    /// resolve.
+    /// The fluid shape this container was built with.
     ShapeFluid getFluidShape() { return fluidShape; }
 
     /// Registers a [FluidContainerRegistry] mapping for each served material, filling this item at the material's
