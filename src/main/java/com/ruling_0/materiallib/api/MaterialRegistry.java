@@ -226,6 +226,13 @@ public final class MaterialRegistry {
         return Collections.unmodifiableMap(assignedOwners);
     }
 
+    /// The full index assignment rendered as a CSV table for debugging: one row per assigned index,
+    /// including indices reserved for materials not loaded this session, with the persisted owner and,
+    /// for loaded materials, shapes and families. Only available after the registry has resolved.
+    public String dumpCsv() {
+        return MaterialCsv.dump(this);
+    }
+
     /// Assigns each material its global index, append-only against the persisted assignment: a material already in
     /// the store keeps its index, genuinely new materials take the next free indices in ascending name order, and
     /// indices of materials no longer present stay reserved (never reused) so existing item stacks do not change
