@@ -20,10 +20,10 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// A material that generates this shape must also generate the [ShapeFluid] it holds; the registry enforces that at
 /// resolve.
 ///
-/// Renders in two passes like a vanilla bucket: an untinted empty-container texture underneath the texture set's
-/// fill texture, which is tinted with [StandardProperties#TINT]. The container looks the same for every material,
-/// so the empty texture is a property of the shape rather than of a texture set: it lives in the shape's own
-/// domain at `textures/items/materials/<name>_empty.png`, next to the texture set folders.
+/// Renders in two passes: an untinted empty-container texture underneath the texture set's texture for this
+/// shape, which supplies the fluid fill and is tinted with [StandardProperties#TINT]. The container looks the
+/// same for every material, so the empty texture is a property of the shape rather than of a texture set: it
+/// lives in the shape's own domain at `textures/items/materials/<name>_empty.png`.
 public class ShapeFluidInContainer extends ShapeItem {
 
     private final ShapeFluid fluidShape;
