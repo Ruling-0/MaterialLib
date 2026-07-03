@@ -20,6 +20,7 @@ import com.ruling_0.materiallib.api.Shape;
 import com.ruling_0.materiallib.api.ShapeBlock;
 import com.ruling_0.materiallib.api.ShapeFluidInContainer;
 import com.ruling_0.materiallib.api.ShapeItem;
+import com.ruling_0.materiallib.api.StandardProperties;
 
 /// The /matinfo debug command: prints the shape and material encoded by the held item, plus the
 /// material's family membership and property values, when it is a MaterialLib shape stack. Usable by
@@ -67,8 +68,16 @@ public class CommandMatInfo extends CommandBase {
         send(sender, "Properties:");
         for (Property<?> property : declaredProperties(material)) {
             send(sender,
-                "  " + property.getModId() + ":" + property.getName() + " = " + material.getProperty(property));
+                "  " + property.getModId() + ":" + property.getName() + " = " + formatValue(material, property));
         }
+    }
+
+    private static String formatValue(Material material, Property<?> property) {
+        Object value = material.getProperty(property);
+        if (property == StandardProperties.TINT) {
+            return String.format("0x%08X", value);
+        }
+        return String.valueOf(value);
     }
 
     private static Shape shapeOf(ItemStack stack) {

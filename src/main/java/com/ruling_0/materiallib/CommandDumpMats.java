@@ -7,6 +7,7 @@ import java.nio.file.Files;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.event.ClickEvent;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.EnumChatFormatting;
 
@@ -48,6 +49,11 @@ public class CommandDumpMats extends CommandBase {
                     EnumChatFormatting.RED + "Could not write " + dumpFile.getAbsolutePath() + ": " + e));
             return;
         }
-        sender.addChatMessage(new ChatComponentText("Dumped material indices to " + dumpFile.getAbsolutePath()));
+        ChatComponentText link = new ChatComponentText(dumpFile.getAbsolutePath());
+        link.getChatStyle()
+            .setChatClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, dumpFile.getAbsolutePath()));
+        link.getChatStyle()
+            .setUnderlined(true);
+        sender.addChatMessage(new ChatComponentText("Dumped material indices to ").appendSibling(link));
     }
 }
