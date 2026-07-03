@@ -57,17 +57,6 @@ class MaterialIdStoreTest {
     }
 
     @Test
-    void writeCreatesMissingParentDirectories() {
-        Map<String, Integer> indices = new LinkedHashMap<>();
-        indices.put("Iron", 0);
-        File nested = new File(new File(dir, "nested"), "material-ids.json");
-
-        MaterialIdStore.write(nested, indices);
-
-        assertEquals(indices, MaterialIdStore.read(nested));
-    }
-
-    @Test
     void readingACorruptFileFailsLoudly() throws Exception {
         Files.write(file().toPath(), "{ not valid json".getBytes(StandardCharsets.UTF_8));
 

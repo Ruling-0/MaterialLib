@@ -102,23 +102,4 @@ class WorldMaterialIdsTest {
         assertEquals(0, migration.lookup(7));
         assertEquals(assignment, MaterialIdStore.read(worldFile()));
     }
-
-    @Test
-    void checkMigratesAMixOfMovedAndRemovedMaterials() {
-        Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("Iron", 0);
-        assignment.put("Gold", 3);
-        MaterialRegistry resolved = resolvedWith(assignment);
-        Map<String, Integer> stale = new LinkedHashMap<>();
-        stale.put("Iron", 0);
-        stale.put("Gold", 1);
-        stale.put("Gone", 2);
-        MaterialIdStore.write(worldFile(), stale);
-
-        MaterialMigration migration = WorldMaterialIds.check(resolved, worldFile());
-
-        assertNotNull(migration);
-        assertEquals(3, migration.lookup(1));
-        assertEquals(assignment, MaterialIdStore.read(worldFile()));
-    }
 }

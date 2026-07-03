@@ -21,26 +21,16 @@ class MaterialUnificationTest {
     private final TextureSet otherTexture = TextureSet.of("bmod", "dull");
 
     @Test
-    void sameNameMaterialsFromDifferentModsUnifyIntoOne() {
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
+    void sameNameMaterialsUnifyOntoTheAlphabeticallyFirstModidRegardlessOfOrder() {
         registry.newMaterial("bmod", "testiron", otherTexture)
+            .build();
+        registry.newMaterial("amod", "testiron", ownerTexture)
             .build();
         registry.resolve();
 
         assertEquals(1, registry.getMaterials().size());
-        assertSame(registry.getMaterial("amod", "testiron"), registry.getMaterial("bmod", "testiron"));
-    }
-
-    @Test
-    void theAlphabeticallyFirstModidOwnsAContestedNameRegardlessOfOrder() {
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
-        registry.resolve();
-
         Material merged = registry.getMaterial("amod", "testiron");
+        assertSame(merged, registry.getMaterial("bmod", "testiron"));
         assertEquals("amod", merged.getModId());
         assertEquals("amod:testiron", merged.getKey());
         assertEquals(Map.of("testiron", "amod"), registry.getAssignedOwners());
