@@ -37,7 +37,8 @@ final class LateHandlerCheck {
             Field field = EventBus.class.getDeclaredField("busID");
             field.setAccessible(true);
             busId = field.getInt(MinecraftForge.EVENT_BUS);
-        } catch (ReflectiveOperationException e) {
+        }
+        catch (ReflectiveOperationException e) {
             MaterialLib.LOG.warn("Cannot detect late MaterialRegistrationEvent handlers", e);
             return null;
         }
@@ -49,8 +50,8 @@ final class LateHandlerCheck {
         for (IEventListener listener : listeners.getListeners(busId)) {
             if (!contains(subscribed, listener)) {
                 MaterialLib.LOG.error(
-                    "{} subscribed to MaterialRegistrationEvent after it fired, so its registrations were "
-                        + "never collected. Subscribe during FMLConstructionEvent",
+                    "{} subscribed to MaterialRegistrationEvent after it fired, so its registrations were " +
+                        "never collected. Subscribe during FMLConstructionEvent",
                     listener);
             }
         }
