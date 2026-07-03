@@ -34,13 +34,21 @@ final class Names {
     static String validate(String type, String value) {
         if (value == null) throw new IllegalArgumentException(type + " must not be null");
         if (value.isEmpty()) throw new IllegalArgumentException(type + " must not be empty");
+        if (hasInvalidChars(value)) {
+            throw new IllegalArgumentException(type + " \"" + value + "\" must not contain ':' or whitespace");
+        }
+        return value;
+    }
+
+    /// Whether `value` contains ':' or whitespace, the characters excluded from identifiers.
+    static boolean hasInvalidChars(String value) {
         for (int i = 0; i < value.length(); i++) {
             char c = value.charAt(i);
             if (c == ':' || Character.isWhitespace(c)) {
-                throw new IllegalArgumentException(type + " \"" + value + "\" must not contain ':' or whitespace");
+                return true;
             }
         }
-        return value;
+        return false;
     }
 
     static String key(String modid, String name) {
