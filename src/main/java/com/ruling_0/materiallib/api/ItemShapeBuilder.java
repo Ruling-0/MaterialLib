@@ -3,9 +3,9 @@ package com.ruling_0.materiallib.api;
 import java.util.Objects;
 
 /// Builds and registers a simple item [Shape] backed by a [ShapeItem]. Obtained from
-/// [MaterialLibAPI#newItemShape] and finished with [#build], which must be called during the owning mod's
-/// preInit. Mods needing custom item behavior subclass [ShapeItem] instead and register through
-/// [MaterialLibAPI#registerItemShape].
+/// [MaterialLibAPI#newItemShape] and finished with [#build], which must be called inside the owning mod's
+/// [MaterialRegistrationEvent] handler. Mods needing custom item behavior subclass [ShapeItem] instead and
+/// register through [MaterialLibAPI#registerItemShape].
 public final class ItemShapeBuilder {
 
     private final String modid;

@@ -8,12 +8,13 @@ import net.minecraftforge.fluids.FluidStack;
 
 /// The public entry point of MaterialLib, wrapping the game's [MaterialRegistry] instance.
 ///
-/// All registration happens during the registering mod's preInit: declaring shapes through the shape builders
-/// and register methods, creating materials and families through [#newMaterial] and [#newFamily], altering ones
-/// belonging to other mods through [#editMaterial] and [#editFamily], and registering shape consumers through
-/// [#registerShapeConsumer]. The registry resolves during MaterialLib's init handler; from init onwards (in
-/// mods depending on materiallib) the contents are readable and immutable. Consumers run during MaterialLib's
-/// postInit; see [ShapeConsumer].
+/// All registration happens inside a handler for [MaterialRegistrationEvent], which MaterialLib fires during
+/// its preInit: declaring shapes through the shape builders and register methods, creating materials and
+/// families through [#newMaterial] and [#newFamily], altering ones belonging to other mods through
+/// [#editMaterial] and [#editFamily], and registering shape consumers through [#registerShapeConsumer] and
+/// [#registerPostInitShapeConsumer]. The registries then resolve, still within MaterialLib's preInit, so mods
+/// depending on materiallib read the contents from their own preInit onwards. Consumers run during
+/// MaterialLib's init and postInit; see [ShapeConsumer].
 public final class MaterialLibAPI {
 
     private MaterialLibAPI() {}
@@ -106,14 +107,15 @@ public final class MaterialLibAPI {
     }
 
     /// The itemstack of `material` in `shape`, with the given stack size. The shape must be a backed (item or
-    /// block) shape that the material generates. Only available after shapes have resolved (during this mod's
-    /// init).
+    /// block) shape that the material generates. Only available after shapes have resolved, at the end of
+    /// MaterialLib's preInit.
     public static ItemStack getStack(Material material, Shape shape, int amount) {
         return ShapeRegistry.instance().getStack(material, shape, amount);
     }
 
     /// The fluid stack of `material` in `shape`, with the given volume in millibuckets. The shape must be a fluid
-    /// shape that the material generates. Only available after shapes have resolved (during this mod's init).
+    /// shape that the material generates. Only available after shapes have resolved, at the end of MaterialLib's
+    /// preInit.
     public static FluidStack getFluidStack(Material material, Shape shape, int amount) {
         return ShapeRegistry.instance().getFluidStack(material, shape, amount);
     }

@@ -19,10 +19,10 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// Simple shapes are created through [MaterialLibAPI#newItemShape] and need no subclass. A mod that wants custom
 /// item behavior (right click logic, NBT) subclasses this and registers the instance through
 /// [MaterialLibAPI#registerItemShape]; the base handles subtypes, textures from each material's [TextureSet],
-/// the [StandardProperties#TINT] color, display names, and oredict. Create and register the item during the
-/// owning mod's preInit. MaterialLib registers the chosen owner's item under its own domain so the shape keeps a
-/// stable identity across instances. An advanced tooltip names the mod that owns the shape and the mod that
-/// added the material.
+/// the [StandardProperties#TINT] color, display names, and oredict. Create and register the item inside the
+/// owning mod's [MaterialRegistrationEvent] handler. MaterialLib registers the chosen owner's item under its own
+/// domain so the shape keeps a stable identity across instances. An advanced tooltip names the mod that owns the
+/// shape and the mod that added the material.
 public class ShapeItem extends Item implements BackedShape {
 
     private final String modid;
