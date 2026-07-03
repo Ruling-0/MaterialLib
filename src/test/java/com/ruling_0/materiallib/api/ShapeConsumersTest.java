@@ -35,11 +35,23 @@ class ShapeConsumersTest {
         TestServedShape plate = shape("plate", gold);
 
         List<String> calls = new ArrayList<>();
-        consumers.register("amod", "plate", (s, m) -> calls.add("first " + s.getName() + " " + m.getName()));
-        consumers.register("amod", "gear", (s, m) -> calls.add("second " + s.getName() + " " + m.getName()));
-        consumers.register("bmod", "gear", (s, m) -> calls.add("third " + s.getName() + " " + m.getName()));
+        consumers.register(
+            ShapeConsumers.Phase.INIT,
+            "amod",
+            "plate",
+            (s, m) -> calls.add("first " + s.getName() + " " + m.getName()));
+        consumers.register(
+            ShapeConsumers.Phase.INIT,
+            "amod",
+            "gear",
+            (s, m) -> calls.add("second " + s.getName() + " " + m.getName()));
+        consumers.register(
+            ShapeConsumers.Phase.INIT,
+            "bmod",
+            "gear",
+            (s, m) -> calls.add("third " + s.getName() + " " + m.getName()));
 
-        consumers.run(Map.of("gear", gear, "plate", plate));
+        consumers.run(ShapeConsumers.Phase.INIT, Map.of("gear", gear, "plate", plate));
 
         assertEquals(
             List.of(
@@ -57,10 +69,10 @@ class ShapeConsumersTest {
         TestServedShape gear = shape("gear", iron);
 
         List<String> calls = new ArrayList<>();
-        consumers.register("amod", "missing", (s, m) -> calls.add("missing " + m.getName()));
-        consumers.register("amod", "gear", (s, m) -> calls.add("gear " + m.getName()));
+        consumers.register(ShapeConsumers.Phase.INIT, "amod", "missing", (s, m) -> calls.add("missing " + m.getName()));
+        consumers.register(ShapeConsumers.Phase.INIT, "amod", "gear", (s, m) -> calls.add("gear " + m.getName()));
 
-        consumers.run(Map.of("gear", gear));
+        consumers.run(ShapeConsumers.Phase.INIT, Map.of("gear", gear));
 
         assertEquals(List.of("gear Iron"), calls);
     }
@@ -72,15 +84,15 @@ class ShapeConsumersTest {
         TestServedShape gear = shape("gear", iron, gold);
         RuntimeException boom = new RuntimeException("boom");
         List<String> calls = new ArrayList<>();
-        consumers.register("cmod", "gear", (s, m) -> {
+        consumers.register(ShapeConsumers.Phase.INIT, "cmod", "gear", (s, m) -> {
             calls.add("throwing " + m.getName());
             throw boom;
         });
-        consumers.register("dmod", "gear", (s, m) -> calls.add("later " + m.getName()));
+        consumers.register(ShapeConsumers.Phase.INIT, "dmod", "gear", (s, m) -> calls.add("later " + m.getName()));
 
         IllegalStateException e = assertThrows(
             IllegalStateException.class,
-            () -> consumers.run(Map.of("gear", gear)));
+            () -> consumers.run(ShapeConsumers.Phase.INIT, Map.of("gear", gear)));
 
         assertEquals(
             "Failed to run shape consumer from cmod on shape TestServedShape[amod:gear] and material testmod:Iron",
@@ -91,22 +103,63 @@ class ShapeConsumersTest {
 
     @Test
     void runningTwiceFails() {
-        consumers.run(Map.of());
+        consumers.run(ShapeConsumers.Phase.INIT, Map.of());
 
-        assertThrows(IllegalStateException.class, () -> consumers.run(Map.of()));
+        assertThrows(IllegalStateException.class, () -> consumers.run(ShapeConsumers.Phase.INIT, Map.of()));
     }
 
     @Test
     void registeringAfterTheRunFails() {
-        consumers.run(Map.of());
+        consumers.run(ShapeConsumers.Phase.INIT, Map.of());
 
-        assertThrows(IllegalStateException.class, () -> consumers.register("cmod", "gear", (s, m) -> {}));
+        assertThrows(
+            IllegalStateException.class,
+            () -> consumers.register(ShapeConsumers.Phase.INIT, "cmod", "gear", (s, m) -> {}));
     }
 
     @Test
     void anInvalidRegistrationIsRejected() {
-        assertThrows(IllegalArgumentException.class, () -> consumers.register("cmod", "gear", null));
-        assertThrows(IllegalArgumentException.class, () -> consumers.register(null, "gear", (s, m) -> {}));
-        assertThrows(IllegalArgumentException.class, () -> consumers.register("cmod", "bad name", (s, m) -> {}));
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> consumers.register(ShapeConsumers.Phase.INIT, "cmod", "gear", null));
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> consumers.register(ShapeConsumers.Phase.INIT, null, "gear", (s, m) -> {}));
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> consumers.register(ShapeConsumers.Phase.INIT, "cmod", "bad name", (s, m) -> {}));
+    }
+
+    @Test
+    void consumersRunOnlyInTheirRegisteredPhase() {
+        Material iron = material("Iron");
+        TestServedShape gear = shape("gear", iron);
+
+        List<String> calls = new ArrayList<>();
+        consumers.register(ShapeConsumers.Phase.INIT, "amod", "gear", (s, m) -> calls.add("init " + m.getName()));
+        consumers
+            .register(ShapeConsumers.Phase.POST_INIT, "amod", "gear", (s, m) -> calls.add("postInit " + m.getName()));
+
+        consumers.run(ShapeConsumers.Phase.INIT, Map.of("gear", gear));
+        assertEquals(List.of("init Iron"), calls);
+
+        consumers.run(ShapeConsumers.Phase.POST_INIT, Map.of("gear", gear));
+        assertEquals(List.of("init Iron", "postInit Iron"), calls);
+    }
+
+    @Test
+    void thePhasesRunAndGuardIndependently() {
+        consumers.run(ShapeConsumers.Phase.INIT, Map.of());
+
+        assertThrows(
+            IllegalStateException.class,
+            () -> consumers.register(ShapeConsumers.Phase.INIT, "amod", "gear", (s, m) -> {}));
+        consumers.register(ShapeConsumers.Phase.POST_INIT, "amod", "gear", (s, m) -> {});
+
+        assertThrows(IllegalStateException.class, () -> consumers.run(ShapeConsumers.Phase.INIT, Map.of()));
+
+        consumers.run(ShapeConsumers.Phase.POST_INIT, Map.of());
+
+        assertThrows(IllegalStateException.class, () -> consumers.run(ShapeConsumers.Phase.POST_INIT, Map.of()));
     }
 }

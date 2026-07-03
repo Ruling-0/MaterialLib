@@ -76,19 +76,33 @@ public final class MaterialLibAPI {
         return ShapeRegistry.instance().register(container);
     }
 
-    /// Registers a consumer invoked once per material generating the shape named `shapeName`; see [ShapeConsumer]
-    /// for the dispatch and error contract. Targeting is by name so the target may come from another, possibly
-    /// absent mod; a name no mod registered is skipped with a warning.
+    /// Registers a consumer invoked during MaterialLib's init once per material generating the shape named
+    /// `shapeName`; see [ShapeConsumer] for the dispatch and error contract. Targeting is by name so the target
+    /// may come from another, possibly absent mod; a name no mod registered is skipped with a warning.
     public static void registerShapeConsumer(String modid, String shapeName, ShapeConsumer consumer) {
         ShapeRegistry.instance()
-            .registerConsumer(modid, shapeName, consumer);
+            .registerConsumer(ShapeConsumers.Phase.INIT, modid, shapeName, consumer);
     }
 
     /// Registers a consumer for `shape`, targeted by its name; see
     /// [#registerShapeConsumer(String, String, ShapeConsumer)].
     public static void registerShapeConsumer(String modid, Shape shape, ShapeConsumer consumer) {
         ShapeRegistry.instance()
-            .registerConsumer(modid, shape.getName(), consumer);
+            .registerConsumer(ShapeConsumers.Phase.INIT, modid, shape.getName(), consumer);
+    }
+
+    /// Registers a consumer invoked during MaterialLib's postInit, after every mod's init; otherwise identical
+    /// to [#registerShapeConsumer(String, String, ShapeConsumer)].
+    public static void registerPostInitShapeConsumer(String modid, String shapeName, ShapeConsumer consumer) {
+        ShapeRegistry.instance()
+            .registerConsumer(ShapeConsumers.Phase.POST_INIT, modid, shapeName, consumer);
+    }
+
+    /// Registers a postInit consumer for `shape`, targeted by its name; see
+    /// [#registerPostInitShapeConsumer(String, String, ShapeConsumer)].
+    public static void registerPostInitShapeConsumer(String modid, Shape shape, ShapeConsumer consumer) {
+        ShapeRegistry.instance()
+            .registerConsumer(ShapeConsumers.Phase.POST_INIT, modid, shape.getName(), consumer);
     }
 
     /// The itemstack of `material` in `shape`, with the given stack size. The shape must be a backed (item or
