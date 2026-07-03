@@ -6,7 +6,7 @@ import net.minecraft.item.ItemStack;
 /// ([ShapeBlock]), whose stacks carry the material as their damage or metadata.
 interface BackedShape extends ServedShape {
 
-    /// Registers the backing item or block with the game. Called once at resolve from MaterialLib's init handler.
+    /// Registers the backing item or block with the game. Called once at resolve from MaterialLib's preInit handler.
     void registerWithGame();
 
     /// The itemstack of `material` in this shape, with the given stack size.

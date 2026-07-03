@@ -102,10 +102,10 @@ public final class ShapeRegistry {
         }
     }
 
-    /// Records a consumer to invoke for every material generating the shape named `shapeName`.
-    void registerConsumer(String modid, String shapeName, ShapeConsumer consumer) {
+    /// Records a consumer to invoke during `phase` for every material generating the shape named `shapeName`.
+    void registerConsumer(ShapeConsumers.Phase phase, String modid, String shapeName, ShapeConsumer consumer) {
         requireRegistration("register a shape consumer targeting " + shapeName);
-        consumers.register(modid, shapeName, consumer);
+        consumers.register(phase, modid, shapeName, consumer);
     }
 
     /// Sets the persisted shape owners to honor at resolve, loaded from the instance-global store. Must be set
@@ -166,7 +166,7 @@ public final class ShapeRegistry {
 
     /// Picks each name's owner, registers the owner's backing object, binds each shape to the materials that
     /// generate it, registers fluids and fluid containers, and registers the oredict entries.
-    /// Invoked by MaterialLib's init handler after [MaterialRegistry#resolve]; other mods must not call this.
+    /// Invoked by MaterialLib's preInit handler after [MaterialRegistry#resolve]; other mods must not call this.
     public void resolve() {
         requireRegistration("resolve shapes");
         MaterialRegistry.instance()
@@ -186,16 +186,23 @@ public final class ShapeRegistry {
             fluidShapes.size());
     }
 
-    /// Runs every registered shape consumer once per (shape, material) pair for the shape it targets.
-    /// Invoked once by MaterialLib's postInit handler; other mods must not call this.
-    public void runConsumers() {
+    /// Runs every init-phase shape consumer once per (shape, material) pair for the shape it targets.
+    /// Invoked once by MaterialLib's init handler; other mods must not call this.
+    public void runInitConsumers() {
         requireResolved("run shape consumers");
-        consumers.run(servedByName);
+        consumers.run(ShapeConsumers.Phase.INIT, servedByName);
+    }
+
+    /// Runs every postInit-phase shape consumer once per (shape, material) pair for the shape it targets.
+    /// Invoked once by MaterialLib's postInit handler; other mods must not call this.
+    public void runPostInitConsumers() {
+        requireResolved("run shape consumers");
+        consumers.run(ShapeConsumers.Phase.POST_INIT, servedByName);
     }
 
     /// Sorts every canonical shape into its type and registers each backing item or block with FML under
     /// MaterialLib's domain (`materiallib:<name>`). The domain is MaterialLib's because this runs in MaterialLib's
-    /// init handler (FML restriction). Fluid shapes register their Forge fluids, and fluid containers their
+    /// preInit handler (FML restriction). Fluid shapes register their Forge fluids, and fluid containers their
     /// container mappings, later -- once served materials are known.
     private void collectCanonicalShapes() {
         for (Shape shape : unification.canonicalShapes()) {
@@ -235,14 +242,16 @@ public final class ShapeRegistry {
     private void requireRegistration(String what) {
         if (resolved) {
             throw new IllegalStateException(
-                "Cannot " + what + ": shapes have already resolved. Shapes register during preInit");
+                "Cannot " + what + ": shapes have already resolved. Registration happens inside a " +
+                    "MaterialRegistrationEvent handler subscribed during construction");
         }
     }
 
     private void requireResolved(String what) {
         if (!resolved) {
             throw new IllegalStateException(
-                "Cannot " + what + ": shapes have not resolved yet. They are available from init onwards");
+                "Cannot " + what + ": shapes have not resolved yet. They are available once MaterialLib's " +
+                    "preInit has resolved them");
         }
     }
 

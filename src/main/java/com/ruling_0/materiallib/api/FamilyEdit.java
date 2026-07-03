@@ -7,9 +7,9 @@ import java.util.Objects;
 ///
 /// Operations queue immediately as the methods are called (varargs methods queue one operation per element);
 /// there is no terminal apply call. Operations from all mods are applied in call order when the registry
-/// resolves, so the family does not need to exist yet when an edit is made -- only by the end of preInit.
-/// Operations targeting a family that was never registered are skipped with a logged warning, which keeps edits
-/// directed at optional mods harmless.
+/// resolves, so the family does not need to exist yet when an edit is made -- only by the end of the
+/// registration event. Operations targeting a family that was never registered are skipped with a logged
+/// warning, which keeps edits directed at optional mods harmless.
 public final class FamilyEdit {
 
     private final MaterialRegistry registry;

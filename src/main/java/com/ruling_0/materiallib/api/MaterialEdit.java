@@ -7,10 +7,10 @@ import java.util.Objects;
 ///
 /// Operations queue immediately as the methods are called (varargs methods queue one operation per element);
 /// there is no terminal apply call. Operations from all mods are applied in call order when the registry
-/// resolves, so the material does not need to exist yet when an edit is made -- only by the end of preInit.
-/// Operations targeting a material that was never registered are skipped with a logged warning, which keeps
-/// edits directed at optional mods harmless. An edit addressed to any declaration of a unified name applies to
-/// the unified material.
+/// resolves, so the material does not need to exist yet when an edit is made -- only by the end of the
+/// registration event. Operations targeting a material that was never registered are skipped with a logged
+/// warning, which keeps edits directed at optional mods harmless. An edit addressed to any declaration of a
+/// unified name applies to the unified material.
 public final class MaterialEdit {
 
     private final MaterialRegistry registry;

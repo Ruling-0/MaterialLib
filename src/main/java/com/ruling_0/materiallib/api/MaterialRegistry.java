@@ -19,13 +19,13 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
 /// The broker holding every registered [Material] and [Family].
 ///
-/// The registry has two phases. During registration (all preInit handlers), mods register materials and families
-/// through the builders and queue cross-mod changes through [MaterialEdit] and [FamilyEdit]; key lookups return
-/// the registered objects, but their membership, shapes, and properties cannot be read yet, and neither can the
-/// bulk collection views. During this mod's init handler, [#resolve] merges same-name materials onto their
-/// owners, applies all queued edits in call order, derives family membership and per-material shape sets, and
-/// freezes the registry. From then on everything is readable and nothing can be registered or edited, which
-/// guarantees dependent mods a complete registry in their init and postInit handlers.
+/// The registry has two phases. During registration (inside [MaterialRegistrationEvent] handlers), mods register
+/// materials and families through the builders and queue cross-mod changes through [MaterialEdit] and
+/// [FamilyEdit]; key lookups return the registered objects, but their membership, shapes, and properties cannot
+/// be read yet, and neither can the bulk collection views. Once every handler has returned, [#resolve] merges
+/// same-name materials onto their owners, applies all queued edits in call order, derives family membership and
+/// per-material shape sets, and freezes the registry. From then on everything is readable and nothing can be
+/// registered or edited, which guarantees dependent mods a complete registry from their preInit onwards.
 ///
 /// The game uses the single [#instance]; tests construct private registries directly.
 public final class MaterialRegistry {
@@ -103,7 +103,7 @@ public final class MaterialRegistry {
     public boolean isResolved() { return resolved; }
 
     /// Ends registration and freezes the registry, as described in the class doc. Invoked once by MaterialLib's
-    /// init handler; other mods must not call it.
+    /// preInit handler after the registration event; other mods must not call it.
     public void resolve() {
         requireRegistration("resolve the registry");
         unifyMaterials();
@@ -372,7 +372,8 @@ public final class MaterialRegistry {
         if (!resolved) {
             throw new IllegalStateException(
                 "Cannot " + action + target + ": the material registry has not resolved yet. " +
-                    "Registry contents are readable from init onwards in mods depending on materiallib");
+                    "Registry contents are readable once MaterialLib's preInit has resolved the registry; " +
+                    "mods depending on materiallib read from their preInit onwards");
         }
     }
 
@@ -380,7 +381,8 @@ public final class MaterialRegistry {
         if (resolved) {
             throw new IllegalStateException(
                 "Cannot " + what + ": the material registry has already resolved. " +
-                    "Materials, families, and edits must be registered during preInit");
+                    "Materials, families, and edits register inside a MaterialRegistrationEvent handler " +
+                    "subscribed during construction");
         }
     }
 

@@ -22,9 +22,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// Simple shapes are created through [MaterialLibAPI#newBlockShape]; a mod wanting custom block behavior subclasses
 /// this and registers the instance through [MaterialLibAPI#registerBlockShape]. The base handles per-material textures
 /// from each material's [TextureSet], the [StandardProperties#TINT] color, creative-tab variants, and dropping the
-/// placed metadata. Create and register the block during the owning mod's preInit. MaterialLib registers the chosen
-/// owner's block under its own domain so the shape keeps a stable identity across instances, and the block's item shows
-/// the same display name and advanced-tooltip attribution as an item shape.
+/// placed metadata. Create and register the block inside the owning mod's [MaterialRegistrationEvent] handler.
+/// MaterialLib registers the chosen owner's block under its own domain so the shape keeps a stable identity across
+/// instances, and the block's item shows the same display name and advanced-tooltip attribution as an item shape.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;

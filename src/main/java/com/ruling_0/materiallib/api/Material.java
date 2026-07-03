@@ -18,10 +18,10 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// A registered material: a named member of the registry that generates a set of [Shape]s and carries
 /// [Property] values.
 ///
-/// Materials are created through [MaterialLibAPI#newMaterial] during preInit and become read-only once the
-/// registry resolves during this mod's init. A material may belong to any number of [Family]s; membership,
-/// properties, and the effective shape set are only available after resolution, since other mods may alter them
-/// through [MaterialEdit]s until then.
+/// Materials are created through [MaterialLibAPI#newMaterial] inside a [MaterialRegistrationEvent] handler and
+/// become read-only once the registry resolves at the end of MaterialLib's preInit. A material may belong to
+/// any number of [Family]s; membership, properties, and the effective shape set are only available after
+/// resolution, since other mods may alter them through [MaterialEdit]s until then.
 ///
 /// Two mods may declare a material with the same name without coordinating; at resolve such declarations unify
 /// into one material carrying the union of both -- shapes, families, tooltip lines, and properties, with the

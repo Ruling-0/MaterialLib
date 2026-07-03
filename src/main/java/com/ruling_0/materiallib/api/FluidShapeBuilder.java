@@ -3,8 +3,9 @@ package com.ruling_0.materiallib.api;
 import java.util.Objects;
 
 /// Builds and registers a simple fluid [Shape] backed by a [ShapeFluid]. Obtained from [MaterialLibAPI#newFluidShape]
-/// and finished with [#build], which must be called during the owning mod's preInit. Mods needing custom fluid
-/// behavior subclass [ShapeFluid] instead and register through [MaterialLibAPI#registerFluidShape].
+/// and finished with [#build], which must be called inside the owning mod's [MaterialRegistrationEvent] handler.
+/// Mods needing custom fluid behavior subclass [ShapeFluid] instead and register through
+/// [MaterialLibAPI#registerFluidShape].
 public final class FluidShapeBuilder {
 
     private final String modid;

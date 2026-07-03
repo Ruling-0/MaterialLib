@@ -11,7 +11,7 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
 /// Builds and registers a [Material]. Obtained from [MaterialLibAPI#newMaterial] and finished with [#build],
-/// which registers the material and must be called during preInit.
+/// which registers the material and must be called inside the mod's [MaterialRegistrationEvent] handler.
 public final class MaterialBuilder {
 
     private final MaterialRegistry registry;
@@ -62,7 +62,7 @@ public final class MaterialBuilder {
     }
 
     /// Adds the material to a family by key, deferring the lookup until the registry resolves. The family may
-    /// be registered by any mod at any point during preInit.
+    /// be registered by any mod at any point during the registration event.
     public MaterialBuilder addToFamily(String familyModid, String familyName) {
         familyKeys.add(
             new String[] { Names.validate("family modid", familyModid),
