@@ -51,6 +51,18 @@ class PropertyResolutionTest {
         assertEquals(0xFFFFCC00, tinted.getProperty(StandardProperties.TINT));
     }
 
+    /// Unlike [StandardProperties#TINT] (see [#tintDefaultsToWhite]), [StandardProperties#FALLBACK_TEXTURE_SET] has
+    /// no default: it is null whenever a material does not set one, which is the routine case since almost no
+    /// material does.
+    @Test
+    void fallbackTextureSetHasNoDefault() {
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .build();
+        registry.resolve();
+
+        assertNull(material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET));
+    }
+
     @Test
     void isSetIgnoresDefaults() {
         Material material = registry.newMaterial("testmod", "TestIron", texture)
