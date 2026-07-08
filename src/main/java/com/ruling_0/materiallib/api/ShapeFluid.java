@@ -20,8 +20,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// this shape's [FluidNamer] (by default `<shape>.<material>` lowercased, e.g. `test.testiron`).
 ///
 /// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
-/// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve and, on the
-/// client, binds each fluid's still and flowing icons from the material's [TextureSet].
+/// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve, configures
+/// newly registered fluids through this shape's [FluidConfigurer], and, on the client, binds each fluid's still and
+/// flowing icons from the material's [TextureSet].
 ///
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see
 /// [ShapeFluidInContainer]). Each fluid takes its display name from the shape's format and its color from the
@@ -30,11 +31,13 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 public class ShapeFluid implements ServedShape {
 
     private static final List<String> NO_OREDICTS = List.of();
+    private static final FluidConfigurer NO_OP_CONFIGURER = (material, fluid) -> {};
 
     private final String modid;
     private final String name;
     private final String displayNameFormat;
     private final FluidNamer namer;
+    private final FluidConfigurer configurer;
 
     private final ServedMaterials served = new ServedMaterials();
 
@@ -43,16 +46,18 @@ public class ShapeFluid implements ServedShape {
     /// Creates a fluid shape. `displayNameFormat` is applied to the material name to build the fluid's display
     /// name, e.g. `"Molten %s"`. Identifiers must be non-empty and free of ':' and whitespace.
     public ShapeFluid(String modid, String name, String displayNameFormat) {
-        this(modid, name, displayNameFormat, null);
+        this(modid, name, displayNameFormat, null, null);
     }
 
-    /// As the three-argument constructor, additionally setting this shape's [FluidNamer]. A null namer defaults to
-    /// [FluidNamer#DEFAULT].
-    public ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer) {
+    /// As the three-argument constructor, additionally setting this shape's [FluidNamer] and [FluidConfigurer]. A
+    /// null namer defaults to [FluidNamer#DEFAULT]; a null configurer performs no extra configuration.
+    public ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer,
+                      FluidConfigurer configurer) {
         this.modid = Names.validate("fluid shape modid", modid);
         this.name = Names.validate("fluid shape name", name);
         this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
         this.namer = namer != null ? namer : FluidNamer.DEFAULT;
+        this.configurer = configurer != null ? configurer : NO_OP_CONFIGURER;
     }
 
     @Override
@@ -89,16 +94,23 @@ public class ShapeFluid implements ServedShape {
         fluidsByIndex.clear();
         for (Material material : served.get()) {
             String fluidName = FluidNaming.validate(fluidName(material), this, material, usedFluidNames);
-            Fluid fluid = new MaterialFluid(fluidName, material);
-            if (!FluidRegistry.registerFluid(fluid)) {
-                fluid = FluidRegistry.getFluid(fluidName);
-                MaterialLib.LOG.warn(
-                    "Fluid {} of {} is already registered elsewhere; its tint, name, and icons will not apply",
-                    fluidName,
-                    material.getKey());
-            }
-            fluidsByIndex.put(material.getIndex(), fluid);
+            fluidsByIndex.put(material.getIndex(), registerOrReuse(fluidName, material));
         }
+    }
+
+    /// Registers a newly created [MaterialFluid] under `fluidName` and configures it, or -- if that name is already
+    /// registered by another mod -- reuses the existing fluid unmodified.
+    private Fluid registerOrReuse(String fluidName, Material material) {
+        Fluid created = new MaterialFluid(fluidName, material);
+        if (FluidRegistry.registerFluid(created)) {
+            configurer.configure(material, created);
+            return created;
+        }
+        MaterialLib.LOG.warn(
+            "Fluid {} of {} is already registered elsewhere; its tint, name, and icons will not apply",
+            fluidName,
+            material.getKey());
+        return FluidRegistry.getFluid(fluidName);
     }
 
     /// The fluid stack of `material` in this shape, with the given volume in millibuckets. The material must

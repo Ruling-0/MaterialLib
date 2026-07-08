@@ -24,7 +24,7 @@ class ShapeFluidTest {
             .build();
         FluidNamer namer = (shape, material) -> "legacy." + material.getName()
             .toLowerCase();
-        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", namer);
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", namer, null);
 
         assertEquals("legacy.testiron", molten.fluidName(iron));
     }
