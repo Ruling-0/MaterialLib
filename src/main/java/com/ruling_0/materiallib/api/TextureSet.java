@@ -27,6 +27,10 @@ public final class TextureSet {
         return modid + ":materials/" + name + "/" + shapeName;
     }
 
+    public String overlayPath(String shapeName) {
+        return modid + ":materials/" + name + "/" + shapeName + "_OVERLAY";
+    }
+
     @Override
     public boolean equals(Object o) {
         return o instanceof TextureSet other && modid.equals(other.modid) && name.equals(other.name);

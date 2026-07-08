@@ -30,7 +30,7 @@ public class ShapeItem extends Item implements BackedShape {
     private final String displayNameFormat;
 
     private final ServedMaterials served = new ServedMaterials();
-    private final ShapeIcons icons = new ShapeIcons();
+    private final ShapeIcons icons = new ShapeIcons(true);
 
     /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
     /// appended (e.g. `gear` -> `gearIron`); `displayNameFormat` is applied to the material name to build the
@@ -106,13 +106,20 @@ public class ShapeItem extends Item implements BackedShape {
 
     @Override
     @SideOnly(Side.CLIENT)
-    public IIcon getIconFromDamage(int damage) {
-        return icons.get(damage);
+    public boolean requiresMultipleRenderPasses() {
+        return true;
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
+    public IIcon getIconFromDamageForRenderPass(int damage, int renderPass) {
+        return renderPass == 0 ? icons.get(damage) : icons.getOverlay(damage);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
+        if (renderPass != 0) return 0xFFFFFFFF;
         Material material = ShapeText.materialFor(stack);
         return material != null ? material.getProperty(StandardProperties.TINT) : 0xFFFFFFFF;
     }

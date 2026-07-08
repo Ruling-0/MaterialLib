@@ -33,7 +33,7 @@ public class ShapeBlock extends Block implements BackedShape {
     private final String displayNameFormat;
 
     private final ServedMaterials served = new ServedMaterials();
-    private final ShapeIcons icons = new ShapeIcons();
+    private final ShapeIcons icons = new ShapeIcons(false);
 
     /// Creates a block shape backed by a [net.minecraft.block.material.Material#iron] block. `oreDicts` are the
     /// oredict prefixes, at least one; `displayNameFormat` is applied to the material name to build the display
