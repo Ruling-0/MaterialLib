@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.minecraft.item.ItemStack;
 
@@ -16,6 +17,7 @@ import com.ruling_0.materiallib.MaterialLib;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 
 /// Holds the item, block, or fluid backing every [Shape] and finishes their setup once the material registry has
@@ -272,8 +274,9 @@ public final class ShapeRegistry {
     }
 
     private void registerFluids() {
+        Set<String> usedFluidNames = new ObjectOpenHashSet<>();
         for (ShapeFluid fluid : fluidShapes) {
-            fluid.registerFluids();
+            fluid.registerFluids(usedFluidNames);
         }
     }
 

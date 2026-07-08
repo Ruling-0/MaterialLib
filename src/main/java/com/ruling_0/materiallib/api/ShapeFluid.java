@@ -1,7 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.List;
-import java.util.Locale;
+import java.util.Set;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 
@@ -16,8 +16,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
-/// The Forge fluid backing a fluid [Shape]: one registered [Fluid] per material that generates the shape, named
-/// `<shape>.<material>` lowercased (e.g. `test.testiron`).
+/// The Forge fluid backing a fluid [Shape]: one registered [Fluid] per material that generates the shape, named by
+/// this shape's [FluidNamer] (by default `<shape>.<material>` lowercased, e.g. `test.testiron`).
 ///
 /// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
 /// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve and, on the
@@ -34,6 +34,7 @@ public class ShapeFluid implements ServedShape {
     private final String modid;
     private final String name;
     private final String displayNameFormat;
+    private final FluidNamer namer;
 
     private final ServedMaterials served = new ServedMaterials();
 
@@ -42,9 +43,16 @@ public class ShapeFluid implements ServedShape {
     /// Creates a fluid shape. `displayNameFormat` is applied to the material name to build the fluid's display
     /// name, e.g. `"Molten %s"`. Identifiers must be non-empty and free of ':' and whitespace.
     public ShapeFluid(String modid, String name, String displayNameFormat) {
+        this(modid, name, displayNameFormat, null);
+    }
+
+    /// As the three-argument constructor, additionally setting this shape's [FluidNamer]. A null namer defaults to
+    /// [FluidNamer#DEFAULT].
+    public ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer) {
         this.modid = Names.validate("fluid shape modid", modid);
         this.name = Names.validate("fluid shape name", name);
         this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
+        this.namer = namer != null ? namer : FluidNamer.DEFAULT;
     }
 
     @Override
@@ -69,16 +77,18 @@ public class ShapeFluid implements ServedShape {
     @Override
     public Material[] getServedMaterials() { return served.get(); }
 
-    /// The Forge fluid name for a material in this shape, e.g. `test.testiron`.
+    /// The Forge fluid name for a material in this shape, as produced by this shape's [FluidNamer] (e.g.
+    /// `molten.testiron` by default).
     String fluidName(Material material) {
-        return (name + "." + material.getName()).toLowerCase(Locale.ENGLISH);
+        return namer.name(this, material);
     }
 
-    /// Registers one Forge fluid per served material.
-    void registerFluids() {
+    /// Registers one Forge fluid per served material, validating and reserving each material's fluid name against
+    /// `usedFluidNames`, shared across every fluid shape resolving this session.
+    void registerFluids(Set<String> usedFluidNames) {
         fluidsByIndex.clear();
         for (Material material : served.get()) {
-            String fluidName = fluidName(material);
+            String fluidName = FluidNaming.validate(fluidName(material), this, material, usedFluidNames);
             Fluid fluid = new MaterialFluid(fluidName, material);
             if (!FluidRegistry.registerFluid(fluid)) {
                 fluid = FluidRegistry.getFluid(fluidName);
