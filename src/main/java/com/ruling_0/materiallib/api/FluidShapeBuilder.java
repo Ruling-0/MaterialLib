@@ -12,6 +12,7 @@ public final class FluidShapeBuilder {
     private final String name;
     private String displayNameFormat;
     private FluidNamer namer;
+    private FluidConfigurer configurer;
     private boolean built;
 
     FluidShapeBuilder(String modid, String name) {
@@ -34,6 +35,13 @@ public final class FluidShapeBuilder {
         return this;
     }
 
+    /// Sets the callback configuring each newly registered material fluid (temperature, gaseous, luminosity,
+    /// density, viscosity, ...); see [FluidConfigurer].
+    public FluidShapeBuilder configureFluid(FluidConfigurer configurer) {
+        this.configurer = Objects.requireNonNull(configurer, "configurer must not be null");
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -41,6 +49,6 @@ public final class FluidShapeBuilder {
         }
         built = true;
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance().register(new ShapeFluid(modid, name, format, namer));
+        return ShapeRegistry.instance().register(new ShapeFluid(modid, name, format, namer, configurer));
     }
 }
