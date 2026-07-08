@@ -1,9 +1,15 @@
 package com.ruling_0.materiallib.api;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -136,5 +142,21 @@ class MaterialRegistryTest {
     void resolveTwiceThrows() {
         registry.resolve();
         assertThrows(IllegalStateException.class, registry::resolve);
+    }
+
+    /// A material built through [MaterialBuilder] can never lack [StandardProperties#TEXTURE_SET] (the builder
+    /// requires one and rejects removing it), but the registry must still warn instead of crashing if one ever
+    /// does, since that failure would otherwise only surface as a rendering NullPointerException far from its
+    /// cause. Bypasses the builder with the package-private [Material] constructor to simulate that case.
+    @Test
+    void shapeServingMaterialWithoutTextureSetResolvesInsteadOfCrashing() {
+        Shape gear = new TestShape("testmod", "gear");
+        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
+        Material material = new Material(registry, "testmod", "Broken", properties, Set.of(gear), List.of());
+        registry.register(material);
+
+        assertDoesNotThrow(registry::resolve);
+        assertNull(material.getProperty(StandardProperties.TEXTURE_SET));
+        assertTrue(material.getShapes().contains(gear));
     }
 }
