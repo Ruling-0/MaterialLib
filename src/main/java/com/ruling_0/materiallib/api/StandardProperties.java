@@ -20,7 +20,8 @@ public final class StandardProperties {
     public static final Property<TextureSet> TEXTURE_SET = Property.of(MaterialLib.MODID, "textureSet");
 
     /// The fallback texture set, for if a texture does not exist within the normal texture set.
-    public static final Property<TextureSet> FALLBACK_TEXTURE_SET = Property.of(MaterialLib.MODID, "fallbackTextureSet");
+    public static final Property<TextureSet> FALLBACK_TEXTURE_SET = Property.of(MaterialLib.MODID,
+        "fallbackTextureSet");
 
     /// ARGB tint applied to the material's textures.
     public static final Property<Integer> TINT = Property.of(MaterialLib.MODID, "tint", 0xFFFFFFFF);

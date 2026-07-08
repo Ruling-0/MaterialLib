@@ -41,7 +41,8 @@ final class ShapeIcons {
                         setIcons(register, alternative, shapeName, false);
                         break;
                     }
-                    path = alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET).iconPath(shapeName);
+                    path = alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET)
+                        .iconPath(shapeName);
                     if (checkResLoc(path)) {
                         setIcons(register, alternative, shapeName, true);
                         break;
@@ -65,7 +66,9 @@ final class ShapeIcons {
     }
 
     private void setIcons(IIconRegister register, Material material, String shapeName, boolean fallback) {
-        TextureSet textureSet = fallback ? material.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET) : material.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET);
+        TextureSet textureSet = fallback ?
+            material.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET) :
+            material.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET);
         iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(shapeName)));
         String overlayPath = textureSet.overlayPath(shapeName);
         if (checkResLoc(overlayPath)) {
