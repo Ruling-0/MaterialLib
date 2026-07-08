@@ -39,4 +39,9 @@ class ShapeNamingTest {
     void requireValidFormatAcceptsALiteralFormatWithoutAPlaceholder() {
         assertEquals("Bucket of Lava", ShapeNaming.requireValidFormat("Bucket of Lava"));
     }
+
+    @Test
+    void variantBlockNameCombinesShapeAndVariant() {
+        assertEquals("ore_stone", ShapeNaming.variantBlockName("ore", "stone"));
+    }
 }

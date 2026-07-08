@@ -62,11 +62,28 @@ final class ShapeUnification {
                     MaterialLib.LOG.info("Unified shape {}:{} onto owner {}", candidate.getModId(), name, ownerModid);
                 }
             }
+            requireIdenticalVariants(name, candidates, canonical);
             logOreDictDivergence(name, candidates, canonical);
             owners.put(name, ownerModid);
         }
         resolved = true;
         return owners;
+    }
+
+    /// Rejects a name whose candidates declare different variant lists. Unlike oredict divergence, this is not
+    /// safely ignorable: the non-owning candidates' materials would otherwise be generating variants the owner's
+    /// backing blocks do not have.
+    private void requireIdenticalVariants(String name, List<Shape> candidates, Shape canonical) {
+        List<String> ownerVariants = canonical.getVariants();
+        for (Shape candidate : candidates) {
+            if (candidate == canonical) continue;
+            if (!ownerVariants.equals(candidate.getVariants())) {
+                throw new IllegalStateException(
+                    "Shapes " + canonical.getModId() + ":" + name + " and " + candidate.getModId() + ":" + name +
+                        " share a name but declare different variants (" + ownerVariants + " vs " +
+                        candidate.getVariants() + "); shapes sharing a name must declare identical variant lists");
+            }
+        }
     }
 
     private void logOreDictDivergence(String name, List<Shape> candidates, Shape canonical) {
