@@ -32,8 +32,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// instances, and the block's item shows the same display name and advanced-tooltip attribution as an item shape.
 ///
 /// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
-/// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) under the tinted
-/// material icon, in a second render pass; see [#registerBlockIcons] and [#canRenderInPass]. Drops, hardness,
+/// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) in the solid render
+/// pass, under the tinted material icon drawn in the alpha pass; see [#registerBlockIcons] and [#canRenderInPass].
+/// Drops, hardness,
 /// resistance, and harvest level may be overridden per material and variant through [BlockShapeBuilder]'s behavior
 /// hooks; a hook left unset preserves the vanilla default it replaces.
 public class ShapeBlock extends Block implements BackedShape {
@@ -158,8 +159,10 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// A block with no base texture renders as a single tinted layer, as always. A block with a base texture
-    /// renders in two passes -- the tinted material icon in pass 0 (so the item form, which never sets an active
-    /// render pass, keeps showing it), and the untinted base underneath in pass 1; see [#canRenderInPass].
+    /// renders in two passes -- the untinted base in the solid pass 0, and the tinted material icon over it in
+    /// the alpha-blended pass 1 (pass 1 draws after pass 0, and the material texture's transparent pixels let
+    /// the base show through). The item form never sets an active render pass (pass -1) and shows the tinted
+    /// material icon; see [#canRenderInPass].
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderBlockPass() { return baseTexture != null ? 1 : 0; }
@@ -173,7 +176,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
-        if (baseTexture != null && MinecraftForgeClient.getRenderPass() == 1) {
+        if (baseTexture != null && MinecraftForgeClient.getRenderPass() == 0) {
             return baseIcon;
         }
         return icons.get(meta);
@@ -188,7 +191,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int colorMultiplier(IBlockAccess world, int x, int y, int z) {
-        if (baseTexture != null && MinecraftForgeClient.getRenderPass() == 1) {
+        if (baseTexture != null && MinecraftForgeClient.getRenderPass() == 0) {
             return 0xFFFFFF;
         }
         return tintFor(world.getBlockMetadata(x, y, z));
