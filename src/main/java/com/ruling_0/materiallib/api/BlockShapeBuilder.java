@@ -1,5 +1,6 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.List;
 import java.util.Objects;
 
 /// Builds and registers a simple block [Shape] backed by a [ShapeBlock]. Obtained from
@@ -12,6 +13,7 @@ public final class BlockShapeBuilder {
     private final String name;
     private String[] oreDicts;
     private String displayNameFormat;
+    private String[] variants;
     private boolean built;
 
     BlockShapeBuilder(String modid, String name) {
@@ -34,6 +36,20 @@ public final class BlockShapeBuilder {
         return this;
     }
 
+    /// Declares the shape's variants, e.g. the stone types an ore shape generates against. Each variant registers
+    /// its own backing block, named `<shapeName>_<variant>` (see [ShapeNaming#variantBlockName]), sharing the
+    /// materials the shape generates but able to differ in texture (see [ShapeIcons]) and behavior (see
+    /// [#drops], [#hardness], [#resistance], [#harvestLevel]). Omit this call for a shape with no variants, the
+    /// common case; a shape with variants must declare at least one, and names must be unique and valid
+    /// identifiers. Shapes sharing this shape's name must declare the identical variant list, or unification fails
+    /// loudly; see [ShapeUnification]. [MaterialLibAPI#getStack(Material, Shape, int)] and oredict registration
+    /// use the first declared variant; [MaterialLibAPI#getStack(Material, Shape, String, int)] and
+    /// [MaterialLibAPI#getBlock(Shape, String)] address a specific one.
+    public BlockShapeBuilder variants(String... variants) {
+        this.variants = variants;
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -42,6 +58,10 @@ public final class BlockShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance().register(new ShapeBlock(modid, name, format, prefixes));
+        if (variants == null) {
+            return ShapeRegistry.instance().register(new ShapeBlock(modid, name, format, prefixes));
+        }
+        return ShapeRegistry.instance()
+            .register(ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants)));
     }
 }
