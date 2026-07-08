@@ -2,7 +2,6 @@ package com.ruling_0.materiallib.api;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.util.IIcon;
-import net.minecraft.util.ResourceLocation;
 
 import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
 import com.ruling_0.materiallib.MaterialLib;
