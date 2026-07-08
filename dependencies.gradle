@@ -47,4 +47,6 @@ dependencies {
     testImplementation(platform('org.junit:junit-bom:5.11.4'))
     testImplementation('org.junit.jupiter:junit-jupiter')
     testRuntimeOnly('org.junit.platform:junit-platform-launcher')
+    // fastutil is only on the compile/runtime classpath via the patched Minecraft jar, not the plain test JVM.
+    testRuntimeOnly('it.unimi.dsi:fastutil:8.5.18')
 }
