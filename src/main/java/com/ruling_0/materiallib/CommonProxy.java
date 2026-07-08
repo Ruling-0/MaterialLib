@@ -52,6 +52,7 @@ public class CommonProxy {
     }
 
     public void init(FMLInitializationEvent event) {
+        ShapeRegistry.instance().registerFluidContainers();
         ShapeRegistry.instance().runInitConsumers();
     }
 
