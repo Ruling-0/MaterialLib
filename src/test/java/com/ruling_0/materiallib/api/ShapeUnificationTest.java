@@ -116,6 +116,39 @@ class ShapeUnificationTest {
     }
 
     @Test
+    void candidatesSharingIdenticalVariantListsUnifyFine() {
+        TestShape bmod = new TestShape("bmod", "ore", List.of("stone", "granite"));
+        TestShape amod = new TestShape("amod", "ore", List.of("stone", "granite"));
+        unification.register(bmod);
+        unification.register(amod);
+
+        unification.resolve(noOwners());
+
+        assertSame(amod, unification.canonical(amod));
+        assertSame(amod, unification.canonical(bmod));
+    }
+
+    @Test
+    void candidatesDeclaringDifferentVariantListsFailLoudly() {
+        TestShape amod = new TestShape("amod", "ore", List.of("stone", "granite"));
+        TestShape bmod = new TestShape("bmod", "ore", List.of("stone"));
+        unification.register(amod);
+        unification.register(bmod);
+
+        assertThrows(IllegalStateException.class, () -> unification.resolve(noOwners()));
+    }
+
+    @Test
+    void aVariantListAgainstNoVariantsFailsLoudly() {
+        TestShape amod = new TestShape("amod", "ore", List.of("stone"));
+        TestShape bmod = new TestShape("bmod", "ore");
+        unification.register(amod);
+        unification.register(bmod);
+
+        assertThrows(IllegalStateException.class, () -> unification.resolve(noOwners()));
+    }
+
+    @Test
     void registeringTheSameInstanceTwiceRecordsItOnce() {
         TestShape gear = new TestShape("amod", "gear");
         assertSame(gear, unification.register(gear));

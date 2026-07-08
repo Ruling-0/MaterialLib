@@ -1,5 +1,8 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /// Builds and registers a simple block [Shape] backed by a [ShapeBlock]. Obtained from
@@ -12,6 +15,12 @@ public final class BlockShapeBuilder {
     private final String name;
     private String[] oreDicts;
     private String displayNameFormat;
+    private String[] variants;
+    private final Map<String, String> variantBases = new LinkedHashMap<>();
+    private BlockDropFunction dropsFn;
+    private BlockFloatFunction hardnessFn;
+    private BlockFloatFunction resistanceFn;
+    private BlockHarvestLevelFunction harvestLevelFn;
     private boolean built;
 
     BlockShapeBuilder(String modid, String name) {
@@ -34,6 +43,60 @@ public final class BlockShapeBuilder {
         return this;
     }
 
+    /// Declares the shape's variants, e.g. the stone types an ore shape generates against. Each variant registers
+    /// its own backing block, named `<shapeName>_<variant>` (see [ShapeNaming#variantBlockName]), sharing the
+    /// materials the shape generates but able to differ in texture (see [ShapeIcons]) and behavior (see
+    /// [#drops], [#hardness], [#resistance], [#harvestLevel]). Omit this call for a shape with no variants, the
+    /// common case; a shape with variants must declare at least one, and names must be unique and valid
+    /// identifiers. Shapes sharing this shape's name must declare the identical variant list, or unification fails
+    /// loudly; see [ShapeUnification]. [MaterialLibAPI#getStack(Material, Shape, int)] and oredict registration
+    /// use the first declared variant; [MaterialLibAPI#getStack(Material, Shape, String, int)] and
+    /// [MaterialLibAPI#getBlock(Shape, String)] address a specific one.
+    public BlockShapeBuilder variants(String... variants) {
+        this.variants = variants;
+        return this;
+    }
+
+    /// Declares the untinted background texture drawn under `variant`'s tinted material icon (e.g. the stone
+    /// background of an ore), as a full icon path (`"minecraft:blocks/stone"`) independent of any material's
+    /// texture set. `texture` is registered as a second render pass; see [ShapeBlock#canRenderInPass]. Optional --
+    /// a variant with no base texture renders as a single tinted layer, as today. `variant` must be one of the
+    /// names passed to [#variants].
+    public BlockShapeBuilder variantBase(String variant, String texture) {
+        Objects.requireNonNull(variant, "variant must not be null");
+        if (texture == null || texture.isEmpty()) {
+            throw new IllegalArgumentException("variant base texture must not be null or empty");
+        }
+        variantBases.put(variant, texture);
+        return this;
+    }
+
+    /// Overrides what a block of this shape drops when broken, replacing the default of dropping the placed
+    /// block itself. Called with the fortune level and whether the break was silk-touched. Needed for e.g. a
+    /// small ore that drops an item, never the block.
+    public BlockShapeBuilder drops(BlockDropFunction drops) {
+        this.dropsFn = Objects.requireNonNull(drops, "drops must not be null");
+        return this;
+    }
+
+    /// Overrides a block of this shape's hardness (mining speed), replacing the default of `5.0`.
+    public BlockShapeBuilder hardness(BlockFloatFunction hardness) {
+        this.hardnessFn = Objects.requireNonNull(hardness, "hardness must not be null");
+        return this;
+    }
+
+    /// Overrides a block of this shape's explosion resistance, replacing the default of `10.0`.
+    public BlockShapeBuilder resistance(BlockFloatFunction resistance) {
+        this.resistanceFn = Objects.requireNonNull(resistance, "resistance must not be null");
+        return this;
+    }
+
+    /// Overrides a block of this shape's required harvest level, replacing the vanilla default of none required.
+    public BlockShapeBuilder harvestLevel(BlockHarvestLevelFunction harvestLevel) {
+        this.harvestLevelFn = Objects.requireNonNull(harvestLevel, "harvestLevel must not be null");
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -42,6 +105,12 @@ public final class BlockShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance().register(new ShapeBlock(modid, name, format, prefixes));
+        BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn);
+        if (variants == null) {
+            return ShapeRegistry.instance()
+                .register(new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior));
+        }
+        return ShapeRegistry.instance().register(
+            ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants), variantBases, behavior));
     }
 }

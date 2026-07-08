@@ -26,4 +26,9 @@ public interface Shape {
     /// its item under each (e.g. "gear" and "cog" give both "gearTestIron" and "cogTestIron"). At least one for an
     /// item or block shape; a fluid shape has none..
     List<String> getOreDicts();
+
+    /// The variant names a block shape declares through [BlockShapeBuilder#variants], in declaration order, or
+    /// empty for a shape with no variants (the common case, and every non-block shape). Shapes sharing a name must
+    /// declare identical variant lists, or unification fails; see [ShapeUnification].
+    default List<String> getVariants() { return List.of(); }
 }

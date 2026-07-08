@@ -52,6 +52,12 @@ final class ShapeNaming {
         return displayNameFormat != null ? displayNameFormat : "%s " + capitalize(shapeName);
     }
 
+    /// The registry name of one variant's backing block: the shape name, an underscore, and the variant name,
+    /// e.g. `("ore", "stone")` -> `"ore_stone"`. Also the block's default texture file name; see [ShapeIcons].
+    static String variantBlockName(String shapeName, String variant) {
+        return shapeName + "_" + variant;
+    }
+
     private static String capitalize(String value) {
         if (value == null || value.isEmpty()) {
             throw new IllegalArgumentException("shape name must not be null or empty");

@@ -7,15 +7,21 @@ final class TestShape implements Shape {
     private final String modid;
     private final String name;
     private final List<String> oreDicts;
+    private final List<String> variants;
 
     TestShape(String modid, String name) {
         this(modid, name, name);
     }
 
     TestShape(String modid, String name, String... oreDicts) {
+        this(modid, name, List.of(), oreDicts);
+    }
+
+    TestShape(String modid, String name, List<String> variants, String... oreDicts) {
         this.modid = modid;
         this.name = name;
         this.oreDicts = List.of(oreDicts);
+        this.variants = variants;
     }
 
     @Override
@@ -26,6 +32,9 @@ final class TestShape implements Shape {
 
     @Override
     public List<String> getOreDicts() { return oreDicts; }
+
+    @Override
+    public List<String> getVariants() { return variants; }
 
     @Override
     public String toString() {
