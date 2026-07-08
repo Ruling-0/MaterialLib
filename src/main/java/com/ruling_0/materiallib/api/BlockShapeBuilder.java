@@ -1,6 +1,8 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /// Builds and registers a simple block [Shape] backed by a [ShapeBlock]. Obtained from
@@ -14,6 +16,7 @@ public final class BlockShapeBuilder {
     private String[] oreDicts;
     private String displayNameFormat;
     private String[] variants;
+    private final Map<String, String> variantBases = new LinkedHashMap<>();
     private boolean built;
 
     BlockShapeBuilder(String modid, String name) {
@@ -50,6 +53,20 @@ public final class BlockShapeBuilder {
         return this;
     }
 
+    /// Declares the untinted background texture drawn under `variant`'s tinted material icon (e.g. the stone
+    /// background of an ore), as a full icon path (`"minecraft:blocks/stone"`) independent of any material's
+    /// texture set. `texture` is registered as a second render pass; see [ShapeBlock#canRenderInPass]. Optional --
+    /// a variant with no base texture renders as a single tinted layer, as today. `variant` must be one of the
+    /// names passed to [#variants].
+    public BlockShapeBuilder variantBase(String variant, String texture) {
+        Objects.requireNonNull(variant, "variant must not be null");
+        if (texture == null || texture.isEmpty()) {
+            throw new IllegalArgumentException("variant base texture must not be null or empty");
+        }
+        variantBases.put(variant, texture);
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -62,6 +79,6 @@ public final class BlockShapeBuilder {
             return ShapeRegistry.instance().register(new ShapeBlock(modid, name, format, prefixes));
         }
         return ShapeRegistry.instance()
-            .register(ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants)));
+            .register(ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants), variantBases));
     }
 }
