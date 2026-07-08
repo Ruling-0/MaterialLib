@@ -17,6 +17,10 @@ public final class BlockShapeBuilder {
     private String displayNameFormat;
     private String[] variants;
     private final Map<String, String> variantBases = new LinkedHashMap<>();
+    private BlockDropFunction dropsFn;
+    private BlockFloatFunction hardnessFn;
+    private BlockFloatFunction resistanceFn;
+    private BlockHarvestLevelFunction harvestLevelFn;
     private boolean built;
 
     BlockShapeBuilder(String modid, String name) {
@@ -67,6 +71,32 @@ public final class BlockShapeBuilder {
         return this;
     }
 
+    /// Overrides what a block of this shape drops when broken, replacing the default of dropping the placed
+    /// block itself. Called with the fortune level and whether the break was silk-touched. Needed for e.g. a
+    /// small ore that drops an item, never the block.
+    public BlockShapeBuilder drops(BlockDropFunction drops) {
+        this.dropsFn = Objects.requireNonNull(drops, "drops must not be null");
+        return this;
+    }
+
+    /// Overrides a block of this shape's hardness (mining speed), replacing the default of `5.0`.
+    public BlockShapeBuilder hardness(BlockFloatFunction hardness) {
+        this.hardnessFn = Objects.requireNonNull(hardness, "hardness must not be null");
+        return this;
+    }
+
+    /// Overrides a block of this shape's explosion resistance, replacing the default of `10.0`.
+    public BlockShapeBuilder resistance(BlockFloatFunction resistance) {
+        this.resistanceFn = Objects.requireNonNull(resistance, "resistance must not be null");
+        return this;
+    }
+
+    /// Overrides a block of this shape's required harvest level, replacing the vanilla default of none required.
+    public BlockShapeBuilder harvestLevel(BlockHarvestLevelFunction harvestLevel) {
+        this.harvestLevelFn = Objects.requireNonNull(harvestLevel, "harvestLevel must not be null");
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -75,10 +105,12 @@ public final class BlockShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
+        BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn);
         if (variants == null) {
-            return ShapeRegistry.instance().register(new ShapeBlock(modid, name, format, prefixes));
+            return ShapeRegistry.instance()
+                .register(new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior));
         }
-        return ShapeRegistry.instance()
-            .register(ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants), variantBases));
+        return ShapeRegistry.instance().register(
+            ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants), variantBases, behavior));
     }
 }

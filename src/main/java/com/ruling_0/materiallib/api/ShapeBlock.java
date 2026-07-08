@@ -1,16 +1,19 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 
 import net.minecraftforge.client.MinecraftForgeClient;
 
@@ -30,7 +33,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 ///
 /// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
 /// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) under the tinted
-/// material icon, in a second render pass; see [#registerBlockIcons] and [#canRenderInPass].
+/// material icon, in a second render pass; see [#registerBlockIcons] and [#canRenderInPass]. Drops, hardness,
+/// resistance, and harvest level may be overridden per material and variant through [BlockShapeBuilder]'s behavior
+/// hooks; a hook left unset preserves the vanilla default it replaces.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;
@@ -38,7 +43,9 @@ public class ShapeBlock extends Block implements BackedShape {
     private final List<String> oreDicts;
     private final String displayNameFormat;
     private final String groupName;
+    private final String variant;
     private final String baseTexture;
+    private final BlockBehavior behavior;
 
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeIcons icons = new ShapeIcons(false);
@@ -54,27 +61,40 @@ public class ShapeBlock extends Block implements BackedShape {
     /// Creates a block shape backed by a block of `blockMaterial`, for subclasses needing a non-metal block.
     public ShapeBlock(net.minecraft.block.material.Material blockMaterial, String modid, String name,
                       String displayNameFormat, String... oreDicts) {
-        this(blockMaterial, modid, name, displayNameFormat, oreDicts, null, null);
+        this(blockMaterial, modid, name, displayNameFormat, oreDicts, null, null, null, BlockBehavior.NONE);
     }
 
-    /// Creates one variant's backing block for [ShapeBlockVariants]. `groupName` is the plain shape name, tried as
-    /// an icon fallback after this variant's own name (see [#registerBlockIcons]); `baseTexture` is this variant's
-    /// optional untinted background icon path, independent of any material's texture set, or null for none.
+    /// Creates one variant's backing block for [ShapeBlockVariants], or the sole block of a variant-less shape
+    /// with behavior hooks (`groupName`, `variant`, and `baseTexture` all null). `groupName` is the plain shape
+    /// name, tried as an icon fallback after this variant's own name (see [#registerBlockIcons]); `variant` is
+    /// this block's variant name, passed to `behavior`'s hooks; `baseTexture` is this variant's optional untinted
+    /// background icon path, independent of any material's texture set, or null for none.
     ShapeBlock(String modid, String name, String displayNameFormat, String[] oreDicts, String groupName,
-               String baseTexture) {
-        this(net.minecraft.block.material.Material.iron, modid, name, displayNameFormat, oreDicts, groupName,
-            baseTexture);
+               String variant, String baseTexture, BlockBehavior behavior) {
+        this(
+            net.minecraft.block.material.Material.iron,
+            modid,
+            name,
+            displayNameFormat,
+            oreDicts,
+            groupName,
+            variant,
+            baseTexture,
+            behavior);
     }
 
     private ShapeBlock(net.minecraft.block.material.Material blockMaterial, String modid, String name,
-                       String displayNameFormat, String[] oreDicts, String groupName, String baseTexture) {
+                       String displayNameFormat, String[] oreDicts, String groupName, String variant,
+                       String baseTexture, BlockBehavior behavior) {
         super(blockMaterial);
         this.modid = Names.validate("block shape modid", modid);
         this.name = Names.validate("block shape name", name);
         this.oreDicts = Names.validateOreDicts(oreDicts);
         this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
         this.groupName = groupName;
+        this.variant = variant;
         this.baseTexture = baseTexture;
+        this.behavior = behavior;
         setHardness(5.0F);
         setResistance(10.0F);
         setStepSound(soundTypeMetal);
@@ -180,6 +200,52 @@ public class ShapeBlock extends Block implements BackedShape {
     private static int tintFor(int meta) {
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         return material != null ? material.getProperty(StandardProperties.TINT) & 0xFFFFFF : 0xFFFFFF;
+    }
+
+    @Override
+    public float getBlockHardness(World world, int x, int y, int z) {
+        Material material = behavior.hardness() != null ? materialAt(world, x, y, z) : null;
+        return material != null ? behavior.hardness().apply(material, variant) :
+            super.getBlockHardness(world, x, y, z);
+    }
+
+    @Override
+    public float getExplosionResistance(Entity exploder, World world, int x, int y, int z, double explosionX,
+                                        double explosionY, double explosionZ) {
+        Material material = behavior.resistance() != null ? materialAt(world, x, y, z) : null;
+        return material != null ? behavior.resistance().apply(material, variant) :
+            super.getExplosionResistance(exploder, world, x, y, z, explosionX, explosionY, explosionZ);
+    }
+
+    @Override
+    public int getHarvestLevel(int metadata) {
+        Material material = behavior.harvestLevel() != null ? materialFor(metadata) : null;
+        return material != null ? behavior.harvestLevel().apply(material, variant) : super.getHarvestLevel(metadata);
+    }
+
+    /// The drops for a normal (non-silk-touch) break; see [BlockShapeBuilder#drops].
+    @Override
+    public ArrayList<ItemStack> getDrops(World world, int x, int y, int z, int metadata, int fortune) {
+        Material material = behavior.drops() != null ? materialFor(metadata) : null;
+        if (material == null) return super.getDrops(world, x, y, z, metadata, fortune);
+        return new ArrayList<>(behavior.drops().drops(material, variant, fortune, false));
+    }
+
+    /// The single stack a silk-touch break picks up; see [BlockShapeBuilder#drops].
+    @Override
+    public ItemStack createStackedBlock(int metadata) {
+        Material material = behavior.drops() != null ? materialFor(metadata) : null;
+        if (material == null) return super.createStackedBlock(metadata);
+        List<ItemStack> drops = behavior.drops().drops(material, variant, 0, true);
+        return drops.isEmpty() ? null : drops.get(0);
+    }
+
+    private static Material materialAt(World world, int x, int y, int z) {
+        return materialFor(world.getBlockMetadata(x, y, z));
+    }
+
+    private static Material materialFor(int metadata) {
+        return MaterialRegistry.instance().getMaterialByIndex(metadata);
     }
 
     /// The item form of a [ShapeBlock], carrying the placed metadata onto the stack so each material is a separate
