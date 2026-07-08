@@ -1,5 +1,7 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
@@ -15,10 +17,11 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 /// The item backing a fluid-in-container [Shape]: a [ShapeItem] whose damage is a material's global index and that
-/// maps, per material, from its filled stack to the material's fluid through the [FluidContainerRegistry].
+/// maps, per material, from its filled stack to one of the shape's fluids through the [FluidContainerRegistry].
 ///
-/// A material that generates this shape must also generate the [ShapeFluid] it holds; the registry enforces that at
-/// resolve.
+/// A material that generates this shape must also generate at least one of the fluid shapes it can hold; the
+/// registry enforces that at resolve, and binds each material to the first of those shapes, in declared order, that
+/// the material generates (see [FluidInContainerShapeBuilder#fluid(Shape...)]).
 ///
 /// Renders in two passes: an untinted empty-container texture underneath the texture set's texture for this
 /// shape, which supplies the fluid fill and is tinted with [StandardProperties#TINT]. The container looks the
@@ -26,8 +29,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// lives in the shape's own domain at `textures/items/materials/<name>_empty.png`.
 public class ShapeFluidInContainer extends ShapeItem {
 
-    private final ShapeFluid fluidShape;
-    private final ItemStack emptyContainer;
+    private final List<Shape> fluidShapes;
+    private final EmptyContainer emptyContainer;
     private final int volume;
     private IIcon emptyIcon;
 
@@ -36,26 +39,51 @@ public class ShapeFluidInContainer extends ShapeItem {
     /// drain. `oreDicts` and `displayNameFormat` behave as for a [ShapeItem].
     public ShapeFluidInContainer(String modid, String name, String displayNameFormat, ShapeFluid fluidShape,
                                  ItemStack emptyContainer, int volume, String... oreDicts) {
+        this(modid, name, displayNameFormat,
+            List.of(Objects.requireNonNull(fluidShape, "fluidShape must not be null")),
+            emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, oreDicts);
+    }
+
+    /// As the six-argument constructor, but with an ordered list of fluid shapes this container can hold (see
+    /// [FluidInContainerShapeBuilder#fluid(Shape...)]) and a possibly-deferred [EmptyContainer].
+    ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
+                          EmptyContainer emptyContainer, int volume, String... oreDicts) {
         super(modid, name, displayNameFormat, oreDicts);
-        this.fluidShape = Objects.requireNonNull(fluidShape, "fluidShape must not be null");
-        this.emptyContainer = emptyContainer == null ? null : emptyContainer.copy();
+        if (fluidShapes == null || fluidShapes.isEmpty()) {
+            throw new IllegalArgumentException("fluidShapes must not be null or empty");
+        }
+        this.fluidShapes = List.copyOf(fluidShapes);
+        this.emptyContainer = emptyContainer;
         if (volume <= 0) {
             throw new IllegalArgumentException("container volume must be positive, was " + volume);
         }
         this.volume = volume;
     }
 
-    /// The fluid shape this container was built with.
-    ShapeFluid getFluidShape() { return fluidShape; }
+    /// The fluid shapes this container was built with, in fallback order.
+    List<Shape> getFluidShapes() { return fluidShapes; }
+
+    /// The first of `fluidShapes` that `material` generates, or null if none do.
+    static ShapeFluid selectFluid(Material material, List<ShapeFluid> fluidShapes) {
+        for (ShapeFluid fluid : fluidShapes) {
+            for (Material served : fluid.getServedMaterials()) {
+                if (served == material) return fluid;
+            }
+        }
+        return null;
+    }
 
     /// Registers a [FluidContainerRegistry] mapping for each served material, filling this item at the material's
-    /// index from `canonicalFluid`. Called at resolve, after fluids are registered.
-    void registerContainers(ShapeFluid canonicalFluid) {
+    /// index from its fluid in `fluidByMaterial`. Called from MaterialLib's init, before init-phase shape
+    /// consumers run and after fluids are registered at resolve; resolves this container's [EmptyContainer] once.
+    void registerContainers(Map<Material, ShapeFluid> fluidByMaterial) {
+        ItemStack empty = emptyContainer != null ? emptyContainer.resolve() : null;
         for (Material material : getServedMaterials()) {
-            FluidStack fluidStack = canonicalFluid.fluidStack(material, volume);
+            FluidStack fluidStack = fluidByMaterial.get(material)
+                .fluidStack(material, volume);
             ItemStack filled = getStack(material, 1);
-            boolean registered = emptyContainer != null ?
-                FluidContainerRegistry.registerFluidContainer(fluidStack, filled, emptyContainer.copy()) :
+            boolean registered = empty != null ?
+                FluidContainerRegistry.registerFluidContainer(fluidStack, filled, empty.copy()) :
                 FluidContainerRegistry.registerFluidContainer(fluidStack, filled);
             if (!registered) {
                 MaterialLib.LOG.warn(
