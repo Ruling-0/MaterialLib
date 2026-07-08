@@ -13,8 +13,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 final class ShapeIcons {
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
-    private static IIcon missingno = ((TextureMap) Minecraft.getMinecraft().getTextureManager()
-        .getTexture(TextureMap.locationBlocksTexture)).getAtlasSprite("missingno");
 
     /// Registers one icon per served material from its texture set, plus the missing-material placeholder.
     void bind(IIconRegister register, Material[] materials, String shapeName) {
@@ -28,6 +26,7 @@ final class ShapeIcons {
     /// The icon for a material index, or the missing-material placeholder.
     IIcon get(int index) {
         IIcon icon = iconsByIndex.get(index);
-        return icon != null ? icon : missingno;
+        return icon != null ? icon : ((TextureMap) Minecraft.getMinecraft().getTextureManager()
+            .getTexture(TextureMap.locationBlocksTexture)).getAtlasSprite("missingno");
     }
 }
