@@ -30,15 +30,26 @@ final class ShapeIcons {
         for (Material material : materials) {
             String path = material.getProperty(StandardProperties.TEXTURE_SET).iconPath(shapeName);
             if (!checkResLoc(path)) {
+                path = material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET).iconPath(shapeName);
+                if (checkResLoc(path)) {
+                    setIcons(register, material, shapeName, true);
+                    continue;
+                }
                 for (Material alternative : material.getAlternatives()) {
                     path = alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET).iconPath(shapeName);
                     if (checkResLoc(path)) {
-                        setIcons(register, alternative, shapeName);
+                        setIcons(register, alternative, shapeName, false);
+                        break;
+                    }
+                    path = alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET)
+                        .iconPath(shapeName);
+                    if (checkResLoc(path)) {
+                        setIcons(register, alternative, shapeName, true);
                         break;
                     }
                 }
             }
-            else setIcons(register, material, shapeName);
+            else setIcons(register, material, shapeName, false);
         }
         emptyIcon = register.registerIcon(EMPTY_ICON);
     }
@@ -54,8 +65,10 @@ final class ShapeIcons {
         return icon != null ? overlaysByIndex.get(index) : emptyIcon;
     }
 
-    private void setIcons(IIconRegister register, Material material, String shapeName) {
-        TextureSet textureSet = material.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET);
+    private void setIcons(IIconRegister register, Material material, String shapeName, boolean fallback) {
+        TextureSet textureSet = fallback ?
+            material.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET) :
+            material.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET);
         iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(shapeName)));
         String overlayPath = textureSet.overlayPath(shapeName);
         if (checkResLoc(overlayPath)) {
