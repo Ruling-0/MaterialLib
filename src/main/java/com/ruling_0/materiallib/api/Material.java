@@ -44,6 +44,7 @@ public final class Material {
     private final Set<Shape> removedShapes = new ReferenceOpenHashSet<>(4);
     private final Set<Family> families = new ReferenceOpenHashSet<>(4);
     private final List<String> tooltipLines = new ArrayList<>(2);
+    private final Set<Material> alternatives = new ReferenceOpenHashSet<>(4);
 
     private Family[] sortedFamilies;
     private Set<Family> familiesView;
@@ -116,6 +117,11 @@ public final class Material {
     @SuppressWarnings("unchecked")
     public <T> T getProperty(Property<T> property) {
         if (canonical != this) return canonical.getProperty(property);
+        return getPropertyIgnoreCanonical(property);
+    }
+
+    @SuppressWarnings("unchecked")
+    <T> T getPropertyIgnoreCanonical(Property<T> property) {
         registry.requireResolved("query properties of ", key);
         Object value = properties.get(property);
         if (value != null) return (T) value;
@@ -211,6 +217,7 @@ public final class Material {
         families.addAll(loser.families);
         tooltipLines.addAll(loser.tooltipLines);
         loser.canonical = this;
+        alternatives.add(loser);
     }
 
     void addFamilyInternal(Family family) {
@@ -235,6 +242,9 @@ public final class Material {
     Material canonical() {
         return canonical;
     }
+
+    /// The set of materials unified onto this canonical one
+    Set<Material> getAlternatives() { return alternatives; }
 
     void resolveIndex(int index) {
         this.index = index;

@@ -26,22 +26,19 @@ final class ShapeIcons {
     /// Registers one icon per served material from its texture set
     void bind(IIconRegister register, Material[] materials, String shapeName) {
         iconsByIndex.clear();
+        overlaysByIndex.clear();
         for (Material material : materials) {
-            TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
-            iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(shapeName)));
-            String overlayPath = textureSet.overlayPath(shapeName);
-            if (isItem) {
-                if (ResourceUtil.resourceExists(ResourceUtil.getCompleteItemTextureResourceLocation(overlayPath))) {
-                    overlaysByIndex.put(material.getIndex(), register.registerIcon(textureSet.overlayPath(shapeName)));
+            String path = material.getProperty(StandardProperties.TEXTURE_SET).iconPath(shapeName);
+            if (!checkResLoc(path)) {
+                for (Material alternative : material.getAlternatives()) {
+                    path = alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET).iconPath(shapeName);
+                    if (checkResLoc(path)) {
+                        setIcons(register, alternative, shapeName);
+                        break;
+                    }
                 }
-                else overlaysByIndex.put(material.getIndex(), null);
             }
-            else {
-                if (ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(overlayPath))) {
-                    overlaysByIndex.put(material.getIndex(), register.registerIcon(textureSet.overlayPath(shapeName)));
-                }
-                else overlaysByIndex.put(material.getIndex(), null);
-            }
+            else setIcons(register, material, shapeName);
         }
         emptyIcon = register.registerIcon(EMPTY_ICON);
     }
@@ -55,5 +52,20 @@ final class ShapeIcons {
     IIcon getOverlay(int index) {
         IIcon icon = overlaysByIndex.get(index);
         return icon != null ? overlaysByIndex.get(index) : emptyIcon;
+    }
+
+    private void setIcons(IIconRegister register, Material material, String shapeName) {
+        TextureSet textureSet = material.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET);
+        iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(shapeName)));
+        String overlayPath = textureSet.overlayPath(shapeName);
+        if (checkResLoc(overlayPath)) {
+            overlaysByIndex.put(material.getIndex(), register.registerIcon(overlayPath));
+        }
+        else overlaysByIndex.put(material.getIndex(), null);
+    }
+
+    private boolean checkResLoc(String path) {
+        if (isItem) return ResourceUtil.resourceExists(ResourceUtil.getCompleteItemTextureResourceLocation(path));
+        else return ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(path));
     }
 }
