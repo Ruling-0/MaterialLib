@@ -2,6 +2,8 @@ package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import net.minecraft.item.ItemStack;
 
@@ -31,10 +33,12 @@ final class ShapeBlockVariants implements BackedShape {
     }
 
     /// Builds the variant group and its backing blocks, one per name in `variantNames`, each registered as
-    /// `<name>_<variant>`.
+    /// `<name>_<variant>` and drawing the base texture `variantBases` declares for it, if any (see
+    /// [BlockShapeBuilder#variantBase]). Fails when `variantBases` names a variant not in `variantNames`.
     static ShapeBlockVariants create(String modid, String name, String displayNameFormat, String[] oreDicts,
-                                     List<String> variantNames) {
+                                     List<String> variantNames, Map<String, String> variantBases) {
         List<String> validatedOreDicts = Names.validateOreDicts(oreDicts);
+        requireDeclaredVariants(variantNames, variantBases.keySet(), "a variant base texture");
         String[] oreDictsArray = validatedOreDicts.toArray(new String[0]);
         VariantSet<ShapeBlock> blocks = VariantSet.of(
             variantNames,
@@ -42,8 +46,22 @@ final class ShapeBlockVariants implements BackedShape {
                 modid,
                 ShapeNaming.variantBlockName(name, variant),
                 displayNameFormat,
-                oreDictsArray));
+                oreDictsArray,
+                name,
+                variantBases.get(variant)));
         return new ShapeBlockVariants(modid, name, validatedOreDicts, blocks);
+    }
+
+    /// Rejects a key in `keys` (e.g. a [BlockShapeBuilder#variantBase] target) that names a variant not in
+    /// `variantNames`.
+    static void requireDeclaredVariants(List<String> variantNames, Set<String> keys, String what) {
+        for (String key : keys) {
+            if (!variantNames.contains(key)) {
+                throw new IllegalArgumentException(
+                    what + " was declared for variant \"" + key + "\", which is not one of the declared variants " +
+                        variantNames);
+            }
+        }
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.List;
+
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.util.IIcon;
 
@@ -23,33 +25,21 @@ final class ShapeIcons {
         this.isItem = isItem;
     }
 
-    /// Registers one icon per served material from its texture set
+    /// Registers one icon per served material from its texture set, looked up under `shapeName`.
     void bind(IIconRegister register, Material[] materials, String shapeName) {
+        bind(register, materials, List.of(shapeName));
+    }
+
+    /// Registers one icon per served material from its texture set, trying each name in `shapeNameCandidates` in
+    /// order and keeping the first that resolves. A variant block shape passes `<shapeName>_<variant>` before
+    /// `<shapeName>`, so a variant needs no texture of its own unless it looks different from the plain shape.
+    void bind(IIconRegister register, Material[] materials, List<String> shapeNameCandidates) {
         iconsByIndex.clear();
         overlaysByIndex.clear();
         for (Material material : materials) {
-            String path = material.getProperty(StandardProperties.TEXTURE_SET).iconPath(shapeName);
-            if (!checkResLoc(path)) {
-                path = material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET).iconPath(shapeName);
-                if (checkResLoc(path)) {
-                    setIcons(register, material, shapeName, true);
-                    continue;
-                }
-                for (Material alternative : material.getAlternatives()) {
-                    path = alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET).iconPath(shapeName);
-                    if (checkResLoc(path)) {
-                        setIcons(register, alternative, shapeName, false);
-                        break;
-                    }
-                    path = alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET)
-                        .iconPath(shapeName);
-                    if (checkResLoc(path)) {
-                        setIcons(register, alternative, shapeName, true);
-                        break;
-                    }
-                }
+            for (String shapeName : shapeNameCandidates) {
+                if (tryBind(register, material, shapeName)) break;
             }
-            else setIcons(register, material, shapeName, false);
         }
         emptyIcon = register.registerIcon(EMPTY_ICON);
     }
@@ -63,6 +53,36 @@ final class ShapeIcons {
     IIcon getOverlay(int index) {
         IIcon icon = overlaysByIndex.get(index);
         return icon != null ? overlaysByIndex.get(index) : emptyIcon;
+    }
+
+    /// Resolves and registers `material`'s icon (and overlay, if any) under `shapeName`, trying its texture set,
+    /// then its fallback texture set, then the same two on each of its unification alternatives. Returns whether
+    /// an icon was bound; false leaves the material without one, for the caller to retry under another shape name.
+    private boolean tryBind(IIconRegister register, Material material, String shapeName) {
+        String path = material.getProperty(StandardProperties.TEXTURE_SET).iconPath(shapeName);
+        if (checkResLoc(path)) {
+            setIcons(register, material, shapeName, false);
+            return true;
+        }
+        path = material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET).iconPath(shapeName);
+        if (checkResLoc(path)) {
+            setIcons(register, material, shapeName, true);
+            return true;
+        }
+        for (Material alternative : material.getAlternatives()) {
+            path = alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET).iconPath(shapeName);
+            if (checkResLoc(path)) {
+                setIcons(register, alternative, shapeName, false);
+                return true;
+            }
+            path = alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET)
+                .iconPath(shapeName);
+            if (checkResLoc(path)) {
+                setIcons(register, alternative, shapeName, true);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void setIcons(IIconRegister register, Material material, String shapeName, boolean fallback) {
