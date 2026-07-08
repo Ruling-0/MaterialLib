@@ -11,9 +11,12 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.MovingObjectPosition;
 
+import com.ruling_0.materiallib.api.BlockMaterialInfo;
 import com.ruling_0.materiallib.api.Family;
 import com.ruling_0.materiallib.api.Material;
+import com.ruling_0.materiallib.api.MaterialLibAPI;
 import com.ruling_0.materiallib.api.MaterialRegistry;
 import com.ruling_0.materiallib.api.Property;
 import com.ruling_0.materiallib.api.Shape;
@@ -22,8 +25,9 @@ import com.ruling_0.materiallib.api.ShapeFluidInContainer;
 import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.StandardProperties;
 
-/// The /matinfo debug command: prints the shape and material encoded by the held item, plus the
-/// material's family membership and property values, when it is a MaterialLib shape stack.
+/// The /matinfo debug command: prints the shape, variant, and material encoded by the held item, or otherwise the
+/// block the player is looking at, plus the material's family membership and property values, when it is a
+/// MaterialLib shape.
 public class CommandMatInfo extends CommandBase {
 
     @Override
@@ -43,19 +47,40 @@ public class CommandMatInfo extends CommandBase {
     public void processCommand(ICommandSender sender, String[] args) {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
         ItemStack stack = player.getCurrentEquippedItem();
-        if (stack == null) {
-            send(sender, "Hold a MaterialLib shape item to inspect it");
+        if (stack != null) {
+            Shape shape = shapeOf(stack);
+            if (shape != null) {
+                report(sender, shape, null, MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage()));
+                return;
+            }
+        }
+        BlockMaterialInfo info = lookAtBlock(player);
+        if (info != null) {
+            report(sender, info.shape(), info.variant(), info.material());
             return;
         }
-        Shape shape = shapeOf(stack);
-        if (shape == null) {
-            send(sender, stack.getDisplayName() + " is not a MaterialLib shape");
-            return;
+        send(sender, "Hold a MaterialLib shape item, or look at a MaterialLib shape block, to inspect it");
+    }
+
+    /// The shape, variant, and material of the block `player` is looking at, or null when it is out of range or
+    /// not a block MaterialLib registered.
+    private static BlockMaterialInfo lookAtBlock(EntityPlayerMP player) {
+        MovingObjectPosition target = player.rayTrace(32.0D, 1.0F);
+        if (target == null || target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+            return null;
         }
-        send(sender, "Shape: " + shape.getModId() + ":" + shape.getName() + " (" + type(shape) + ")");
-        Material material = MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage());
+        Block block = player.worldObj.getBlock(target.blockX, target.blockY, target.blockZ);
+        int metadata = player.worldObj.getBlockMetadata(target.blockX, target.blockY, target.blockZ);
+        return MaterialLibAPI.lookupBlock(block, metadata);
+    }
+
+    private static void report(ICommandSender sender, Shape shape, String variant, Material material) {
+        String variantSuffix = variant != null ? " variant " + variant : "";
+        send(
+            sender,
+            "Shape: " + shape.getModId() + ":" + shape.getName() + variantSuffix + " (" + type(shape) + ")");
         if (material == null) {
-            send(sender, "Material: none loaded at index " + stack.getItemDamage() + " (reserved or unknown)");
+            send(sender, "Material: none loaded at this index (reserved or unknown)");
             return;
         }
         send(sender, "Material: " + material.getKey() + " (index " + material.getIndex() + ")");
