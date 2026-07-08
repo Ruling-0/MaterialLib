@@ -10,11 +10,22 @@ class ShapeFluidTest {
     private final TextureSet texture = TextureSet.of("examplemod", "shiny");
 
     @Test
-    void fluidNameIsShapeAndMaterialLowercased() {
+    void fluidNameIsShapeAndMaterialLowercasedByDefault() {
         Material iron = registry.newMaterial("examplemod", "TestIron", texture)
             .build();
         ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
 
         assertEquals("molten.testiron", molten.fluidName(iron));
+    }
+
+    @Test
+    void aCustomNamerOverridesTheDefaultName() {
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
+            .build();
+        FluidNamer namer = (shape, material) -> "legacy." + material.getName()
+            .toLowerCase();
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", namer, null);
+
+        assertEquals("legacy.testiron", molten.fluidName(iron));
     }
 }
