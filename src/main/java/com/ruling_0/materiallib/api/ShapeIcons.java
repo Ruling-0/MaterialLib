@@ -23,7 +23,9 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// [StandardProperties#TINT] it has no default), so it is treated as "no fallback available", never a warning.
 final class ShapeIcons {
 
-    private static final String EMPTY_ICON = MaterialLib.MODID + ":empty";
+    /// The transparent placeholder icon path, present on both the item and block atlases; also used by
+    /// [ShapeFluid#registerIcons] for a fluid whose material has no texture set.
+    static final String EMPTY_ICON = MaterialLib.MODID + ":empty";
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<IIcon> overlaysByIndex = new Int2ObjectOpenHashMap<>();
