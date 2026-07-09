@@ -13,6 +13,7 @@ public final class FluidShapeBuilder {
     private String displayNameFormat;
     private FluidNamer namer;
     private FluidConfigurer configurer;
+    private FluidIconPather iconPather;
     private boolean built;
 
     FluidShapeBuilder(String modid, String name) {
@@ -42,6 +43,20 @@ public final class FluidShapeBuilder {
         return this;
     }
 
+    /// Sets the per-material icon path override, in place of the material's texture set; see [FluidIconPather].
+    /// Returning null from `pather` for a given material falls back to that material's texture-set lookup, the
+    /// same as when this is left unset.
+    public FluidShapeBuilder iconPath(FluidIconPather pather) {
+        this.iconPather = Objects.requireNonNull(pather, "pather must not be null");
+        return this;
+    }
+
+    /// As [#iconPath(FluidIconPather)], for a single icon path shared by every served material.
+    public FluidShapeBuilder iconPath(String path) {
+        Objects.requireNonNull(path, "path must not be null");
+        return iconPath((shape, material) -> path);
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -49,6 +64,7 @@ public final class FluidShapeBuilder {
         }
         built = true;
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance().register(new ShapeFluid(modid, name, format, namer, configurer));
+        return ShapeRegistry.instance()
+            .register(new ShapeFluid(modid, name, format, namer, configurer, iconPather));
     }
 }
