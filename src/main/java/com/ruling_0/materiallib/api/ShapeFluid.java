@@ -126,16 +126,17 @@ public class ShapeFluid implements ServedShape {
 
     /// Binds each material's still and flowing fluid icon from its texture set. Fluid textures live on the block
     /// atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]). A material with no
-    /// texture set (see [StandardProperties#TEXTURE_SET]) keeps Forge's default fluid icon instead of crashing the
-    /// stitch; [MaterialRegistry#resolve] already warns about that condition when the registry resolves.
+    /// texture set (see [StandardProperties#TEXTURE_SET]) gets the empty placeholder icon, since a [Fluid] left
+    /// iconless returns null from [Fluid#getIcon] and crashes tank and NEI renderers; [MaterialRegistry#resolve]
+    /// already warns about that condition when the registry resolves.
     @SideOnly(Side.CLIENT)
     void registerIcons(IIconRegister register) {
         for (Material material : served.get()) {
             Fluid fluid = fluidsByIndex.get(material.getIndex());
             if (!(fluid instanceof MaterialFluid)) continue;
             TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
-            if (textureSet == null) continue;
-            fluid.setIcons(register.registerIcon(textureSet.iconPath(name)));
+            String iconPath = textureSet != null ? textureSet.iconPath(name) : ShapeIcons.EMPTY_ICON;
+            fluid.setIcons(register.registerIcon(iconPath));
         }
     }
 
