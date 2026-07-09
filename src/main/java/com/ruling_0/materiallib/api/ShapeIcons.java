@@ -2,6 +2,7 @@ package com.ruling_0.materiallib.api;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.util.IIcon;
@@ -46,14 +47,37 @@ final class ShapeIcons {
     /// order and keeping the first that resolves. A variant block shape passes `<shapeName>_<variant>` before
     /// `<shapeName>`, so a variant needs no texture of its own unless it looks different from the plain shape.
     void bind(IIconRegister register, Material[] materials, List<String> shapeNameCandidates) {
+        bind(register, materials, shapeNameCandidates, null);
+    }
+
+    /// As [#bind(IIconRegister, Material[], List)], additionally trying `perMaterialIconPath` for each material
+    /// before the texture-set candidates: a non-null path it returns that names a file which exists on this atlas
+    /// binds that icon directly, skipping the candidate chain; a null return, or a path naming a file that does
+    /// not exist, falls through to the candidate chain unchanged. Pass null for `perMaterialIconPath` to skip the
+    /// override entirely, the same as the two-argument overload.
+    void bind(IIconRegister register, Material[] materials, List<String> shapeNameCandidates,
+              Function<Material, String> perMaterialIconPath) {
         iconsByIndex.clear();
         overlaysByIndex.clear();
         for (Material material : materials) {
+            if (bindPerMaterialOverride(register, material, perMaterialIconPath)) continue;
             for (String shapeName : shapeNameCandidates) {
                 if (tryBind(register, material, shapeName)) break;
             }
         }
         emptyIcon = register.registerIcon(EMPTY_ICON);
+    }
+
+    /// Registers `material`'s icon from `perMaterialIconPath`, if set and it names a file that exists on this
+    /// atlas, returning whether it did. `perMaterialIconPath` itself may be null, the routine case when no
+    /// override is configured for this shape at all.
+    private boolean bindPerMaterialOverride(IIconRegister register, Material material,
+                                            Function<Material, String> perMaterialIconPath) {
+        if (perMaterialIconPath == null) return false;
+        String path = perMaterialIconPath.apply(material);
+        if (path == null || !checkResLoc(path)) return false;
+        iconsByIndex.put(material.getIndex(), register.registerIcon(path));
+        return true;
     }
 
     /// The icon for a material index, or the empty placeholder if none resolved.

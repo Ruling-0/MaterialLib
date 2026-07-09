@@ -55,6 +55,40 @@ class ShapeIconsTest {
         assertSame(placeholder, icons.getOverlay(7));
     }
 
+    /// A per-material pather that returns null for every material behaves the same as passing no pather at all --
+    /// resolution falls straight through to the texture-set candidate chain, here again falling back to the empty
+    /// placeholder since the material has no texture set. This is the only branch of the pather-aware overload
+    /// testable without a live client: a pather returning a non-null path still needs [ShapeIcons] to check whether
+    /// the named file exists on the resource-pack atlas, which requires a live `Minecraft` client (see the in-game
+    /// example content).
+    @Test
+    void perMaterialPatherReturningNullFallsThroughToTheCandidateChain() {
+        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
+        Material material = new Material(registry, "testmod", "Broken", properties, Set.of(), List.of());
+        registry.register(material);
+        registry.resolve();
+
+        ShapeIcons icons = new ShapeIcons(false);
+        assertDoesNotThrow(
+            () -> icons.bind(register, new Material[] { material }, List.of("block"), ignored -> null));
+
+        IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
+        assertNotNull(placeholder);
+        assertSame(placeholder, icons.get(material.getIndex()));
+    }
+
+    /// A null pather passed to the four-argument overload is equivalent to the three-argument overload that omits
+    /// it entirely, so the per-material override is opt-in.
+    @Test
+    void aNullPatherIsEquivalentToOmittingTheOverload() {
+        ShapeIcons icons = new ShapeIcons(false);
+        assertDoesNotThrow(() -> icons.bind(register, new Material[0], List.of("block"), null));
+
+        IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
+        assertNotNull(placeholder);
+        assertSame(placeholder, icons.get(7));
+    }
+
     private record FakeIcon(String name) implements IIcon {
 
         @Override
