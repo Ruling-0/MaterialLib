@@ -11,6 +11,7 @@ import net.minecraft.util.IIcon;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
 import com.ruling_0.materiallib.MaterialLib;
 
 import cpw.mods.fml.relauncher.Side;
@@ -26,13 +27,18 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// Renders in two passes: an untinted empty-container texture underneath the texture set's texture for this
 /// shape, which supplies the fluid fill and is tinted with [StandardProperties#TINT]. The container looks the
 /// same for every material, so the empty texture is a property of the shape rather than of a texture set: it
-/// lives in the shape's own domain at `textures/items/materials/<name>_empty.png`.
+/// defaults to `<modid>:materials/<name>_empty` in the shape's own domain, or the path
+/// [FluidInContainerShapeBuilder#emptyIcon] sets. A path naming a texture file that does not exist registers the
+/// [ShapeIcons#EMPTY_ICON] placeholder instead, logged once, so a missing base texture degrades gracefully rather
+/// than rendering missingno; see [#registerIcons].
 public class ShapeFluidInContainer extends ShapeItem {
 
     private final List<Shape> fluidShapes;
     private final EmptyContainer emptyContainer;
     private final int volume;
+    private final String emptyIconPath;
     private IIcon emptyIcon;
+    private boolean warnedMissingEmptyIcon;
 
     /// Creates a fluid-in-container shape holding `fluidShape`, `volume` millibuckets per item. `emptyContainer` is
     /// the item returned when the fluid is drained (e.g. an empty bucket), or null for a container consumed on
@@ -41,13 +47,14 @@ public class ShapeFluidInContainer extends ShapeItem {
                                  ItemStack emptyContainer, int volume, String... oreDicts) {
         this(modid, name, displayNameFormat,
             List.of(Objects.requireNonNull(fluidShape, "fluidShape must not be null")),
-            emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, oreDicts);
+            emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, null, oreDicts);
     }
 
     /// As the six-argument constructor, but with an ordered list of fluid shapes this container can hold (see
-    /// [FluidInContainerShapeBuilder#fluid(Shape...)]) and a possibly-deferred [EmptyContainer].
+    /// [FluidInContainerShapeBuilder#fluid(Shape...)]), a possibly-deferred [EmptyContainer], and an optional base
+    /// icon path override (see [FluidInContainerShapeBuilder#emptyIcon]); null uses [#emptyIconPath]'s default.
     ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
-                          EmptyContainer emptyContainer, int volume, String... oreDicts) {
+                          EmptyContainer emptyContainer, int volume, String emptyIconPath, String... oreDicts) {
         super(modid, name, displayNameFormat, oreDicts);
         if (fluidShapes == null || fluidShapes.isEmpty()) {
             throw new IllegalArgumentException("fluidShapes must not be null or empty");
@@ -58,6 +65,19 @@ public class ShapeFluidInContainer extends ShapeItem {
             throw new IllegalArgumentException("container volume must be positive, was " + volume);
         }
         this.volume = volume;
+        this.emptyIconPath = emptyIconPath;
+    }
+
+    /// The icon path to register for this container's untinted base texture; see [#resolveEmptyIconPath].
+    String emptyIconPath() {
+        return resolveEmptyIconPath(getModId(), getName(), emptyIconPath);
+    }
+
+    /// The icon path to register for a container's untinted base texture: `override` -- the path
+    /// [FluidInContainerShapeBuilder#emptyIcon] set -- when non-null, or `<modid>:materials/<name>_empty` in the
+    /// container's own domain by default.
+    static String resolveEmptyIconPath(String modid, String name, String override) {
+        return override != null ? override : modid + ":materials/" + name + "_empty";
     }
 
     /// The fluid shapes this container was built with, in fallback order.
@@ -94,11 +114,25 @@ public class ShapeFluidInContainer extends ShapeItem {
         }
     }
 
+    /// Registers this container's fill icons, then its base icon at [#emptyIconPath], or the
+    /// [ShapeIcons#EMPTY_ICON] placeholder -- logged once -- if that path names no existing texture file.
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister register) {
         super.registerIcons(register);
-        emptyIcon = register.registerIcon(getModId() + ":materials/" + getName() + "_empty");
+        String path = emptyIconPath();
+        if (ResourceUtil.resourceExists(ResourceUtil.getCompleteItemTextureResourceLocation(path))) {
+            emptyIcon = register.registerIcon(path);
+            return;
+        }
+        if (!warnedMissingEmptyIcon) {
+            warnedMissingEmptyIcon = true;
+            MaterialLib.LOG.warn(
+                "Fluid container {} has no base icon at {}; it will render the empty placeholder instead",
+                this,
+                path);
+        }
+        emptyIcon = register.registerIcon(ShapeIcons.EMPTY_ICON);
     }
 
     @Override
