@@ -27,7 +27,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// Simple shapes are created through [MaterialLibAPI#newBlockShape]. A mod wanting custom block behavior subclasses
 /// this and registers the instance through [MaterialLibAPI#registerBlockShape]. The base handles per-material textures
 /// from each material's [TextureSet], the [StandardProperties#TINT] color, creative-tab variants, and dropping the
-/// placed metadata. Create and register the block inside the owning mod's [MaterialRegistrationEvent] handler.
+/// placed metadata; a material may instead be given a per-material icon ahead of its texture set through
+/// [#iconPathFor] (a subclass override) or a [BlockShapeBuilder#iconPath] pather. Create and register the block
+/// inside the owning mod's [MaterialRegistrationEvent] handler.
 /// MaterialLib registers the chosen owner's block under its own domain so the shape keeps a stable identity across
 /// instances, and the block's item shows the same display name and advanced-tooltip attribution as an item shape.
 ///
@@ -47,6 +49,7 @@ public class ShapeBlock extends Block implements BackedShape {
     private final String variant;
     private final String baseTexture;
     private final BlockBehavior behavior;
+    private final BlockIconPather iconPather;
 
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeIcons icons = new ShapeIcons(false);
@@ -62,16 +65,17 @@ public class ShapeBlock extends Block implements BackedShape {
     /// Creates a block shape backed by a block of `blockMaterial`, for subclasses needing a non-metal block.
     public ShapeBlock(net.minecraft.block.material.Material blockMaterial, String modid, String name,
                       String displayNameFormat, String... oreDicts) {
-        this(blockMaterial, modid, name, displayNameFormat, oreDicts, null, null, null, BlockBehavior.NONE);
+        this(blockMaterial, modid, name, displayNameFormat, oreDicts, null, null, null, BlockBehavior.NONE, null);
     }
 
     /// Creates one variant's backing block for [ShapeBlockVariants], or the sole block of a variant-less shape
     /// with behavior hooks (`groupName`, `variant`, and `baseTexture` all null). `groupName` is the plain shape
     /// name, tried as an icon fallback after this variant's own name (see [#registerBlockIcons]); `variant` is
     /// this block's variant name, passed to `behavior`'s hooks; `baseTexture` is this variant's optional untinted
-    /// background icon path, independent of any material's texture set, or null for none.
+    /// background icon path, independent of any material's texture set, or null for none; `iconPather` is this
+    /// shape's optional [BlockShapeBuilder#iconPath] override, or null for none.
     ShapeBlock(String modid, String name, String displayNameFormat, String[] oreDicts, String groupName,
-               String variant, String baseTexture, BlockBehavior behavior) {
+               String variant, String baseTexture, BlockBehavior behavior, BlockIconPather iconPather) {
         this(
             net.minecraft.block.material.Material.iron,
             modid,
@@ -81,12 +85,13 @@ public class ShapeBlock extends Block implements BackedShape {
             groupName,
             variant,
             baseTexture,
-            behavior);
+            behavior,
+            iconPather);
     }
 
     private ShapeBlock(net.minecraft.block.material.Material blockMaterial, String modid, String name,
                        String displayNameFormat, String[] oreDicts, String groupName, String variant,
-                       String baseTexture, BlockBehavior behavior) {
+                       String baseTexture, BlockBehavior behavior, BlockIconPather iconPather) {
         super(blockMaterial);
         this.modid = Names.validate("block shape modid", modid);
         this.name = Names.validate("block shape name", name);
@@ -96,6 +101,7 @@ public class ShapeBlock extends Block implements BackedShape {
         this.variant = variant;
         this.baseTexture = baseTexture;
         this.behavior = behavior;
+        this.iconPather = iconPather;
         setHardness(5.0F);
         setResistance(10.0F);
         setStepSound(soundTypeMetal);
@@ -152,10 +158,19 @@ public class ShapeBlock extends Block implements BackedShape {
     @SideOnly(Side.CLIENT)
     public void registerBlockIcons(IIconRegister register) {
         List<String> candidates = groupName != null ? List.of(name, groupName) : List.of(name);
-        icons.bind(register, served.get(), candidates);
+        icons.bind(register, served.get(), candidates, this::iconPathFor);
         if (baseTexture != null) {
             baseIcon = register.registerIcon(baseTexture);
         }
+    }
+
+    /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
+    /// to them; consulted once per served material in [#registerBlockIcons]. The default implementation defers to
+    /// this block's [BlockIconPather], set through [BlockShapeBuilder#iconPath] and null when unset. A shape
+    /// registered as a [ShapeBlock] subclass through [MaterialLibAPI#registerBlockShape] may override this
+    /// directly instead of going through a pather.
+    protected String iconPathFor(Material material) {
+        return iconPather != null ? iconPather.iconPath(this, material) : null;
     }
 
     /// A block with no base texture renders as a single tinted layer, as always. A block with a base texture
