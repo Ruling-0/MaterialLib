@@ -15,7 +15,7 @@ import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
-import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.client.ForgeHooksClient;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
@@ -161,8 +161,10 @@ public class ShapeBlock extends Block implements BackedShape {
     /// A block with no base texture renders as a single tinted layer, as always. A block with a base texture
     /// renders in two passes -- the untinted base in the solid pass 0, and the tinted material icon over it in
     /// the alpha-blended pass 1 (pass 1 draws after pass 0, and the material texture's transparent pixels let
-    /// the base show through). The item form never sets an active render pass (pass -1) and shows the tinted
-    /// material icon; see [#canRenderInPass].
+    /// the base show through). [#getIcon] and [#colorMultiplier] tell the two passes apart through
+    /// [ForgeHooksClient#getWorldRenderPass], which [ForgeHooksClient] only sets to 0 or 1 around world chunk
+    /// tessellation; it is -1 everywhere else, including the item form, which always shows the tinted material
+    /// icon; see [#canRenderInPass].
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderBlockPass() { return baseTexture != null ? 1 : 0; }
@@ -176,7 +178,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
-        if (baseTexture != null && MinecraftForgeClient.getRenderPass() == 0) {
+        if (baseTexture != null && ForgeHooksClient.getWorldRenderPass() == 0) {
             return baseIcon;
         }
         return icons.get(meta);
@@ -191,7 +193,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int colorMultiplier(IBlockAccess world, int x, int y, int z) {
-        if (baseTexture != null && MinecraftForgeClient.getRenderPass() == 0) {
+        if (baseTexture != null && ForgeHooksClient.getWorldRenderPass() == 0) {
             return 0xFFFFFF;
         }
         return tintFor(world.getBlockMetadata(x, y, z));
