@@ -22,6 +22,7 @@ public final class FluidInContainerShapeBuilder {
     private int volume = FluidContainerRegistry.BUCKET_VOLUME;
     private String[] oreDicts;
     private String displayNameFormat;
+    private String emptyIconPath;
     private boolean built;
 
     FluidInContainerShapeBuilder(String modid, String name) {
@@ -89,6 +90,15 @@ public final class FluidInContainerShapeBuilder {
         return this;
     }
 
+    /// Sets the untinted base icon path drawn under the fluid fill (e.g. `"gregtech:items/cell_base"`), overriding
+    /// the default of `<modid>:materials/<name>_empty` in this shape's own domain. A path naming a texture file
+    /// that does not exist falls back at registration to the empty placeholder icon, logged once; see
+    /// [ShapeFluidInContainer#registerIcons].
+    public FluidInContainerShapeBuilder emptyIcon(String path) {
+        this.emptyIconPath = Objects.requireNonNull(path, "path must not be null");
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice
     /// or if no fluid was set.
     public Shape build() {
@@ -108,7 +118,8 @@ public final class FluidInContainerShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance()
-            .register(new ShapeFluidInContainer(modid, name, format, fluidShapes, emptyContainer, volume, prefixes));
+        return ShapeRegistry.instance().register(
+            new ShapeFluidInContainer(modid, name, format, fluidShapes, emptyContainer, volume, emptyIconPath,
+                prefixes));
     }
 }

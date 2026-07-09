@@ -22,7 +22,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
 /// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve, configures
 /// newly registered fluids through this shape's [FluidConfigurer], and, on the client, binds each fluid's still and
-/// flowing icons from the material's [TextureSet].
+/// flowing icons from [#iconPath] -- the material's [TextureSet] by default, or this shape's [FluidIconPather] when
+/// set (see [FluidShapeBuilder#iconPath]).
 ///
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see
 /// [ShapeFluidInContainer]). Each fluid takes its display name from the shape's format and its color from the
@@ -38,6 +39,7 @@ public class ShapeFluid implements ServedShape {
     private final String displayNameFormat;
     private final FluidNamer namer;
     private final FluidConfigurer configurer;
+    private final FluidIconPather iconPather;
 
     private final ServedMaterials served = new ServedMaterials();
 
@@ -53,11 +55,20 @@ public class ShapeFluid implements ServedShape {
     /// null namer defaults to [FluidNamer#DEFAULT]; a null configurer performs no extra configuration.
     public ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer,
                       FluidConfigurer configurer) {
+        this(modid, name, displayNameFormat, namer, configurer, null);
+    }
+
+    /// As the five-argument constructor, additionally setting this shape's [FluidIconPather]. A null pather, or one
+    /// that returns null for a given material, falls back to that material's texture-set lookup; see
+    /// [#registerIcons].
+    ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer, FluidConfigurer configurer,
+               FluidIconPather iconPather) {
         this.modid = Names.validate("fluid shape modid", modid);
         this.name = Names.validate("fluid shape name", name);
         this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
         this.namer = namer != null ? namer : FluidNamer.DEFAULT;
         this.configurer = configurer != null ? configurer : NO_OP_CONFIGURER;
+        this.iconPather = iconPather;
     }
 
     @Override
@@ -124,20 +135,29 @@ public class ShapeFluid implements ServedShape {
         return new FluidStack(fluid, amount);
     }
 
-    /// Binds each material's still and flowing fluid icon from its texture set. Fluid textures live on the block
-    /// atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]). A material with no
-    /// texture set (see [StandardProperties#TEXTURE_SET]) gets the empty placeholder icon, since a [Fluid] left
-    /// iconless returns null from [Fluid#getIcon] and crashes tank and NEI renderers; [MaterialRegistry#resolve]
-    /// already warns about that condition when the registry resolves.
+    /// Binds each material's still and flowing fluid icon from [#iconPath]. Fluid textures live on the block
+    /// atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
     @SideOnly(Side.CLIENT)
     void registerIcons(IIconRegister register) {
         for (Material material : served.get()) {
             Fluid fluid = fluidsByIndex.get(material.getIndex());
             if (!(fluid instanceof MaterialFluid)) continue;
-            TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
-            String iconPath = textureSet != null ? textureSet.iconPath(name) : ShapeIcons.EMPTY_ICON;
-            fluid.setIcons(register.registerIcon(iconPath));
+            fluid.setIcons(register.registerIcon(iconPath(material)));
         }
+    }
+
+    /// The icon path to register for `material`'s fluid: this shape's [FluidIconPather] when set and it returns a
+    /// path for `material`, otherwise `material`'s texture set (see [StandardProperties#TEXTURE_SET]), or the
+    /// empty placeholder if it has none, since a [Fluid] left iconless returns null from [Fluid#getIcon] and
+    /// crashes tank and NEI renderers; [MaterialRegistry#resolve] already warns about that condition when the
+    /// registry resolves.
+    String iconPath(Material material) {
+        if (iconPather != null) {
+            String path = iconPather.iconPath(this, material);
+            if (path != null) return path;
+        }
+        TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
+        return textureSet != null ? textureSet.iconPath(name) : ShapeIcons.EMPTY_ICON;
     }
 
     /// A material's fluid, naming itself from the shape's display format and coloring itself with the material's
