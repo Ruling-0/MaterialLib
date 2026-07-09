@@ -22,6 +22,7 @@ public final class BlockShapeBuilder {
     private BlockFloatFunction resistanceFn;
     private BlockHarvestLevelFunction harvestLevelFn;
     private String harvestTool;
+    private BlockIconPather iconPather;
     private boolean built;
 
     BlockShapeBuilder(String modid, String name) {
@@ -111,6 +112,14 @@ public final class BlockShapeBuilder {
         return this;
     }
 
+    /// Sets the per-material icon path override, in place of the material's texture set; see [BlockIconPather].
+    /// Returning null from `pather` for a given material falls back to that material's texture-set lookup, the
+    /// same as when this is left unset.
+    public BlockShapeBuilder iconPath(BlockIconPather pather) {
+        this.iconPather = Objects.requireNonNull(pather, "pather must not be null");
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -127,9 +136,10 @@ public final class BlockShapeBuilder {
         BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn, harvestTool);
         if (variants == null) {
             return ShapeRegistry.instance()
-                .register(new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior));
+                .register(new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior, iconPather));
         }
         return ShapeRegistry.instance().register(
-            ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants), variantBases, behavior));
+            ShapeBlockVariants
+                .create(modid, name, format, prefixes, List.of(variants), variantBases, behavior, iconPather));
     }
 }
