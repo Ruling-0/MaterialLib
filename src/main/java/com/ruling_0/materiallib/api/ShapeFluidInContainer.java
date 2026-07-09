@@ -107,15 +107,28 @@ public class ShapeFluidInContainer extends ShapeItem {
         return true;
     }
 
+    /// The untinted container base for pass 0, and the material's fill icon -- [ShapeItem]'s pass-0 icon, with its
+    /// placeholder fallback -- for every later pass. The fill pass must not fall through to vanilla
+    /// [net.minecraft.item.Item#getIconFromDamage]'s `itemIcon` field, which no shape item ever assigns.
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamageForRenderPass(int damage, int pass) {
-        return pass == 0 ? emptyIcon : getIconFromDamage(damage);
+        return pass == 0 ? emptyIcon : super.getIconFromDamageForRenderPass(damage, 0);
     }
 
+    /// The single-icon form simple renderers use, showing the container base; see [ShapeItem#getIconFromDamage].
+    @Override
+    @SideOnly(Side.CLIENT)
+    public IIcon getIconFromDamage(int damage) {
+        return emptyIcon != null ? emptyIcon : super.getIconFromDamage(damage);
+    }
+
+    /// White for the untinted container base in pass 0, and the material tint -- [ShapeItem]'s pass-0 color -- for
+    /// the fill passes, keeping each pass's tint aligned with the icon [#getIconFromDamageForRenderPass] returns
+    /// for it.
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
-        return renderPass == 0 ? 0xFFFFFFFF : super.getColorFromItemStack(stack, renderPass);
+        return renderPass == 0 ? 0xFFFFFFFF : super.getColorFromItemStack(stack, 0);
     }
 }
