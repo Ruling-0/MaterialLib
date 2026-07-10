@@ -17,6 +17,9 @@ import net.minecraft.world.World;
 
 import net.minecraftforge.client.ForgeHooksClient;
 
+import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
+import com.ruling_0.materiallib.MaterialLib;
+
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -54,6 +57,8 @@ public class ShapeBlock extends Block implements BackedShape {
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeIcons icons = new ShapeIcons(false);
     private IIcon baseIcon;
+    private boolean warnedMissingBaseTexture;
+    private int itemRenderPass = -1;
 
     /// Creates a block shape backed by a [net.minecraft.block.material.Material#iron] block. `oreDicts` are the
     /// oredict prefixes, at least one; `displayNameFormat` is applied to the material name to build the display
@@ -160,9 +165,43 @@ public class ShapeBlock extends Block implements BackedShape {
         List<String> candidates = groupName != null ? List.of(name, groupName) : List.of(name);
         icons.bind(register, served.get(), candidates, this::iconPathFor);
         if (baseTexture != null) {
-            baseIcon = register.registerIcon(baseTexture);
+            baseIcon = registerBaseIcon(register);
         }
     }
+
+    /// Registers [#baseTexture] if it names an existing file, or the [ShapeIcons#EMPTY_ICON] placeholder -- logged
+    /// once -- if it does not, the same existence-checked fallback [ShapeIcons] uses for a material's texture-set
+    /// icon. Without this check a bad base texture path renders as Minecraft's own unlogged missing-texture
+    /// checkerboard instead of a diagnosable warning.
+    private IIcon registerBaseIcon(IIconRegister register) {
+        if (ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(baseTexture))) {
+            return register.registerIcon(baseTexture);
+        }
+        if (!warnedMissingBaseTexture) {
+            warnedMissingBaseTexture = true;
+            MaterialLib.LOG.warn(
+                "Block shape {} variant {} has no base texture at {}; it will render the empty placeholder instead",
+                name,
+                variant,
+                baseTexture);
+        }
+        return register.registerIcon(ShapeIcons.EMPTY_ICON);
+    }
+
+    /// Whether this variant draws a base texture layer under the tinted material icon; see [#registerBlockIcons].
+    /// [ClientProxy][com.ruling_0.materiallib.ClientProxy] uses this to decide which block shapes need
+    /// [ShapeBlockItemRenderer] -- a plain block shape has nothing to composite and keeps the vanilla single-pass
+    /// item renderer.
+    public boolean hasBaseTexture() {
+        return baseTexture != null;
+    }
+
+    /// Sets the pass [#getIcon] and [#getRenderColor] fall back to when [ForgeHooksClient#getWorldRenderPass] is
+    /// -1 (i.e. outside world chunk tessellation), or -1 to clear it. [ShapeBlockItemRenderer] toggles this around
+    /// each of its two [net.minecraft.client.renderer.RenderBlocks#renderBlockAsItem] calls so the item form's
+    /// base and overlay layers resolve the same icon and color [#getIcon]/[#getRenderColor] give the corresponding
+    /// world render pass.
+    void setItemRenderPass(int pass) { itemRenderPass = pass; }
 
     /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
     /// to them; consulted once per served material in [#registerBlockIcons]. The default implementation defers to
@@ -178,8 +217,8 @@ public class ShapeBlock extends Block implements BackedShape {
     /// the alpha-blended pass 1 (pass 1 draws after pass 0, and the material texture's transparent pixels let
     /// the base show through). [#getIcon] and [#colorMultiplier] tell the two passes apart through
     /// [ForgeHooksClient#getWorldRenderPass], which [ForgeHooksClient] only sets to 0 or 1 around world chunk
-    /// tessellation; it is -1 everywhere else, including the item form, which always shows the tinted material
-    /// icon; see [#canRenderInPass].
+    /// tessellation; it is -1 everywhere else, including the item form, which falls back to [#itemRenderPass]
+    /// instead (see [#getIcon], [#getRenderColor], [#setItemRenderPass]); see [#canRenderInPass].
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderBlockPass() { return baseTexture != null ? 1 : 0; }
@@ -190,10 +229,19 @@ public class ShapeBlock extends Block implements BackedShape {
         return baseTexture == null ? pass == 0 : pass == 0 || pass == 1;
     }
 
+    /// The world-tessellation render pass ([ForgeHooksClient#getWorldRenderPass]) when it is active (0 or 1), or
+    /// [#itemRenderPass] otherwise -- 0 or 1 while [ShapeBlockItemRenderer] drives the item form's two-pass
+    /// composite, -1 (falling through to the single tinted layer, [#icons]) everywhere else, matching this
+    /// block's appearance before [ShapeBlockItemRenderer] existed.
+    private int renderPass() {
+        int worldPass = ForgeHooksClient.getWorldRenderPass();
+        return worldPass != -1 ? worldPass : itemRenderPass;
+    }
+
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
-        if (baseTexture != null && ForgeHooksClient.getWorldRenderPass() == 0) {
+        if (baseTexture != null && renderPass() == 0) {
             return baseIcon;
         }
         return icons.get(meta);
@@ -202,6 +250,9 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderColor(int meta) {
+        if (baseTexture != null && itemRenderPass == 0) {
+            return 0xFFFFFF;
+        }
         return tintFor(meta);
     }
 
