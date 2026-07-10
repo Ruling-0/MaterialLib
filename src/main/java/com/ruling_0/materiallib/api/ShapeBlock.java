@@ -39,6 +39,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
 /// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) in the solid render
 /// pass, under the tinted material icon drawn in the alpha pass; see [#registerBlockIcons] and [#canRenderInPass].
+/// The same base-and-overlay composite is reproduced for the item form -- GUI slot, hotbar, held, and dropped --
+/// by [ShapeBlockItemRenderer]; see [#renderPass] for how the two mechanisms share [#getIcon] and [#getRenderColor].
 /// Drops, hardness,
 /// resistance, and harvest level may be overridden per material and variant through [BlockShapeBuilder]'s behavior
 /// hooks; a hook left unset preserves the vanilla default it replaces.
@@ -239,14 +241,16 @@ public class ShapeBlock extends Block implements BackedShape {
     /// pass first also means a call with [#itemRenderPass] set never touches [ForgeHooksClient], which needs a
     /// live client and is otherwise unreachable from a headless test (see [ShapeBlockTest]'s javadoc).
     ///
-    /// A -1 result (the common "everywhere else" case) resolves to the base layer the same as pass 0 does (see
-    /// [#getIcon], [#getRenderColor]), not the tinted overlay: vanilla's inventory and hotbar slot icon
-    /// ([net.minecraft.client.renderer.entity.RenderItem#renderItemIntoGUI]) draws a full-cube block item by
-    /// calling [#getIcon]/[#getRenderColor] directly, once, with no Forge extension point a mod can hook to run a
-    /// second, overlay pass -- the untinted base is still a recognizable icon there, where the tinted overlay
-    /// alone (this class's behavior before this fallback existed) rendered as a transparent slot with a few
-    /// floating tinted flecks, since the overlay icon is a sparse, mostly-transparent layer meant to be drawn
-    /// over the base, never standalone.
+    /// A -1 result resolves to the base layer the same as pass 0 does (see [#getIcon], [#getRenderColor]), not the
+    /// tinted overlay. [ShapeBlockItemRenderer] covers every item-form context Forge dispatches to a custom
+    /// [net.minecraftforge.client.IItemRenderer] -- GUI slot, hotbar, held, and dropped -- and always sets
+    /// [#itemRenderPass] explicitly for both of its draws (see its javadoc for the dispatch chain), so -1 is not
+    /// reached there. It remains a defensive default for any other code that calls [#getIcon]/[#getRenderColor]
+    /// directly on a full cube outside both world tessellation and [ShapeBlockItemRenderer] -- e.g. a mod that
+    /// renders an item's icon without going through `RenderItem` at all. The untinted base is a recognizable icon
+    /// in that case, where the tinted overlay alone (this class's behavior before this fallback existed) rendered
+    /// as a transparent slot with a few floating tinted flecks, since the overlay icon is a sparse, mostly-transparent
+    /// layer meant to be drawn over the base, never standalone.
     private int renderPass() {
         return itemRenderPass != -1 ? itemRenderPass : ForgeHooksClient.getWorldRenderPass();
     }
