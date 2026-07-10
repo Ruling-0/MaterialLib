@@ -178,4 +178,36 @@ public final class MaterialLibAPI {
 
     /// All registered families; only available after the registry has resolved.
     public static Collection<Family> getFamilies() { return MaterialRegistry.instance().getFamilies(); }
+
+    /// The stack MaterialLib backs as canonical for `oreDictName`, at stack size 1, or null when oredict
+    /// unification is disabled (see the `unifyOreDict` config option), `oreDictName` is excluded, or no
+    /// MaterialLib shape backs it. Only available after shapes have resolved.
+    public static ItemStack resolveOreDict(String oreDictName) {
+        return OreDictUnificator.instance()
+            .resolveOreDict(oreDictName);
+    }
+
+    /// `stack` unified onto MaterialLib's canonical item, when `stack` is a foreign item registered under an
+    /// oredict name MaterialLib backs; `stack` itself, unchanged, otherwise. MaterialLib never calls this
+    /// itself -- a consumer mod's own recipe-resolution code calls it to decide which stack to use, the way
+    /// GregTech's own unificator resolves its inputs and outputs today. Only available after shapes have
+    /// resolved.
+    public static ItemStack unifyOreDict(ItemStack stack) {
+        return OreDictUnificator.instance()
+            .unify(stack);
+    }
+
+    /// Whether MaterialLib backs `oreDictName` as canonical, i.e. [#resolveOreDict] would return a stack for
+    /// it. Only available after shapes have resolved.
+    public static boolean isCanonicalOreDictName(String oreDictName) {
+        return OreDictUnificator.instance()
+            .isCanonicalName(oreDictName);
+    }
+
+    /// Whether `stack` is itself MaterialLib's canonical stack for some oredict name it backs. Only available
+    /// after shapes have resolved.
+    public static boolean isCanonicalOreDictStack(ItemStack stack) {
+        return OreDictUnificator.instance()
+            .isCanonical(stack);
+    }
 }

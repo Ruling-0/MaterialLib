@@ -216,8 +216,9 @@ public final class ShapeRegistry {
     }
 
     /// Picks each name's owner, registers the owner's backing object, binds each shape to the materials that
-    /// generate it, registers fluids, validates fluid containers, and registers the oredict entries. Fluid
-    /// container mappings register separately; see [#registerFluidContainers].
+    /// generate it, registers fluids, validates fluid containers, registers the oredict entries, and hands them
+    /// to [OreDictUnificator] to claim as canonical. Fluid container mappings register separately; see
+    /// [#registerFluidContainers].
     /// Invoked by MaterialLib's preInit handler after [MaterialRegistry#resolve]; other mods must not call this.
     public void resolve() {
         requireRegistration("resolve shapes");
@@ -228,6 +229,8 @@ public final class ShapeRegistry {
         validateFluidContainers();
         registerFluids();
         registerOreDictionary();
+        OreDictUnificator.instance()
+            .finishRegistration();
         resolved = true;
         MaterialLib.LOG.info("Resolved {} item shapes, {} block shapes, and {} fluid shapes", itemShapes.size(),
             blockShapes.size(), fluidShapes.size());
@@ -408,11 +411,14 @@ public final class ShapeRegistry {
     }
 
     private void registerOreDictionary() {
+        OreDictUnificator unificator = OreDictUnificator.instance();
         for (BackedShape shape : backedShapes) {
             for (Material material : shape.getServedMaterials()) {
                 ItemStack stack = shape.getStack(material, 1);
                 for (String prefix : shape.getOreDicts()) {
-                    OreDictionary.registerOre(prefix + material.getName(), stack);
+                    String name = prefix + material.getName();
+                    OreDictionary.registerOre(name, stack);
+                    unificator.registerCanonical(name, stack);
                 }
             }
         }
