@@ -11,6 +11,7 @@ import com.ruling_0.materiallib.api.MaterialIdStore;
 import com.ruling_0.materiallib.api.MaterialOwnerStore;
 import com.ruling_0.materiallib.api.MaterialRegistrationEvent;
 import com.ruling_0.materiallib.api.MaterialRegistry;
+import com.ruling_0.materiallib.api.OreDictUnificator;
 import com.ruling_0.materiallib.api.ShapeOwnerStore;
 import com.ruling_0.materiallib.api.ShapeRegistry;
 import com.ruling_0.materiallib.api.WorldMaterialIds;
@@ -28,6 +29,8 @@ public class CommonProxy {
 
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
+        OreDictUnificator.instance()
+            .configure();
 
         MaterialLib.LOG.info("MaterialLib version " + Tags.VERSION);
 
