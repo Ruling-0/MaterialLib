@@ -42,10 +42,15 @@ import org.lwjgl.opengl.GL11;
 /// The two passes draw the same full cube geometry at the same depth, which -- unlike world chunk tessellation's
 /// single tessellated pass -- z-fights under the default depth test: two independent draw calls' fragments land
 /// at the same depth up to floating-point rounding, so the depth test can reject either one unpredictably. The
-/// overlay pass is drawn with [org.lwjgl.opengl.GL11#GL_LEQUAL] depth testing (so an equal-depth fragment always
-/// wins over the base pass already in the depth buffer) and scaled up by [#OVERLAY_SCALE] around the cube's
-/// center (so it wins even under stricter depth tests some other mod's GL state might have left active), both
-/// restored once the composite is done.
+/// overlay pass is drawn with [org.lwjgl.opengl.GL11#GL_LEQUAL] depth testing and scaled up by [#OVERLAY_SCALE]
+/// so every overlay face sits strictly outside the base cube's, both restored once the composite is done. The
+/// scale is applied around the origin because that is where `renderBlockAsItem` centers the cube it draws: for a
+/// standard block it rotates, then translates by (-0.5, -0.5, -0.5), then emits the unit-cube faces, so the cube
+/// spans -0.5..+0.5 in this renderer's frame -- it does NOT span 0..1. Scaling around (0.5, 0.5, 0.5) would map
+/// the face planes at +0.5 exactly onto themselves, and those still-coincident faces speckle per pixel wherever
+/// the two passes' slightly different matrices round their equal depths in opposite directions -- most visibly
+/// under the GUI slot/hotbar transform (`ForgeHooksClient#renderInventoryItem`), which magnifies the cube 10x
+/// through a Z-mirrored ortho projection.
 ///
 /// [com.ruling_0.materiallib.ClientProxy] registers one instance per variant block whose shape has a base texture
 /// ([ShapeBlock#hasBaseTexture]); a plain block shape has nothing to composite and keeps the vanilla single-pass
@@ -90,9 +95,7 @@ public final class ShapeBlockItemRenderer implements IItemRenderer {
             OpenGlHelper.glBlendFunc(770, 771, 1, 0);
             GL11.glDepthFunc(GL11.GL_LEQUAL);
             GL11.glPushMatrix();
-            GL11.glTranslatef(0.5F, 0.5F, 0.5F);
             GL11.glScalef(OVERLAY_SCALE, OVERLAY_SCALE, OVERLAY_SCALE);
-            GL11.glTranslatef(-0.5F, -0.5F, -0.5F);
             renderBlocks.renderBlockAsItem(shape, meta, 1.0F);
             GL11.glPopMatrix();
         }
