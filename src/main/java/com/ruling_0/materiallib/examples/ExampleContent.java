@@ -28,6 +28,18 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// TestGold show per-pair display names.
 public final class ExampleContent {
 
+    /// The base texture testOre's `stone` variant draws under its tinted material icon; see [#register]. Package
+    /// visible so [ExampleContentTest][com.ruling_0.materiallib.examples.ExampleContentTest] pins it against
+    /// [com.gtnewhorizon.gtnhlib.util.ResourceUtil#getCompleteBlockTextureResourceLocation]'s convention -- a
+    /// path with no `blocks/` segment, since that prefix is implicit in the base path the resource-location lookup
+    /// already applies, naming a file that actually ships in this Minecraft version's vanilla jar. A doubled
+    /// `blocks/` segment, or a texture 1.7.10 never shipped (granite/diorite/andesite stone variants are a 1.8+
+    /// feature), resolves to a nonexistent file and silently falls back to the transparent placeholder icon.
+    static final String TEST_ORE_STONE_BASE_TEXTURE = "minecraft:stone";
+
+    /// As [#TEST_ORE_STONE_BASE_TEXTURE], for testOre's `cobblestone` variant.
+    static final String TEST_ORE_COBBLESTONE_BASE_TEXTURE = "minecraft:cobblestone";
+
     @SubscribeEvent
     public void onMaterialRegistration(MaterialRegistrationEvent event) {
         register();
@@ -59,8 +71,8 @@ public final class ExampleContent {
             .displayName("%s Ore")
             .oreDict("ore")
             .variants("stone", "cobblestone")
-            .variantBase("stone", "minecraft:stone")
-            .variantBase("cobblestone", "minecraft:cobblestone")
+            .variantBase("stone", TEST_ORE_STONE_BASE_TEXTURE)
+            .variantBase("cobblestone", TEST_ORE_COBBLESTONE_BASE_TEXTURE)
             .iconPath((shape, material) -> "TestGold".equals(material.getName()) ? "minecraft:gold_block" : null)
             .build();
 
