@@ -172,7 +172,10 @@ public class ShapeBlock extends Block implements BackedShape {
     /// Registers [#baseTexture] if it names an existing file, or the [ShapeIcons#EMPTY_ICON] placeholder -- logged
     /// once -- if it does not, the same existence-checked fallback [ShapeIcons] uses for a material's texture-set
     /// icon. Without this check a bad base texture path renders as Minecraft's own unlogged missing-texture
-    /// checkerboard instead of a diagnosable warning.
+    /// checkerboard instead of a diagnosable warning. The existence check and the registration both resolve
+    /// [#baseTexture] itself -- never a derived or re-formatted copy of it -- so they always agree; see
+    /// [com.gtnewhorizon.gtnhlib.util.ResourceUtil#getCompleteBlockTextureResourceLocation] for how that single
+    /// string maps to the file the check looks for.
     private IIcon registerBaseIcon(IIconRegister register) {
         if (ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(baseTexture))) {
             return register.registerIcon(baseTexture);
@@ -196,11 +199,11 @@ public class ShapeBlock extends Block implements BackedShape {
         return baseTexture != null;
     }
 
-    /// Sets the pass [#getIcon] and [#getRenderColor] fall back to when [ForgeHooksClient#getWorldRenderPass] is
-    /// -1 (i.e. outside world chunk tessellation), or -1 to clear it. [ShapeBlockItemRenderer] toggles this around
-    /// each of its two [net.minecraft.client.renderer.RenderBlocks#renderBlockAsItem] calls so the item form's
-    /// base and overlay layers resolve the same icon and color [#getIcon]/[#getRenderColor] give the corresponding
-    /// world render pass.
+    /// Sets the pass [#renderPass] falls back to when [ForgeHooksClient#getWorldRenderPass] is -1 (i.e. outside
+    /// world chunk tessellation), or -1 to clear it. [ShapeBlockItemRenderer] toggles this around each of its two
+    /// [net.minecraft.client.renderer.RenderBlocks#renderBlockAsItem] calls so the item form's base and overlay
+    /// layers resolve the same icon and color [#getIcon]/[#getRenderColor] give the corresponding world render
+    /// pass; see [#renderPass] for what -1 resolves to everywhere else.
     void setItemRenderPass(int pass) { itemRenderPass = pass; }
 
     /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
@@ -229,19 +232,29 @@ public class ShapeBlock extends Block implements BackedShape {
         return baseTexture == null ? pass == 0 : pass == 0 || pass == 1;
     }
 
-    /// The world-tessellation render pass ([ForgeHooksClient#getWorldRenderPass]) when it is active (0 or 1), or
-    /// [#itemRenderPass] otherwise -- 0 or 1 while [ShapeBlockItemRenderer] drives the item form's two-pass
-    /// composite, -1 (falling through to the single tinted layer, [#icons]) everywhere else, matching this
-    /// block's appearance before [ShapeBlockItemRenderer] existed.
+    /// [#itemRenderPass] when [ShapeBlockItemRenderer] has set it (0 or 1, driving the item form's two-pass
+    /// composite), or the world-tessellation render pass ([ForgeHooksClient#getWorldRenderPass]) otherwise -- 0
+    /// or 1 during world chunk tessellation, -1 everywhere else. [ShapeBlockItemRenderer] and world tessellation
+    /// never run nested inside one another, so which of the two this checks first never changes the result; item
+    /// pass first also means a call with [#itemRenderPass] set never touches [ForgeHooksClient], which needs a
+    /// live client and is otherwise unreachable from a headless test (see [ShapeBlockTest]'s javadoc).
+    ///
+    /// A -1 result (the common "everywhere else" case) resolves to the base layer the same as pass 0 does (see
+    /// [#getIcon], [#getRenderColor]), not the tinted overlay: vanilla's inventory and hotbar slot icon
+    /// ([net.minecraft.client.renderer.entity.RenderItem#renderItemIntoGUI]) draws a full-cube block item by
+    /// calling [#getIcon]/[#getRenderColor] directly, once, with no Forge extension point a mod can hook to run a
+    /// second, overlay pass -- the untinted base is still a recognizable icon there, where the tinted overlay
+    /// alone (this class's behavior before this fallback existed) rendered as a transparent slot with a few
+    /// floating tinted flecks, since the overlay icon is a sparse, mostly-transparent layer meant to be drawn
+    /// over the base, never standalone.
     private int renderPass() {
-        int worldPass = ForgeHooksClient.getWorldRenderPass();
-        return worldPass != -1 ? worldPass : itemRenderPass;
+        return itemRenderPass != -1 ? itemRenderPass : ForgeHooksClient.getWorldRenderPass();
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
-        if (baseTexture != null && renderPass() == 0) {
+        if (baseTexture != null && renderPass() != 1) {
             return baseIcon;
         }
         return icons.get(meta);
@@ -250,7 +263,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderColor(int meta) {
-        if (baseTexture != null && itemRenderPass == 0) {
+        if (baseTexture != null && renderPass() != 1) {
             return 0xFFFFFF;
         }
         return tintFor(meta);
