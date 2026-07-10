@@ -11,18 +11,33 @@ import cpw.mods.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 
 /// Renders a variant block's item form -- a normal full cube -- with the same base-and-overlay composite as
-/// [ShapeBlock]'s world rendering, for every render type Forge dispatches to a custom [IItemRenderer]: a dropped
-/// item entity, and the item equipped in a player's hand (third and first person). Vanilla's own inventory and
-/// hotbar slot icon never reaches this class at all -- see [ShapeBlock#renderPass]'s javadoc for that path and
-/// how [ShapeBlock] degrades gracefully there instead.
+/// [ShapeBlock]'s world rendering, for every [ItemRenderType] Forge dispatches to a custom [IItemRenderer]:
+/// [ItemRenderType#ENTITY] (a dropped item entity), [ItemRenderType#EQUIPPED] and
+/// [ItemRenderType#EQUIPPED_FIRST_PERSON] (held in a player's hand, third and first person), and
+/// [ItemRenderType#INVENTORY] -- a GUI inventory slot or hotbar icon. [#handleRenderType] answers every type the
+/// same way and [#renderItem] does not branch on `type`, so registering one instance per block (see below) covers
+/// all four uniformly.
+///
+/// Vanilla's inventory/hotbar icon path (`RenderItem#renderItemIntoGUI`) draws exactly one icon per face with no
+/// second pass, but that method is not what a GUI slot or hotbar actually calls: they call
+/// `RenderItem#renderItemAndEffectIntoGUI`, which tries
+/// `net.minecraftforge.client.ForgeHooksClient#renderInventoryItem` first -- and that consults
+/// `net.minecraftforge.client.MinecraftForgeClient#getItemRenderer(item, ItemRenderType.INVENTORY)`, i.e. this
+/// class, before ever reaching the single-icon fallback. The same is true for `ItemRenderType.ENTITY`
+/// (`ForgeHooksClient#renderEntityItem`) and `ItemRenderType.EQUIPPED`
+/// (`net.minecraft.client.renderer.ItemRenderer#renderItem`, which checks `MinecraftForgeClient#getItemRenderer`
+/// before falling back to a block's render type at all). All of this is verified against the RetroFuturaGradle
+/// dev environment's Forge-patched sources (`build/rfg/mcp_patched_minecraft-sources.jar`) -- not the unpatched
+/// vanilla decompile, which lacks every one of those hooks and previously led to the wrong conclusion that
+/// inventory and hotbar slots could not reach a custom [IItemRenderer]. Angelica, which this pack runs, does not
+/// mixin into `RenderItem`, `ItemRenderer`, or `GuiContainer`, so none of this dispatch chain is altered by it.
 ///
 /// Vanilla's block-as-item renderer ([RenderBlocks#renderBlockAsItem]) draws exactly one icon per face, driven by
 /// a single call to [net.minecraft.block.Block#getRenderColor], so it cannot reproduce [ShapeBlock#getIcon]'s
-/// pass-conditioned base/overlay split by itself; unlike world chunk tessellation, it never sets
-/// [net.minecraftforge.client.ForgeHooksClient#getWorldRenderPass], so [ShapeBlock#getIcon] always resolves the
-/// tinted material icon and the untinted base never shows. This renderer calls `renderBlockAsItem` twice instead,
-/// toggling [ShapeBlock#setItemRenderPass] between calls so [ShapeBlock#getIcon] and [ShapeBlock#getRenderColor]
-/// pick the same base/overlay layer each pass that world tessellation would.
+/// pass-conditioned base/overlay split by itself. This renderer calls `renderBlockAsItem` twice instead, toggling
+/// [ShapeBlock#setItemRenderPass] between calls so [ShapeBlock#getIcon] and [ShapeBlock#getRenderColor] pick the
+/// base layer for the first call and the tinted overlay for the second, the same split world chunk tessellation
+/// gets from its own two render passes (see [ShapeBlock#renderPass]).
 ///
 /// The two passes draw the same full cube geometry at the same depth, which -- unlike world chunk tessellation's
 /// single tessellated pass -- z-fights under the default depth test: two independent draw calls' fragments land

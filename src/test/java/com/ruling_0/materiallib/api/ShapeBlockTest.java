@@ -18,8 +18,8 @@ import org.junit.jupiter.api.Test;
 /// only the pass selection, not the tint value, is under test. The -1 (unset) default and world-tessellation
 /// behavior both need a live client --
 /// the user must verify in-client that a variant ore block shows its base texture under the tinted material icon
-/// placed in world, in inventory/hotbar (base only -- see [ShapeBlock#renderPass]'s javadoc), and held/dropped
-/// (full composite, via [ShapeBlockItemRenderer]).
+/// placed in world and, via [ShapeBlockItemRenderer]'s two-pass composite, in every item-form context: GUI slot,
+/// hotbar, held, and dropped.
 class ShapeBlockTest {
 
     private final ShapeBlock withBaseTexture = new ShapeBlock(
