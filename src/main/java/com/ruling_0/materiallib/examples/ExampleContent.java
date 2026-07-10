@@ -22,10 +22,22 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// The testFrame block shape reaches both materials through the Test family; the testGear
 /// item shape, ingot and block shapes, test fluid shape, testBucket fluid-in-container shape, and testOre
 /// block shape are generated on the materials directly. testOre demonstrates block shape variants: a stone
-/// and a granite variant, each with its own untinted vanilla-stone base texture under the tinted material
+/// and a cobblestone variant, each with its own untinted vanilla base texture under the tinted material
 /// icon. A consumer on testGear adds a shapeless recipe per material crafting its ingot into its gear, and
 /// lang overrides on TestGold show per-pair display names.
 public final class ExampleContent {
+
+    /// The base texture testOre's `stone` variant draws under its tinted material icon; see [#register]. Package
+    /// visible so [ExampleContentTest][com.ruling_0.materiallib.examples.ExampleContentTest] pins it against
+    /// [com.gtnewhorizon.gtnhlib.util.ResourceUtil#getCompleteBlockTextureResourceLocation]'s convention -- a
+    /// path with no `blocks/` segment, since that prefix is implicit in the base path the resource-location lookup
+    /// already applies, naming a file that actually ships in this Minecraft version's vanilla jar. A doubled
+    /// `blocks/` segment, or a texture 1.7.10 never shipped (granite/diorite/andesite stone variants are a 1.8+
+    /// feature), resolves to a nonexistent file and silently falls back to the transparent placeholder icon.
+    static final String TEST_ORE_STONE_BASE_TEXTURE = "minecraft:stone";
+
+    /// As [#TEST_ORE_STONE_BASE_TEXTURE], for testOre's `cobblestone` variant.
+    static final String TEST_ORE_COBBLESTONE_BASE_TEXTURE = "minecraft:cobblestone";
 
     @SubscribeEvent
     public void onMaterialRegistration(MaterialRegistrationEvent event) {
@@ -56,9 +68,9 @@ public final class ExampleContent {
         Shape testOre = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "testOre")
             .displayName("%s Ore")
             .oreDict("ore")
-            .variants("stone", "granite")
-            .variantBase("stone", "minecraft:blocks/stone")
-            .variantBase("granite", "minecraft:blocks/stone_granite")
+            .variants("stone", "cobblestone")
+            .variantBase("stone", TEST_ORE_STONE_BASE_TEXTURE)
+            .variantBase("cobblestone", TEST_ORE_COBBLESTONE_BASE_TEXTURE)
             .build();
 
         Shape testFluid = MaterialLibAPI.newFluidShape(MaterialLib.MODID, "test")
