@@ -12,6 +12,7 @@ import com.ruling_0.materiallib.MaterialLib;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 /// The per-material icons of an item or block shape, keyed by material index.
@@ -60,11 +61,32 @@ final class ShapeIcons {
               Function<Material, String> perMaterialIconPath) {
         iconsByIndex.clear();
         overlaysByIndex.clear();
+        List<String> unbound = null;
         for (Material material : materials) {
             if (bindPerMaterialOverride(register, material, perMaterialIconPath)) continue;
-            bindMaterial(register, material, shapeNameCandidates);
+            if (!bindMaterial(register, material, shapeNameCandidates)) {
+                if (unbound == null) unbound = new ObjectArrayList<>();
+                unbound.add(material.getKey());
+            }
         }
+        warnUnbound(unbound, materials.length, shapeNameCandidates);
         emptyIcon = register.registerIcon(EMPTY_ICON);
+    }
+
+    /// Logs one line per bind when any served material resolved no icon under any candidate name, naming the
+    /// count and the first few material keys, so a texture missing from every set in a material's chain is
+    /// diagnosable from the log instead of silently rendering the transparent placeholder.
+    private void warnUnbound(List<String> unbound, int total, List<String> shapeNameCandidates) {
+        if (unbound == null) return;
+        int examples = Math.min(unbound.size(), 5);
+        MaterialLib.LOG.warn(
+            "No {} icon resolved under {} for {}/{} served materials (e.g. {}); they will render the " +
+                "transparent placeholder",
+            isItem ? "item" : "block",
+            shapeNameCandidates,
+            unbound.size(),
+            total,
+            String.join(", ", unbound.subList(0, examples)));
     }
 
     /// Registers `material`'s icon from `perMaterialIconPath`, if set and it names a file that exists on this
@@ -95,18 +117,19 @@ final class ShapeIcons {
     /// own texture set, then its fallback texture set, then each unification alternative's texture set and
     /// fallback set. Source-major order keeps a material's own plain-shape texture ahead of a lower source's
     /// variant texture. A null texture set -- the routine case for the optional fallback, or a broken material for
-    /// the mandatory primary one -- is treated like a texture set whose file does not exist.
-    private void bindMaterial(IIconRegister register, Material material, List<String> shapeNameCandidates) {
+    /// the mandatory primary one -- is treated like a texture set whose file does not exist. Returns whether an
+    /// icon was bound.
+    private boolean bindMaterial(IIconRegister register, Material material, List<String> shapeNameCandidates) {
         TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
         if (textureSet == null) {
             warnMissingTextureSet(material, shapeNameCandidates.get(0));
         }
         else if (tryBindSet(register, material, textureSet, shapeNameCandidates)) {
-            return;
+            return true;
         }
         TextureSet fallback = material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET);
         if (fallback != null && tryBindSet(register, material, fallback, shapeNameCandidates)) {
-            return;
+            return true;
         }
         for (Material alternative : material.getAlternatives()) {
             TextureSet alternativeTextureSet = alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET);
@@ -114,15 +137,16 @@ final class ShapeIcons {
                 warnMissingTextureSet(alternative, shapeNameCandidates.get(0));
             }
             else if (tryBindSet(register, alternative, alternativeTextureSet, shapeNameCandidates)) {
-                return;
+                return true;
             }
             TextureSet alternativeFallback = alternative
                 .getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET);
             if (alternativeFallback != null &&
                 tryBindSet(register, alternative, alternativeFallback, shapeNameCandidates)) {
-                return;
+                return true;
             }
         }
+        return false;
     }
 
     /// Registers `material`'s icon (and overlay, if any) from `textureSet` under the first candidate name whose
