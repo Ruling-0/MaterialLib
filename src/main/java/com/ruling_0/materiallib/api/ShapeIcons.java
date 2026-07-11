@@ -12,6 +12,7 @@ import com.ruling_0.materiallib.MaterialLib;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 /// The per-material icons of an item or block shape, keyed by material index.
@@ -59,13 +60,39 @@ final class ShapeIcons {
               Function<Material, String> perMaterialIconPath) {
         iconsByIndex.clear();
         overlaysByIndex.clear();
+        List<String> unbound = null;
         for (Material material : materials) {
             if (bindPerMaterialOverride(register, material, perMaterialIconPath)) continue;
+            boolean bound = false;
             for (String shapeName : shapeNameCandidates) {
-                if (tryBind(register, material, shapeName)) break;
+                if (tryBind(register, material, shapeName)) {
+                    bound = true;
+                    break;
+                }
+            }
+            if (!bound) {
+                if (unbound == null) unbound = new ObjectArrayList<>();
+                unbound.add(material.getKey());
             }
         }
+        warnUnbound(unbound, materials.length, shapeNameCandidates);
         emptyIcon = register.registerIcon(EMPTY_ICON);
+    }
+
+    /// Logs one line per bind when any served material resolved no icon under any candidate name, naming the
+    /// count and the first few material keys, so a texture missing from every set in a material's chain is
+    /// diagnosable from the log instead of silently rendering the transparent placeholder.
+    private void warnUnbound(List<String> unbound, int total, List<String> shapeNameCandidates) {
+        if (unbound == null) return;
+        int examples = Math.min(unbound.size(), 5);
+        MaterialLib.LOG.warn(
+            "No {} icon resolved under {} for {}/{} served materials (e.g. {}); they will render the " +
+                "transparent placeholder",
+            isItem ? "item" : "block",
+            shapeNameCandidates,
+            unbound.size(),
+            total,
+            String.join(", ", unbound.subList(0, examples)));
     }
 
     /// Registers `material`'s icon from `perMaterialIconPath`, if set and it names a file that exists on this
