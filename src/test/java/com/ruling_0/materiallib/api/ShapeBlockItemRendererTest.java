@@ -1,6 +1,9 @@
 package com.ruling_0.materiallib.api;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.lang.reflect.Field;
 
 import net.minecraftforge.client.IItemRenderer.ItemRenderType;
 import net.minecraftforge.client.IItemRenderer.ItemRendererHelper;
@@ -43,5 +46,16 @@ class ShapeBlockItemRendererTest {
     void usesTheBlockRenderHelperForInventoryAndEquippedSlots() {
         assertTrue(renderer.shouldUseRenderHelper(ItemRenderType.INVENTORY, null, ItemRendererHelper.INVENTORY_BLOCK));
         assertTrue(renderer.shouldUseRenderHelper(ItemRenderType.EQUIPPED, null, ItemRendererHelper.EQUIPPED_BLOCK));
+    }
+
+    /// Pins that both composite passes draw at a brightness distinguishable from exactly `1.0F` (see the class
+    /// javadoc's Angelica display-list-cache explanation): reverting to a literal `1.0F` would silently reopen the
+    /// pack-only blank-inventory bug without failing to compile or affecting the plain dev client, where every
+    /// brightness value renders identically.
+    @Test
+    void brightnessIsNotExactlyOne() throws ReflectiveOperationException {
+        Field field = ShapeBlockItemRenderer.class.getDeclaredField("BRIGHTNESS");
+        field.setAccessible(true);
+        assertNotEquals(1.0F, (float) field.get(null));
     }
 }
