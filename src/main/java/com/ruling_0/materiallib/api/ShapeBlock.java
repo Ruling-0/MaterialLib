@@ -227,15 +227,6 @@ public class ShapeBlock extends Block implements BackedShape {
         return iconPather != null ? iconPather.iconPath(this, material) : null;
     }
 
-    /// Signals to vanilla and Forge's item-rendering dispatch (`RenderItem`, `ItemRenderer`) that this block's item
-    /// form has translucent content whenever it [#hasBaseTexture] -- those callers enable alpha blending around the
-    /// composite draw precisely when this returns nonzero, and [ShapeBlockRenderingHandler]'s single world draw
-    /// participates in exactly the render pass this names ([net.minecraft.block.Block#canRenderInPass] defaults to
-    /// `pass == getRenderBlockPass()`), so the overlay's transparent pixels are blended, not just alpha-tested.
-    @Override
-    @SideOnly(Side.CLIENT)
-    public int getRenderBlockPass() { return baseTexture != null ? 1 : 0; }
-
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
