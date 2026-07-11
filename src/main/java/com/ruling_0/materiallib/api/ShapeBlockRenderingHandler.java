@@ -28,12 +28,15 @@ import org.lwjgl.opengl.GL11;
 /// would; this is the same technique GT5-Unofficial's `gregtech.common.render.GTRendererBlock` uses for its own
 /// texture-array composites.
 ///
-/// [ShapeBlock#getRenderBlockPass] returns 1 for a block [ShapeBlock#hasBaseTexture], both to keep this handler's
-/// single [#renderWorldBlock] call inside the alpha-blended chunk pass (`Block#canRenderInPass` defaults to
-/// `pass == getRenderBlockPass()`, so a block renders in exactly one pass without any override here) and because
-/// vanilla and Forge's item-rendering dispatch (`RenderItem`, `ItemRenderer`) read that same value to decide whether
-/// to enable alpha blending around a block-rendered item icon -- without it the overlay's transparent pixels would
-/// only be alpha-tested, not blended.
+/// Composite blocks keep the vanilla render-pass defaults (`getRenderBlockPass` 0, `canRenderInPass` only pass 0),
+/// so the whole composite -- opaque base included -- lives in the solid chunk pass, where the alpha test cuts out
+/// the overlay's transparent pixels the same way it did for legacy GT ores (whose composite quads all draw in pass
+/// 0 too: every GT `ITexture` gates itself by its `IIconContainer#canRenderInPass`, default pass 0). The overlay
+/// icons are cutout textures, not translucent ones, so the blended pass buys nothing; an opaque cube there would
+/// instead sort against genuine translucents (water, glass) and pay for translucency sorting in Angelica's mesher.
+/// Item contexts likewise cut out via the alpha test alone: `RenderItem` and `ItemRenderer` only enable blending
+/// for a block whose `getRenderBlockPass` is nonzero, and the default 0 gives the composite the same alpha-tested
+/// draw legacy ore items always had.
 ///
 /// This handler holds no mutable state, so one instance is safe to reuse from any thread a world mesher (e.g.
 /// Angelica's Celeritas) calls it from.
