@@ -64,8 +64,9 @@ public final class BlockShapeBuilder {
     /// material's texture set -- the same convention [TextureSet#iconPath] uses, resolved the same way; do not
     /// include the `blocks/` folder, it is implicit (see
     /// [com.gtnewhorizon.gtnhlib.util.ResourceUtil#getCompleteBlockTextureResourceLocation]). `texture` is
-    /// registered as a second render pass; see [ShapeBlock#canRenderInPass]. Optional -- a variant with no base
-    /// texture renders as a single tinted layer. `variant` must be one of the names passed to [#variants].
+    /// composited under the tinted material icon by [ShapeBlockRenderingHandler]; see [ShapeBlock#hasBaseTexture].
+    /// Optional -- a variant with no base texture renders as a single tinted layer. `variant` must be one of the
+    /// names passed to [#variants].
     public BlockShapeBuilder variantBase(String variant, String texture) {
         Objects.requireNonNull(variant, "variant must not be null");
         if (texture == null || texture.isEmpty()) {
