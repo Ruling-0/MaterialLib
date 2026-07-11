@@ -55,10 +55,22 @@ import org.lwjgl.opengl.GL11;
 /// [com.ruling_0.materiallib.ClientProxy] registers one instance per variant block whose shape has a base texture
 /// ([ShapeBlock#hasBaseTexture]); a plain block shape has nothing to composite and keeps the vanilla single-pass
 /// item renderer.
+///
+/// Angelica (verified at its pack-shipped tag `2.1.49`) mixes into [RenderBlocks#renderBlockAsItem] itself
+/// (`angelica.itemrenderer.MixinRenderBlocks`, on by default via `optimizeInWorldItemRendering`) and caches its
+/// draw calls into a GL display list keyed only by `(Block, meta)`, replayed on any later call with
+/// `brightness == 1.0F`, `useInventoryTint == true`, no AO, and no override texture -- exactly the state both
+/// passes below use. Since the two passes share the same `(block, meta)` key and that key knows nothing about
+/// [ShapeBlock#setItemRenderPass], the second call hits the first pass's cached list and replays the base layer
+/// again instead of re-deriving the tinted overlay, so GUI/hotbar icons render as the untinted base only. Passing
+/// [#BRIGHTNESS] instead of `1.0F` is imperceptible (an ULP below 1.0, i.e. a no-op in an environment without this
+/// mixin) but permanently fails Angelica's cache-eligibility check, forcing both passes through its real,
+/// per-call `RenderBlocks` draw every time.
 @SideOnly(Side.CLIENT)
 public final class ShapeBlockItemRenderer implements IItemRenderer {
 
     private static final float OVERLAY_SCALE = 1.002F;
+    private static final float BRIGHTNESS = Math.nextDown(1.0F);
 
     private final ShapeBlock shape;
 
@@ -87,7 +99,7 @@ public final class ShapeBlockItemRenderer implements IItemRenderer {
             shape.setItemRenderPass(0);
             GL11.glDisable(GL11.GL_BLEND);
             GL11.glAlphaFunc(GL11.GL_GREATER, 0.5F);
-            renderBlocks.renderBlockAsItem(shape, meta, 1.0F);
+            renderBlocks.renderBlockAsItem(shape, meta, BRIGHTNESS);
 
             shape.setItemRenderPass(1);
             GL11.glEnable(GL11.GL_BLEND);
@@ -96,7 +108,7 @@ public final class ShapeBlockItemRenderer implements IItemRenderer {
             GL11.glDepthFunc(GL11.GL_LEQUAL);
             GL11.glPushMatrix();
             GL11.glScalef(OVERLAY_SCALE, OVERLAY_SCALE, OVERLAY_SCALE);
-            renderBlocks.renderBlockAsItem(shape, meta, 1.0F);
+            renderBlocks.renderBlockAsItem(shape, meta, BRIGHTNESS);
             GL11.glPopMatrix();
         }
         finally {
