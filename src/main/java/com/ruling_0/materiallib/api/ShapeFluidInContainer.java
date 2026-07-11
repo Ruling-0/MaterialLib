@@ -143,11 +143,13 @@ public class ShapeFluidInContainer extends ShapeItem {
         return emptyIcon;
     }
 
-    /// White for the untinted container base in pass 0, and the material tint -- [ShapeItem]'s pass-0 color -- for
+    /// White for the untinted container base in pass 0, and the fluid fill tint (see [ShapeFluid#tintOf]) for
     /// every later pass.
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
-        return renderPass == 0 ? 0xFFFFFFFF : super.getColorFromItemStack(stack, 0);
+        if (renderPass == 0) return 0xFFFFFFFF;
+        Material material = ShapeText.materialFor(stack);
+        return material != null ? ShapeFluid.tintOf(material) : 0xFFFFFFFF;
     }
 }
