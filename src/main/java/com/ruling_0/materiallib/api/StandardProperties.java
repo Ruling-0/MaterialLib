@@ -30,6 +30,14 @@ public final class StandardProperties {
     /// ARGB tint applied to the material's textures.
     public static final Property<Integer> TINT = Property.of(MaterialLib.MODID, "tint", 0xFFFFFFFF);
 
+    /// ARGB tint applied to a fluid shape's fill icon in place of [#TINT], for a fluid whose art already encodes
+    /// its color (e.g. dedicated, hand-drawn fluid art) and so must not also receive the material's general tint.
+    /// Optional and null by default, like [#FALLBACK_TEXTURE_SET]: most materials never set this, and [ShapeFluid]/
+    /// [ShapeFluidInContainer] fall back to [#TINT] when it is unset. Applies only to the fluid fill layer (and the
+    /// matching fill layer of any fluid-in-container shape holding it) -- every other shape a material generates
+    /// (dust, ingot, block, etc.) always uses [#TINT].
+    public static final Property<Integer> FLUID_TINT = Property.of(MaterialLib.MODID, "fluidTint");
+
     /// Rejects the properties derived from builder arguments, which can never be set or removed directly.
     static void requireSettable(Property<?> property) {
         if (property == NAME || property == TEXTURE_SET) {

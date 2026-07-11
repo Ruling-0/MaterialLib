@@ -9,12 +9,14 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
 import com.ruling_0.materiallib.MaterialLib;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 /// The Forge fluid backing a fluid [Shape]: one registered [Fluid] per material that generates the shape, named by
 /// this shape's [FluidNamer] (by default `<shape>.<material>` lowercased, e.g. `test.testiron`).
@@ -27,8 +29,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 ///
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see
 /// [ShapeFluidInContainer]). Each fluid takes its display name from the shape's format and its color from the
-/// material's [StandardProperties#TINT], so tank and GUI renderers show the right name and tint without a custom
-/// fluid block.
+/// material's [StandardProperties#FLUID_TINT], or [StandardProperties#TINT] when unset, so tank and GUI renderers
+/// show the right name and tint without a custom fluid block.
 public class ShapeFluid implements ServedShape {
 
     private static final List<String> NO_OREDICTS = List.of();
@@ -44,6 +46,7 @@ public class ShapeFluid implements ServedShape {
     private final ServedMaterials served = new ServedMaterials();
 
     private final Int2ObjectMap<Fluid> fluidsByIndex = new Int2ObjectOpenHashMap<>();
+    private final Set<Material> warnedMissingIcon = new ReferenceOpenHashSet<>();
 
     /// Creates a fluid shape. `displayNameFormat` is applied to the material name to build the fluid's display
     /// name, e.g. `"Molten %s"`. Identifiers must be non-empty and free of ':' and whitespace.
@@ -135,14 +138,27 @@ public class ShapeFluid implements ServedShape {
         return new FluidStack(fluid, amount);
     }
 
-    /// Binds each material's still and flowing fluid icon from [#iconPath]. Fluid textures live on the block
-    /// atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
+    /// Binds each material's still and flowing fluid icon from [#iconPath], or the [ShapeIcons#EMPTY_ICON]
+    /// placeholder -- logged once per material -- if that path names no existing texture file, the same
+    /// existence-checked fallback [ShapeIcons] uses for a block or item shape's icon. Fluid textures live on the
+    /// block atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
     @SideOnly(Side.CLIENT)
     void registerIcons(IIconRegister register) {
         for (Material material : served.get()) {
             Fluid fluid = fluidsByIndex.get(material.getIndex());
             if (!(fluid instanceof MaterialFluid)) continue;
-            fluid.setIcons(register.registerIcon(iconPath(material)));
+            String path = iconPath(material);
+            if (!ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(path))) {
+                if (warnedMissingIcon.add(material)) {
+                    MaterialLib.LOG.warn(
+                        "Fluid shape {} of {} has no icon at {}; it will render the empty placeholder instead",
+                        this,
+                        material.getKey(),
+                        path);
+                }
+                path = ShapeIcons.EMPTY_ICON;
+            }
+            fluid.setIcons(register.registerIcon(path));
         }
     }
 
@@ -179,6 +195,15 @@ public class ShapeFluid implements ServedShape {
         }
 
         @Override
-        public int getColor() { return material.getProperty(StandardProperties.TINT) & 0xFFFFFF; }
+        public int getColor() { return tintOf(material) & 0xFFFFFF; }
+    }
+
+    /// The ARGB fill tint for `material`'s fluid: [StandardProperties#FLUID_TINT] when set, or
+    /// [StandardProperties#TINT] otherwise. Shared with [ShapeFluidInContainer] so a container's fill layer
+    /// matches the fluid it holds; a caller reading a fluid (rather than an item) color masks off the alpha byte
+    /// itself, as [Fluid#getColor] expects (see [MaterialFluid#getColor]).
+    static int tintOf(Material material) {
+        Integer fluidTint = material.getProperty(StandardProperties.FLUID_TINT);
+        return fluidTint != null ? fluidTint : material.getProperty(StandardProperties.TINT);
     }
 }

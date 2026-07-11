@@ -36,6 +36,12 @@ public final class MaterialBuilder {
         return setProperty(StandardProperties.TINT, tint);
     }
 
+    /// Sets [StandardProperties#FLUID_TINT], the ARGB tint applied to a fluid shape's fill icon in place of
+    /// [#setTint].
+    public MaterialBuilder setFluidTint(int fluidTint) {
+        return setProperty(StandardProperties.FLUID_TINT, fluidTint);
+    }
+
     /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
     public <T> MaterialBuilder setProperty(Property<T> property, T value) {
         StandardProperties.requireSettable(property, value);
