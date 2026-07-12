@@ -199,9 +199,9 @@ public class ShapeFluid implements ServedShape {
     }
 
     /// The ARGB fill tint for `material`'s fluid: [StandardProperties#FLUID_TINT] when set, or
-    /// [StandardProperties#TINT] otherwise. Shared with [ShapeFluidInContainer] so a container's fill layer
-    /// matches the fluid it holds; a caller reading a fluid (rather than an item) color masks off the alpha byte
-    /// itself, as [Fluid#getColor] expects (see [MaterialFluid#getColor]).
+    /// [StandardProperties#TINT] otherwise. [ShapeFluidInContainer] falls back to this for its own fill layer when
+    /// the material sets no [StandardProperties#CELL_TINT]; a caller reading a fluid (rather than an item) color
+    /// masks off the alpha byte itself, as [Fluid#getColor] expects (see [MaterialFluid#getColor]).
     static int tintOf(Material material) {
         Integer fluidTint = material.getProperty(StandardProperties.FLUID_TINT);
         return fluidTint != null ? fluidTint : material.getProperty(StandardProperties.TINT);

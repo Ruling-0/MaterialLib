@@ -157,14 +157,18 @@ public class ShapeFluidInContainer extends ShapeItem {
         return emptyIcon != null ? emptyIcon : super.getIconFromDamage(damage);
     }
 
-    /// White for the untinted container base in pass 0, and the fluid fill tint (see [ShapeFluid#tintOf]) for the
-    /// fill passes, keeping each pass's tint aligned with the icon [#getIconFromDamageForRenderPass] returns for
-    /// it and matching the tint of the fluid the container holds (see [StandardProperties#FLUID_TINT]).
+    /// White for the untinted container base in pass 0, and the fill tint for the fill passes, keeping each pass's
+    /// tint aligned with the icon [#getIconFromDamageForRenderPass] returns for it. The fill tint is
+    /// [StandardProperties#CELL_TINT] when the material sets it, or the fluid fill tint (see [ShapeFluid#tintOf])
+    /// otherwise -- for a material whose legacy cell fill was colored differently from its fluid's own rendering
+    /// (see [StandardProperties#CELL_TINT]).
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
         if (renderPass == 0) return 0xFFFFFFFF;
         Material material = ShapeText.materialFor(stack);
-        return material != null ? ShapeFluid.tintOf(material) : 0xFFFFFFFF;
+        if (material == null) return 0xFFFFFFFF;
+        Integer cellTint = material.getProperty(StandardProperties.CELL_TINT);
+        return cellTint != null ? cellTint : ShapeFluid.tintOf(material);
     }
 }

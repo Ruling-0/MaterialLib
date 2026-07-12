@@ -55,6 +55,14 @@ public final class StandardProperties {
     /// base-textured composite; a composite block shape never consults this property.
     public static final Property<Integer> BLOCK_TINT = Property.of(MaterialLib.MODID, "blockTint");
 
+    /// ARGB tint applied to a [ShapeFluidInContainer]'s fill layer in place of [#FLUID_TINT], for a material whose
+    /// fluid renders one color in the world (e.g. untinted over dedicated art) but whose legacy cell fill was
+    /// tinted differently. Optional and null by default, like [#FLUID_TINT]: most materials never set this, and
+    /// [ShapeFluidInContainer] falls back to [#FLUID_TINT], then [#TINT], when it is unset. Applies only to a
+    /// container's fill layer -- the fluid's own world/tank/GUI rendering (see [ShapeFluid]) always uses
+    /// [#FLUID_TINT], never this property.
+    public static final Property<Integer> CELL_TINT = Property.of(MaterialLib.MODID, "cellTint");
+
     /// Rejects the properties derived from builder arguments, which can never be set or removed directly.
     static void requireSettable(Property<?> property) {
         if (property == NAME || property == TEXTURE_SET) {
