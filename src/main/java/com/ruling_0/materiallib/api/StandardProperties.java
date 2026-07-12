@@ -47,6 +47,14 @@ public final class StandardProperties {
     /// such as a material's compressed storage block, always uses [#TINT] directly.
     public static final Property<Integer> BLOCK_OVERLAY_TINT = Property.of(MaterialLib.MODID, "blockOverlayTint");
 
+    /// ARGB tint applied to a plain (no-base-texture) block shape's icon in place of [#TINT], for a material
+    /// whose whole-block art already encodes its own color (e.g. a dedicated pre-colored storage-block texture)
+    /// and so must not also receive the material's general tint. Optional and null by default, like
+    /// [#FLUID_TINT]: most materials never set this, and [ShapeBlock] falls back to [#TINT] when it is unset.
+    /// The plain-block counterpart of [#BLOCK_OVERLAY_TINT], which covers only the overlay layer of a
+    /// base-textured composite; a composite block shape never consults this property.
+    public static final Property<Integer> BLOCK_TINT = Property.of(MaterialLib.MODID, "blockTint");
+
     /// Rejects the properties derived from builder arguments, which can never be set or removed directly.
     static void requireSettable(Property<?> property) {
         if (property == NAME || property == TEXTURE_SET) {

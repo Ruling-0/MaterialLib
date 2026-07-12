@@ -259,14 +259,14 @@ public class ShapeBlock extends Block implements BackedShape {
     /// [#hasBaseTexture] composite, this resolves the overlay layer's tint: [StandardProperties#BLOCK_OVERLAY_TINT]
     /// when the material sets it, or [StandardProperties#TINT] otherwise, the same fallback [ShapeFluid] uses for
     /// [StandardProperties#FLUID_TINT]. A plain block shape with no base texture -- e.g. a material's compressed
-    /// storage block -- has no overlay layer to speak of and always uses [StandardProperties#TINT] directly.
+    /// storage block -- has no overlay layer to speak of and resolves [StandardProperties#BLOCK_TINT] when the
+    /// material sets it, or [StandardProperties#TINT] otherwise.
     private int tintFor(int meta) {
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         if (material == null) return 0xFFFFFF;
-        if (baseTexture != null) {
-            Integer overlayTint = material.getProperty(StandardProperties.BLOCK_OVERLAY_TINT);
-            if (overlayTint != null) return overlayTint & 0xFFFFFF;
-        }
+        Integer override = material.getProperty(
+            baseTexture != null ? StandardProperties.BLOCK_OVERLAY_TINT : StandardProperties.BLOCK_TINT);
+        if (override != null) return override & 0xFFFFFF;
         return material.getProperty(StandardProperties.TINT) & 0xFFFFFF;
     }
 
