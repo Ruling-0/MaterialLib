@@ -255,11 +255,19 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// The RGB tint of the material at the given metadata, or white when the metadata maps to no live material.
-    /// Block render colors carry no alpha, so the material's ARGB [StandardProperties#TINT] is masked to its low
-    /// 24 bits.
-    private static int tintFor(int meta) {
+    /// Block render colors carry no alpha, so the resolved ARGB value is masked to its low 24 bits. For a
+    /// [#hasBaseTexture] composite, this resolves the overlay layer's tint: [StandardProperties#BLOCK_OVERLAY_TINT]
+    /// when the material sets it, or [StandardProperties#TINT] otherwise, the same fallback [ShapeFluid] uses for
+    /// [StandardProperties#FLUID_TINT]. A plain block shape with no base texture -- e.g. a material's compressed
+    /// storage block -- has no overlay layer to speak of and always uses [StandardProperties#TINT] directly.
+    private int tintFor(int meta) {
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
-        return material != null ? material.getProperty(StandardProperties.TINT) & 0xFFFFFF : 0xFFFFFF;
+        if (material == null) return 0xFFFFFF;
+        if (baseTexture != null) {
+            Integer overlayTint = material.getProperty(StandardProperties.BLOCK_OVERLAY_TINT);
+            if (overlayTint != null) return overlayTint & 0xFFFFFF;
+        }
+        return material.getProperty(StandardProperties.TINT) & 0xFFFFFF;
     }
 
     @Override

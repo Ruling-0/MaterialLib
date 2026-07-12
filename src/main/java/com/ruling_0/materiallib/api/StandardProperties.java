@@ -38,6 +38,15 @@ public final class StandardProperties {
     /// (dust, ingot, block, etc.) always uses [#TINT].
     public static final Property<Integer> FLUID_TINT = Property.of(MaterialLib.MODID, "fluidTint");
 
+    /// ARGB tint applied to a [ShapeBlock#hasBaseTexture] block shape's overlay icon layer in place of [#TINT],
+    /// for a material whose overlay art already encodes its own color (e.g. hand-painted ore splotches carried
+    /// over from a pre-tinted legacy icon) and so must not also receive the material's general tint. Optional and
+    /// null by default, like [#FLUID_TINT]: most materials never set this, and [ShapeBlock] falls back to [#TINT]
+    /// when it is unset. Applies only to a base-textured block shape's overlay layer (e.g. `ore`/`oreSmall`'s
+    /// tinted icon drawn over their untinted per-variant stone background) -- a block shape with no base texture,
+    /// such as a material's compressed storage block, always uses [#TINT] directly.
+    public static final Property<Integer> BLOCK_OVERLAY_TINT = Property.of(MaterialLib.MODID, "blockOverlayTint");
+
     /// Rejects the properties derived from builder arguments, which can never be set or removed directly.
     static void requireSettable(Property<?> property) {
         if (property == NAME || property == TEXTURE_SET) {
