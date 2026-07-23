@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.util.LinkedHashMap;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -21,12 +23,16 @@ class WorldMaterialIdsTest {
     private final MaterialRegistry registry = new MaterialRegistry();
     private final TextureSet texture = TextureSet.of("testmod", "shiny");
 
-    private File worldFile() {
+    private File storeFile() {
         return new File(dir, "material-ids.json");
     }
 
-    private MaterialRegistry resolvedWith(Map<String, Integer> assignment) {
-        for (String name : assignment.keySet()) {
+    private File transitionsDir() {
+        return new File(dir, "transitions");
+    }
+
+    private MaterialRegistry resolvedWith(String... names) {
+        for (String name : names) {
             registry.newMaterial("testmod", name, texture)
                 .build();
         }
@@ -35,12 +41,13 @@ class WorldMaterialIdsTest {
     }
 
     @Test
-    void diffReportsNothingWhenWorldAgreesWithInstance() {
-        Map<String, Integer> world = Map.of("Iron", 0, "Gold", 1);
-        Map<String, Integer> instance = Map.of("Iron", 0, "Gold", 1, "Tin", 2);
+    void diffReportsNothingWhenTheWorldAgreesWithTheCurrentAssignment() {
+        Map<String, Integer> stored = Map.of("Iron", 0, "Gold", 1);
+        Map<String, Integer> current = Map.of("Iron", 0, "Gold", 1, "Tin", 2);
 
-        assertFalse(WorldMaterialIds.diff(world, instance)
-            .isMismatch());
+        assertFalse(
+            WorldMaterialIds.diff(stored, current)
+                .isMismatch());
     }
 
     @Test
@@ -48,10 +55,10 @@ class WorldMaterialIdsTest {
         WorldMaterialIds.Diff diff = WorldMaterialIds.diff(Map.of("Iron", 0), Map.of("Iron", 5));
 
         assertTrue(diff.isMismatch());
-        assertEquals(1, diff.moved()
-            .size());
-        assertTrue(diff.removed()
-            .isEmpty());
+        assertEquals(Map.of(0, 5), diff.movedIndices());
+        assertTrue(
+            diff.removedIndices()
+                .isEmpty());
     }
 
     @Test
@@ -59,46 +66,113 @@ class WorldMaterialIdsTest {
         WorldMaterialIds.Diff diff = WorldMaterialIds.diff(Map.of("Iron", 0, "Gone", 1), Map.of("Iron", 0));
 
         assertTrue(diff.isMismatch());
-        assertEquals(1, diff.removed()
-            .size());
-        assertTrue(diff.moved()
-            .isEmpty());
+        assertEquals(List.of(1), diff.removedIndices());
+        assertTrue(
+            diff.movedIndices()
+                .isEmpty());
     }
 
     @Test
-    void checkStampsAFreshWorldWithTheInstanceAssignment() {
-        Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("Gold", 0);
-        assignment.put("Iron", 1);
-        MaterialRegistry resolved = resolvedWith(assignment);
+    void checkStampsAFreshWorldAtListVersionOne() {
+        MaterialRegistry resolved = resolvedWith("Gold", "Iron");
 
-        assertNull(WorldMaterialIds.check(resolved, worldFile()));
-        assertEquals(assignment, MaterialIdStore.read(worldFile()));
+        assertNull(WorldMaterialIds.check(resolved, dir));
+
+        MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile());
+        assertEquals(1, stored.listVersion());
+        assertEquals(resolved.getContentHash(), stored.hash());
+        assertEquals(resolved.getAssignedIndices(), stored.materials());
+        assertEquals(1, WorldMaterialIds.currentListVersion());
+        assertFalse(transitionsDir().exists());
     }
 
     @Test
-    void checkRefreshesAWorldMissingNewMaterials() {
-        Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("Gold", 0);
-        assignment.put("Iron", 1);
-        MaterialRegistry resolved = resolvedWith(assignment);
-        MaterialIdStore.write(worldFile(), Map.of("Iron", 1));
+    void checkLeavesAMatchingWorldUntouched() {
+        MaterialRegistry resolved = resolvedWith("Gold", "Iron");
+        MaterialIdStore.write(storeFile(), 3, resolved.getContentHash(), resolved.getAssignedIndices());
 
-        assertNull(WorldMaterialIds.check(resolved, worldFile()));
-        assertEquals(assignment, MaterialIdStore.read(worldFile()));
+        assertNull(WorldMaterialIds.check(resolved, dir));
+
+        assertEquals(3, MaterialIdStore.read(storeFile()).listVersion());
+        assertEquals(3, WorldMaterialIds.currentListVersion());
+        assertFalse(transitionsDir().exists());
     }
 
     @Test
-    void checkMigratesAndAdvancesTheCopyOnMismatch() {
-        Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("Iron", 0);
-        MaterialRegistry resolved = resolvedWith(assignment);
-        MaterialIdStore.write(worldFile(), Map.of("Iron", 7));
+    void checkWritesATransitionAndAdvancesTheStoreOnMismatch() {
+        MaterialRegistry resolved = resolvedWith("Iron");
+        MaterialIdStore.write(storeFile(), 1, "outdatedhash", Map.of("Iron", 7, "Gone", 3));
 
-        MaterialMigration migration = WorldMaterialIds.check(resolved, worldFile());
+        MaterialMigration migration = WorldMaterialIds.check(resolved, dir);
 
         assertNotNull(migration);
         assertEquals(0, migration.lookup(7));
-        assertEquals(assignment, MaterialIdStore.read(worldFile()));
+        assertEquals(MaterialMigration.DELETE, migration.lookup(3));
+        MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile());
+        assertEquals(2, stored.listVersion());
+        assertEquals(resolved.getContentHash(), stored.hash());
+        assertEquals(resolved.getAssignedIndices(), stored.materials());
+        assertEquals(2, WorldMaterialIds.currentListVersion());
+        assertEquals(
+            0,
+            MaterialIdTransitions.load(transitionsDir())
+                .compose(1, 2)
+                .get(7));
+        assertEquals(
+            MaterialMigration.DELETE,
+            MaterialIdTransitions.load(transitionsDir())
+                .compose(1, 2)
+                .get(3));
+    }
+
+    @Test
+    void checkKeepsTheTransitionChainContiguousAcrossRepeatedMismatches() {
+        MaterialRegistry resolved = resolvedWith("Iron");
+        MaterialIdStore.write(storeFile(), 4, "outdatedhash", Map.of("Iron", 7));
+
+        WorldMaterialIds.check(resolved, dir);
+
+        assertEquals(5, MaterialIdStore.read(storeFile()).listVersion());
+        assertEquals(
+            0,
+            MaterialIdTransitions.load(transitionsDir())
+                .compose(4, 5)
+                .get(7));
+    }
+
+    @Test
+    void aPureAdditionStillAdvancesTheVersionWithAnEmptyTransition() {
+        MaterialRegistry resolved = resolvedWith("Iron", "Zinc");
+        MaterialIdStore.write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Iron")), Map.of("Iron", 0));
+
+        MaterialMigration migration = WorldMaterialIds.check(resolved, dir);
+
+        assertNotNull(migration);
+        assertTrue(migration.isEmpty());
+        assertEquals(2, MaterialIdStore.read(storeFile()).listVersion());
+        assertTrue(
+            MaterialIdTransitions.load(transitionsDir())
+                .compose(1, 2)
+                .isEmpty());
+    }
+
+    @Test
+    void aLegacyWorldFileIsAdoptedAtListVersionOneAndMigrated() throws Exception {
+        MaterialRegistry resolved = resolvedWith("Iron");
+        Files.createDirectories(dir.toPath());
+        Files.write(
+            storeFile().toPath(),
+            "{\"version\":2,\"materials\":{\"Iron\":7}}".getBytes(StandardCharsets.UTF_8));
+
+        MaterialMigration migration = WorldMaterialIds.check(resolved, dir);
+
+        assertNotNull(migration);
+        assertEquals(0, migration.lookup(7));
+        assertEquals(2, MaterialIdStore.read(storeFile()).listVersion());
+        assertEquals(
+            0,
+            MaterialIdTransitions.load(transitionsDir())
+                .compose(1, 2)
+                .get(7));
     }
 }
