@@ -1,6 +1,8 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -25,9 +27,8 @@ class MaterialIdStoreTest {
     }
 
     @Test
-    void readingAnAbsentFileGivesAnEmptyMap() {
-        assertTrue(MaterialIdStore.read(file())
-            .isEmpty());
+    void readingAnAbsentFileGivesNull() {
+        assertNull(MaterialIdStore.read(file()));
     }
 
     @Test
@@ -36,9 +37,12 @@ class MaterialIdStoreTest {
         indices.put("Iron", 0);
         indices.put("Gold", 1);
 
-        MaterialIdStore.write(file(), indices);
+        MaterialIdStore.write(file(), 4, "somehash", indices);
 
-        assertEquals(indices, MaterialIdStore.read(file()));
+        MaterialIdStore.WorldIds stored = MaterialIdStore.read(file());
+        assertEquals(4, stored.listVersion());
+        assertEquals("somehash", stored.hash());
+        assertEquals(indices, stored.materials());
     }
 
     @Test
@@ -48,12 +52,56 @@ class MaterialIdStoreTest {
         indices.put("First", 0);
         indices.put("Middle", 1);
 
-        MaterialIdStore.write(file(), indices);
+        MaterialIdStore.write(file(), 1, "somehash", indices);
 
         assertEquals(
             List.of("First", "Middle", "Last"),
-            new ArrayList<>(MaterialIdStore.read(file())
-                .keySet()));
+            new ArrayList<>(
+                MaterialIdStore.read(file())
+                    .materials()
+                    .keySet()));
+    }
+
+    @Test
+    void aLegacyFileIsAdoptedAsListVersionOneAndRewritten() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":2,\"materials\":{\"Gold\":0,\"Iron\":1}}".getBytes(StandardCharsets.UTF_8));
+
+        MaterialIdStore.WorldIds stored = MaterialIdStore.read(file());
+
+        assertEquals(1, stored.listVersion());
+        assertEquals(MaterialRegistry.contentHash(List.of("Gold", "Iron")), stored.hash());
+        assertEquals(Map.of("Gold", 0, "Iron", 1), stored.materials());
+        String rewritten = new String(Files.readAllBytes(file().toPath()), StandardCharsets.UTF_8);
+        assertTrue(rewritten.contains("\"version\": 3"));
+        assertEquals(stored, MaterialIdStore.read(file()));
+    }
+
+    @Test
+    void aLegacyFileHashOrdersNamesByIndex() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":2,\"materials\":{\"Iron\":1,\"Gold\":0}}".getBytes(StandardCharsets.UTF_8));
+
+        assertEquals(
+            MaterialRegistry.contentHash(List.of("Gold", "Iron")),
+            MaterialIdStore.read(file())
+                .hash());
+    }
+
+    // A sparse legacy map covers the same names as a dense assignment without meaning the same indices; its
+    // hash must differ or the launch flow would skip the migration the world needs.
+    @Test
+    void aSparseLegacyFileNeverHashesLikeADenseAssignment() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":2,\"materials\":{\"Iron\":7}}".getBytes(StandardCharsets.UTF_8));
+
+        assertNotEquals(
+            MaterialRegistry.contentHash(List.of("Iron")),
+            MaterialIdStore.read(file())
+                .hash());
     }
 
     @Test
@@ -65,22 +113,46 @@ class MaterialIdStoreTest {
 
     @Test
     void readingAFilePresentButMissingMaterialsFailsLoudly() throws Exception {
-        Files.write(file().toPath(), "{\"version\":2}".getBytes(StandardCharsets.UTF_8));
+        Files.write(file().toPath(),
+            "{\"version\":3,\"listVersion\":1,\"hash\":\"x\"}".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
 
     @Test
-    void readingAFileWithEmptyMaterialsGivesAnEmptyMap() throws Exception {
-        Files.write(file().toPath(), "{\"version\":2,\"materials\":{}}".getBytes(StandardCharsets.UTF_8));
+    void readingAFileWithoutAHashFailsLoudly() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":3,\"listVersion\":1,\"materials\":{\"A\":0}}".getBytes(StandardCharsets.UTF_8));
 
-        assertTrue(MaterialIdStore.read(file())
-            .isEmpty());
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
+    }
+
+    @Test
+    void readingAFileWithoutAListVersionFailsLoudly() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":3,\"hash\":\"x\",\"materials\":{\"A\":0}}".getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
+    }
+
+    @Test
+    void readingAFutureFormatFailsLoudly() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":4,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":0}}"
+                .getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
 
     @Test
     void readingANegativeIndexFailsLoudly() throws Exception {
-        Files.write(file().toPath(), "{\"version\":2,\"materials\":{\"A\":-1}}".getBytes(StandardCharsets.UTF_8));
+        Files.write(
+            file().toPath(),
+            "{\"version\":3,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":-1}}"
+                .getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
@@ -89,7 +161,8 @@ class MaterialIdStoreTest {
     void readingADuplicateIndexFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":2,\"materials\":{\"A\":0,\"B\":0}}".getBytes(StandardCharsets.UTF_8));
+            "{\"version\":3,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":0,\"B\":0}}"
+                .getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
@@ -98,16 +171,20 @@ class MaterialIdStoreTest {
     void readingAKeyWithAColonFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":2,\"materials\":{\"amod:Iron\":0}}".getBytes(StandardCharsets.UTF_8));
+            "{\"version\":3,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"amod:Iron\":0}}"
+                .getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
 
     @Test
     void writeOverwritesAnExistingFile() {
-        MaterialIdStore.write(file(), Map.of("Iron", 0, "Gold", 1));
-        MaterialIdStore.write(file(), Map.of("Iron", 0));
+        MaterialIdStore.write(file(), 1, "first", Map.of("Iron", 0, "Gold", 1));
+        MaterialIdStore.write(file(), 2, "second", Map.of("Iron", 0));
 
-        assertEquals(Map.of("Iron", 0), MaterialIdStore.read(file()));
+        MaterialIdStore.WorldIds stored = MaterialIdStore.read(file());
+        assertEquals(2, stored.listVersion());
+        assertEquals("second", stored.hash());
+        assertEquals(Map.of("Iron", 0), stored.materials());
     }
 }

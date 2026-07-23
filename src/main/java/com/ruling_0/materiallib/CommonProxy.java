@@ -60,12 +60,12 @@ public class CommonProxy {
         }
     }
 
-    // Before the worlds load, so the per-world id copy is reconciled against the instance before any item loads.
+    // Before the worlds load, so the world's id list is reconciled against the registry before any item loads.
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {
         MinecraftServer server = event.getServer();
         ISaveHandler save = server.getActiveAnvilConverter().getSaveLoader(server.getFolderName(), false);
-        File worldFile = new File(new File(save.getWorldDirectory(), MaterialLib.MODID), "material-ids.json");
-        PosteaMigration.setActiveMigration(WorldMaterialIds.check(MaterialRegistry.instance(), worldFile));
+        File dir = new File(save.getWorldDirectory(), MaterialLib.MODID);
+        PosteaMigration.setActiveMigration(WorldMaterialIds.check(MaterialRegistry.instance(), dir));
     }
 
     public void serverStarting(FMLServerStartingEvent event) {

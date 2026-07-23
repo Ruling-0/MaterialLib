@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -11,10 +12,8 @@ import org.junit.jupiter.api.Test;
 class MaterialMigrationTest {
 
     @Test
-    void anIdenticalAssignmentNeedsNoMigration() {
-        MaterialMigration migration = new MaterialMigration(
-            Map.of("Iron", 0, "Gold", 1),
-            Map.of("Iron", 0, "Gold", 1));
+    void anEmptyTransitionNeedsNoMigration() {
+        MaterialMigration migration = new MaterialMigration(Map.of(), List.of());
 
         assertTrue(migration.isEmpty());
         assertEquals(MaterialMigration.UNCHANGED, migration.lookup(0));
@@ -22,24 +21,24 @@ class MaterialMigrationTest {
     }
 
     @Test
-    void aMovedMaterialRemapsItsIndex() {
-        MaterialMigration migration = new MaterialMigration(Map.of("Iron", 0), Map.of("Iron", 5));
+    void aMovedIndexIsRemapped() {
+        MaterialMigration migration = new MaterialMigration(Map.of(0, 5), List.of());
 
         assertFalse(migration.isEmpty());
         assertEquals(5, migration.lookup(0));
     }
 
     @Test
-    void aVanishedMaterialIsDeleted() {
-        MaterialMigration migration = new MaterialMigration(Map.of("Iron", 0, "Gone", 3), Map.of("Iron", 0));
+    void aRemovedIndexIsDeleted() {
+        MaterialMigration migration = new MaterialMigration(Map.of(0, 5), List.of(3));
 
         assertEquals(MaterialMigration.DELETE, migration.lookup(3));
-        assertEquals(MaterialMigration.UNCHANGED, migration.lookup(0));
+        assertEquals(MaterialMigration.UNCHANGED, migration.lookup(1));
     }
 
     @Test
     void unrelatedDamageValuesAreUnchanged() {
-        MaterialMigration migration = new MaterialMigration(Map.of("Iron", 0), Map.of("Iron", 5));
+        MaterialMigration migration = new MaterialMigration(Map.of(0, 5), List.of());
 
         assertEquals(MaterialMigration.UNCHANGED, migration.lookup(99));
     }
