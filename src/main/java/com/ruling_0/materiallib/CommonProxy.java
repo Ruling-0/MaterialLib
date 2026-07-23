@@ -7,7 +7,6 @@ import net.minecraft.world.storage.ISaveHandler;
 
 import net.minecraftforge.common.MinecraftForge;
 
-import com.ruling_0.materiallib.api.MaterialIdStore;
 import com.ruling_0.materiallib.api.MaterialOwnerStore;
 import com.ruling_0.materiallib.api.MaterialRegistrationEvent;
 import com.ruling_0.materiallib.api.MaterialRegistry;
@@ -43,10 +42,8 @@ public class CommonProxy {
         lateHandlerCheck = LateHandlerCheck.snapshot(registration);
 
         File dir = new File(event.getModConfigurationDirectory(), MaterialLib.MODID);
-        MaterialIdStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialOwnerStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialRegistry.instance().resolve();
-        MaterialIdStore.saveFrom(MaterialRegistry.instance(), dir);
         MaterialOwnerStore.saveFrom(MaterialRegistry.instance(), dir);
 
         ShapeOwnerStore.loadInto(ShapeRegistry.instance(), dir);

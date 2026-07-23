@@ -7,11 +7,10 @@ import java.util.TreeMap;
 
 /// Renders a resolved [MaterialRegistry]'s full index assignment as a CSV table.
 ///
-/// One row per assigned index in ascending order, including indices reserved for materials not loaded
-/// this session -- the data needed when debugging persistence issues. Columns are the index, the bare
-/// material name, the owning modid, whether the material is loaded, and (for loaded materials) the
-/// generated shapes and family memberships as ';'-joined keys. Fields containing a comma, quote, or
-/// line break are quoted with doubled inner quotes (RFC 4180); rows end with '\n'.
+/// One row per assigned index in ascending order -- the data needed when debugging id issues. Columns are
+/// the index, the bare material name, the owning modid, whether the material is loaded, and (for loaded
+/// materials) the generated shapes and family memberships as ';'-joined keys. Fields containing a comma,
+/// quote, or line break are quoted with doubled inner quotes (RFC 4180); rows end with '\n'.
 final class MaterialCsv {
 
     private MaterialCsv() {}

@@ -26,7 +26,6 @@ class WorldMaterialIdsTest {
     }
 
     private MaterialRegistry resolvedWith(Map<String, Integer> assignment) {
-        registry.setPersistedIndices(assignment);
         for (String name : assignment.keySet()) {
             registry.newMaterial("testmod", name, texture)
                 .build();
@@ -69,8 +68,8 @@ class WorldMaterialIdsTest {
     @Test
     void checkStampsAFreshWorldWithTheInstanceAssignment() {
         Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("Iron", 0);
-        assignment.put("Gold", 1);
+        assignment.put("Gold", 0);
+        assignment.put("Iron", 1);
         MaterialRegistry resolved = resolvedWith(assignment);
 
         assertNull(WorldMaterialIds.check(resolved, worldFile()));
@@ -80,10 +79,10 @@ class WorldMaterialIdsTest {
     @Test
     void checkRefreshesAWorldMissingNewMaterials() {
         Map<String, Integer> assignment = new LinkedHashMap<>();
-        assignment.put("Iron", 0);
-        assignment.put("Gold", 1);
+        assignment.put("Gold", 0);
+        assignment.put("Iron", 1);
         MaterialRegistry resolved = resolvedWith(assignment);
-        MaterialIdStore.write(worldFile(), Map.of("Iron", 0));
+        MaterialIdStore.write(worldFile(), Map.of("Iron", 1));
 
         assertNull(WorldMaterialIds.check(resolved, worldFile()));
         assertEquals(assignment, MaterialIdStore.read(worldFile()));

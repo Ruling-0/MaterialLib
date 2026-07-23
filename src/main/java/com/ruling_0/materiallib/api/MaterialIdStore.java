@@ -7,27 +7,13 @@ import java.util.Map;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
-/// The instance-global store of the material name -> index assignment, a JSON file under `config/materiallib`.
-///
-/// The assignment is append-only and shared by every world on the instance: [#loadInto] feeds the saved indices
-/// to the registry before it resolves so existing materials keep their index, and [#saveFrom] writes the resolved
-/// assignment (including indices reserved for removed materials) back.
+/// The per-world store of the material name -> index assignment, compared by [WorldMaterialIds] against the
+/// registry's deterministic assignment at server start.
 public final class MaterialIdStore {
 
-    private static final String FILE_NAME = "material-ids.json";
     private static final int FORMAT_VERSION = 2;
 
     private MaterialIdStore() {}
-
-    /// Loads the saved assignment from `<dir>/material-ids.json` and passes it to the registry at resolve.
-    public static void loadInto(MaterialRegistry registry, File dir) {
-        registry.setPersistedIndices(read(new File(dir, FILE_NAME)));
-    }
-
-    /// Writes the registry's resolved assignment back to `<dir>/material-ids.json`.
-    public static void saveFrom(MaterialRegistry registry, File dir) {
-        write(new File(dir, FILE_NAME), registry.getAssignedIndices());
-    }
 
     static Map<String, Integer> read(File file) {
         if (!file.isFile()) return new LinkedHashMap<>();
