@@ -100,7 +100,7 @@ public class CommandMatInfo extends CommandBase {
             sender,
             "Shape: " + shape.getModId() + ":" + shape.getName() + variantSuffix + " (" + type(shape) + ")");
         if (material == null) {
-            send(sender, "Material: none loaded at this index (reserved or unknown)");
+            send(sender, "Material: none loaded at this index");
             return;
         }
         send(sender, "Material: " + material.getKey() + " (index " + material.getIndex() + ")");
