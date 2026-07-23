@@ -54,6 +54,8 @@ public class CommonProxy {
     public void init(FMLInitializationEvent event) {
         ShapeRegistry.instance().registerFluidContainers();
         ShapeRegistry.instance().runInitConsumers();
+        MinecraftForge.EVENT_BUS.register(new ChunkVersionStamp());
+        MinecraftForge.EVENT_BUS.register(new PlayerVersionStamp.Handler());
     }
 
     public void postInit(FMLPostInitializationEvent event) {
