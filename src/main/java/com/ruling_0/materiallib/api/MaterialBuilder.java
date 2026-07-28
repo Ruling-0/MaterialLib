@@ -20,6 +20,7 @@ public final class MaterialBuilder {
     private final TextureSet textureSet;
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private final Set<Shape> shapes = new ReferenceLinkedOpenHashSet<>();
+    private final Set<Shape> removedShapes = new ReferenceLinkedOpenHashSet<>();
     private final List<String[]> familyKeys = new ArrayList<>();
     private final List<String> tooltipLines = new ArrayList<>(2);
     private boolean built;
@@ -50,13 +51,33 @@ public final class MaterialBuilder {
     }
 
     public MaterialBuilder generateShape(Shape shape) {
-        shapes.add(Names.validate(shape));
+        Names.validate(shape);
+        shapes.add(shape);
+        removedShapes.remove(shape);
         return this;
     }
 
     public MaterialBuilder generateShapes(Shape... shapes) {
         for (Shape shape : shapes) {
             generateShape(shape);
+        }
+        return this;
+    }
+
+    /// Removes a shape from the material, masking it when a family the material joins contributes it. Queued at
+    /// [#build] and otherwise identical to [MaterialEdit#removeShape] called straight after it: a later
+    /// [MaterialEdit#generateShape] for the same shape still lifts the mask, and a [#generateShape] later in
+    /// this builder cancels the removal.
+    public MaterialBuilder removeShape(Shape shape) {
+        Names.validate(shape);
+        shapes.remove(shape);
+        removedShapes.add(shape);
+        return this;
+    }
+
+    public MaterialBuilder removeShapes(Shape... shapes) {
+        for (Shape shape : shapes) {
+            removeShape(shape);
         }
         return this;
     }
@@ -94,6 +115,10 @@ public final class MaterialBuilder {
         registry.register(material);
         for (String[] familyKey : familyKeys) {
             registry.enqueueAddToFamily(modid, name, familyKey[0], familyKey[1]);
+        }
+        for (Shape shape : removedShapes) {
+            registry
+                .enqueueMaterialOp(modid, name, "remove shape " + shape + " from material", m -> m.removeShape(shape));
         }
         built = true;
         return material;
