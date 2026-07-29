@@ -127,6 +127,11 @@ public class ShapeFluid implements ServedShape {
         return FluidRegistry.getFluid(fluidName);
     }
 
+    /// The fluid registered for `material` in this shape, or null when the material does not generate it.
+    Fluid fluid(Material material) {
+        return fluidsByIndex.get(material.getIndex());
+    }
+
     /// The fluid stack of `material` in this shape, with the given volume in millibuckets. The material must
     /// generate this shape.
     FluidStack fluidStack(Material material, int amount) {

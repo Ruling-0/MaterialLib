@@ -5,6 +5,7 @@ import java.util.Collection;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
 /// The public entry point of MaterialLib, wrapping the game's [MaterialRegistry] instance.
@@ -136,6 +137,14 @@ public final class MaterialLibAPI {
     /// what generated it. Only available after shapes have resolved.
     public static BlockMaterialInfo lookupBlock(Block block, int metadata) {
         return ShapeRegistry.instance().lookupBlock(block, metadata);
+    }
+
+    /// The Forge fluid MaterialLib registered for `material` in `shape`, or null when the material does not
+    /// generate that fluid shape -- the nullable, stack-free counterpart of [#getFluidStack], for a caller
+    /// gating on presence or building its own stacks. `shape` must still be a fluid shape. Only available
+    /// after shapes have resolved.
+    public static Fluid getFluid(Material material, Shape shape) {
+        return ShapeRegistry.instance().getFluid(material, shape);
     }
 
     /// The fluid stack of `material` in `shape`, with the given volume in millibuckets. The shape must be a fluid
