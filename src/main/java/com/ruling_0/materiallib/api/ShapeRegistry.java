@@ -12,6 +12,7 @@ import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.oredict.OreDictionary;
 
@@ -221,6 +222,18 @@ public final class ShapeRegistry {
         if (shape == null) return null;
         Material material = MaterialRegistry.instance().getMaterialByIndex(metadata);
         return new BlockMaterialInfo(shape, variantByBlock.get(block), material);
+    }
+
+    /// The fluid registered for `material` in `shape`, or null when the material does not generate it.
+    /// `shape` must still be a fluid shape -- passing anything else is a caller error, not a miss.
+    Fluid getFluid(Material material, Shape shape) {
+        requireResolved("look up a fluid");
+        material = material.canonical();
+        Shape canonical = unification.canonical(shape);
+        if (!(canonical instanceof ShapeFluid fluid)) {
+            throw new IllegalArgumentException(canonical + " is not a fluid shape");
+        }
+        return fluid.fluid(material);
     }
 
     /// The fluid stack of `material` in `shape`, with the given volume in millibuckets, routed to the shape's
