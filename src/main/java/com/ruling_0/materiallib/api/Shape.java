@@ -41,6 +41,18 @@ public interface Shape {
         return property.getDefaultValue();
     }
 
+    /// Sets a property value on this shape, for the mod that declared it, and returns the shape so calls chain.
+    /// Only before shapes resolve.
+    ///
+    /// This is the counterpart of the shape builders' `property` for a shape registered as a subclass instead
+    /// (see [MaterialLibAPI#registerItemShape]), which never passes through a builder. Changing a shape
+    /// **another** mod declared goes through [MaterialLibAPI#editShape] instead: that addresses the owner by
+    /// name and applies after unification, so it overrides the owner's declaration, whereas this states one --
+    /// two declarations of the same value conflict, and the owner's wins.
+    default Shape setProperty(Property<?> property, Object value) {
+        throw new UnsupportedOperationException(this + " does not hold properties");
+    }
+
     /// True if this shape sets the property explicitly; the property default does not count.
     default boolean hasProperty(Property<?> property) {
         return false;

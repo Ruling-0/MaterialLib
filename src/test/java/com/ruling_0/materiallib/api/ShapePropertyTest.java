@@ -120,4 +120,17 @@ class ShapePropertyTest {
             .set(variant, STACK_SIZE, 16);
         assertEquals(16, group.getProperty(STACK_SIZE));
     }
+
+    /// The owner-facing setter, for a shape registered as a subclass rather than through a builder. Unlike
+    /// [MaterialLibAPI#editShape] it writes to the shape in hand, so it declares rather than overrides.
+    @Test
+    void theOwnerCanSetPropertiesOnAShapeItHolds() {
+        TestShape gear = new TestShape("amod", "gear");
+
+        gear.setProperty(MATERIAL_AMOUNT, 3628800L)
+            .setProperty(STACK_SIZE, 16);
+
+        assertEquals(3628800L, gear.getProperty(MATERIAL_AMOUNT));
+        assertEquals(16, gear.getProperty(STACK_SIZE));
+    }
 }

@@ -36,6 +36,13 @@ interface ServedShape extends Shape {
     }
 
     @Override
+    default Shape setProperty(Property<?> property, Object value) {
+        ShapeProperties.requireSettable(property, value);
+        properties().set(this, property, value);
+        return this;
+    }
+
+    @Override
     default boolean hasProperty(Property<?> property) {
         return properties().has(property);
     }
