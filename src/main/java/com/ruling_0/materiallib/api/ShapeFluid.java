@@ -44,6 +44,7 @@ public class ShapeFluid implements ServedShape {
     private final FluidIconPather iconPather;
 
     private final ServedMaterials served = new ServedMaterials();
+    private final ShapeProperties props = new ShapeProperties();
 
     private final Int2ObjectMap<Fluid> fluidsByIndex = new Int2ObjectOpenHashMap<>();
     private final Set<Material> warnedMissingIcon = new ReferenceOpenHashSet<>();
@@ -95,6 +96,11 @@ public class ShapeFluid implements ServedShape {
 
     @Override
     public Material[] getServedMaterials() { return served.get(); }
+
+    @Override
+    public ShapeProperties properties() {
+        return props;
+    }
 
     /// The Forge fluid name for a material in this shape, as produced by this shape's [FluidNamer].
     String fluidName(Material material) {

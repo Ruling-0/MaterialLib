@@ -30,6 +30,7 @@ public class ShapeItem extends Item implements BackedShape {
     private final String displayNameFormat;
 
     private final ServedMaterials served = new ServedMaterials();
+    private final ShapeProperties props = new ShapeProperties();
     private final ShapeIcons icons = new ShapeIcons(true);
 
     /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
@@ -72,6 +73,11 @@ public class ShapeItem extends Item implements BackedShape {
 
     @Override
     public Material[] getServedMaterials() { return served.get(); }
+
+    @Override
+    public ShapeProperties properties() {
+        return props;
+    }
 
     @Override
     public ItemStack getStack(Material material, int amount) {

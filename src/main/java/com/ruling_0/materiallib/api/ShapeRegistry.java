@@ -7,6 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -50,6 +51,7 @@ public final class ShapeRegistry {
     private final Map<Block, String> variantByBlock = new Reference2ObjectOpenHashMap<>();
     private Map<String, String> persistedOwners = new LinkedHashMap<>();
     private Map<String, String> assignedOwners = new LinkedHashMap<>();
+    private final List<PendingOp> pendingOps = new ObjectArrayList<>();
     private boolean resolved;
 
     ShapeRegistry() {}
@@ -68,6 +70,49 @@ public final class ShapeRegistry {
 
     /// Every fluid shape, in the order their names were first registered. Only populated once shapes resolve.
     public List<ShapeFluid> getFluidShapes() { return fluidShapesView; }
+
+    ShapeEdit editShape(String modid, String name) {
+        return new ShapeEdit(this, modid, name);
+    }
+
+    /// Queues a change to the shape owning `name`, applied when shapes resolve. The lookup is deferred to that
+    /// point, so the shape need not be registered yet; a name nothing registered is skipped with a warning, which
+    /// keeps edits directed at optional mods harmless.
+    void enqueueShapeOp(String modid, String name, String description, Consumer<ServedShape> op) {
+        String key = Names.key(modid, name);
+        requireRegistration(description + " " + key);
+        pendingOps.add(new PendingOp(description + " " + key, () -> {
+            ServedShape target = unification.ownerOf(name);
+            if (target == null) {
+                MaterialLib.LOG.warn("Skipping edit \"{} {}\": no such shape is registered", description, key);
+                return;
+            }
+            op.accept(target);
+        }));
+    }
+
+    private void applyPendingOps() {
+        for (PendingOp op : pendingOps) {
+            try {
+                op.action.run();
+            }
+            catch (RuntimeException e) {
+                throw new IllegalStateException("Failed to apply queued edit \"" + op.description + "\"", e);
+            }
+        }
+        pendingOps.clear();
+    }
+
+    /// Freezes every candidate's property map, the owners' and the merged-away declarations' alike, so a stale
+    /// reference cannot mutate what a consumer has already read.
+    private void freezeProperties() {
+        for (ServedShape shape : unification.allCandidates()) {
+            shape.properties()
+                .freeze();
+        }
+    }
+
+    private record PendingOp(String description, Runnable action) {}
 
     /// Records a shape as a candidate to own its name and returns the shape to generate. The owner is chosen at
     /// [#resolve], so the returned shape is unified onto the owner's backing object or fluid then.
@@ -257,14 +302,21 @@ public final class ShapeRegistry {
         }
     }
 
-    /// Picks each name's owner, registers the owner's backing object and the item behind each empty container,
-    /// binds each shape to the materials that generate it, registers fluids and the fluid container mappings, and
-    /// registers the oredict entries.
+    /// Picks each name's owner, folds the merged-away declarations' properties into it, applies the queued
+    /// [ShapeEdit]s, registers the owner's backing object and the item behind each empty container, binds each
+    /// shape to the materials that generate it, registers fluids and the fluid container mappings, and registers
+    /// the oredict entries.
+    ///
+    /// Properties merge before the edits drain, matching [MaterialRegistry#resolve]: an edit is meant to override
+    /// what any declaration set, and a [ShapeEdit#removeProperty] that ran first would be undone by the merge.
     /// Invoked by MaterialLib's preInit handler after [MaterialRegistry#resolve]; other mods must not call this.
     public void resolve() {
         requireRegistration("resolve shapes");
         MaterialRegistry.instance().requireResolved("resolve shapes", "");
         assignedOwners = unification.resolve(persistedOwners);
+        unification.mergeProperties();
+        applyPendingOps();
+        freezeProperties();
         collectCanonicalShapes();
         registerEmptyContainers();
         bindServedMaterials();

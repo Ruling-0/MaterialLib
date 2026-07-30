@@ -1,10 +1,13 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Map;
 import java.util.Objects;
 
 import net.minecraft.item.ItemStack;
 
 import net.minecraftforge.fluids.FluidContainerRegistry;
+
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 
 /// Builds and registers a simple fluid-in-container [Shape] backed by a [ShapeFluidInContainer]. Obtained from
 /// [MaterialLibAPI#newFluidInContainerShape] and finished with [#build] inside the owning mod's
@@ -20,6 +23,7 @@ public final class FluidInContainerShapeBuilder {
     private String[] oreDicts;
     private String displayNameFormat;
     private String emptyIconPath;
+    private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
 
     FluidInContainerShapeBuilder(String modid, String name) {
@@ -78,6 +82,14 @@ public final class FluidInContainerShapeBuilder {
         return this;
     }
 
+    /// Sets a property value on the shape. Values are read back through [Shape#getProperty] and may be altered
+    /// by another mod through [MaterialLibAPI#editShape].
+    public <T> FluidInContainerShapeBuilder property(Property<T> property, T value) {
+        ShapeProperties.requireSettable(property, value);
+        properties.put(property, value);
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice
     /// or if no fluid was set.
     public Shape build() {
@@ -92,8 +104,11 @@ public final class FluidInContainerShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance().register(
-            new ShapeFluidInContainer(modid, name, format, fluidShape, emptyContainer, volume, emptyIconPath,
-                prefixes));
+        ShapeFluidInContainer shape = new ShapeFluidInContainer(modid, name, format, fluidShape, emptyContainer,
+            volume, emptyIconPath, prefixes);
+        shape.properties()
+            .setAll(shape, properties);
+        return ShapeRegistry.instance()
+            .register(shape);
     }
 }
