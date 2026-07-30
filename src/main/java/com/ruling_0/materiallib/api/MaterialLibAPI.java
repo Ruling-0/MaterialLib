@@ -164,6 +164,12 @@ public final class MaterialLibAPI {
         return MaterialRegistry.instance().editFamily(modid, name);
     }
 
+    /// Queues changes to a shape registered by any mod; see [ShapeEdit]. `modid` identifies the editor, not the
+    /// target: a shape name is unified across mods onto one owner, so the name alone addresses it.
+    public static ShapeEdit editShape(String modid, String name) {
+        return ShapeRegistry.instance().editShape(modid, name);
+    }
+
     /// The material with the given key, or null if none exists. A key whose material unified onto another mod's
     /// returns the unified material.
     public static Material getMaterial(String modid, String name) {

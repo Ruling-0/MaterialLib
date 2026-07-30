@@ -21,17 +21,17 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 /// resolves to the one backing item.
 final class ShapeUnification {
 
-    private final Object2ObjectLinkedOpenHashMap<String, List<Shape>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();
-    private final Object2ObjectLinkedOpenHashMap<String, Shape> canonicalByName = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectLinkedOpenHashMap<String, List<ServedShape>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();
+    private final Object2ObjectLinkedOpenHashMap<String, ServedShape> canonicalByName = new Object2ObjectLinkedOpenHashMap<>();
     private final Reference2ObjectOpenHashMap<Shape, Shape> aliasToCanonical = new Reference2ObjectOpenHashMap<>();
     private boolean resolved;
 
     /// Records a shape as a candidate to own its name and returns it. The owner is not chosen until [#resolve].
     /// Registering the same instance twice records it once.
-    Shape register(Shape shape) {
+    Shape register(ServedShape shape) {
         requireRegistration("register a shape");
         Names.validate(shape);
-        List<Shape> candidates = candidatesByName.get(shape.getName());
+        List<ServedShape> candidates = candidatesByName.get(shape.getName());
         if (candidates == null) {
             candidates = new ObjectArrayList<>();
             candidatesByName.put(shape.getName(), candidates);
@@ -48,14 +48,14 @@ final class ShapeUnification {
     Map<String, String> resolve(Map<String, String> persistedOwners) {
         requireRegistration("resolve shape unification");
         Map<String, String> owners = new LinkedHashMap<>(persistedOwners);
-        for (Map.Entry<String, List<Shape>> entry : candidatesByName.entrySet()) {
+        for (Map.Entry<String, List<ServedShape>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
-            List<Shape> candidates = entry.getValue();
+            List<ServedShape> candidates = entry.getValue();
             String ownerModid = OwnerElection
                 .choose("Shape", name, candidates, Shape::getModId, persistedOwners.get(name), "registered");
-            Shape canonical = candidateOwnedBy(candidates, ownerModid);
+            ServedShape canonical = candidateOwnedBy(candidates, ownerModid);
             canonicalByName.put(name, canonical);
-            for (Shape candidate : candidates) {
+            for (ServedShape candidate : candidates) {
                 if (candidate != canonical) {
                     aliasToCanonical.put(candidate, canonical);
                     MaterialLib.LOG.info("Unified shape {}:{} onto owner {}", candidate.getModId(), name, ownerModid);
@@ -69,8 +69,42 @@ final class ShapeUnification {
         return owners;
     }
 
-    private static Shape candidateOwnedBy(List<Shape> candidates, String modid) {
-        for (Shape candidate : candidates) {
+    /// The shape owning `name`, or null when nothing registered it. Available once [#resolve] has run, which is
+    /// why [ShapeRegistry] defers an edit's lookup to that point.
+    ServedShape ownerOf(String name) {
+        return canonicalByName.get(name);
+    }
+
+    /// Every registered candidate, owners and merged-away declarations alike.
+    List<ServedShape> allCandidates() {
+        List<ServedShape> all = new ObjectArrayList<>();
+        for (List<ServedShape> candidates : candidatesByName.values()) {
+            for (ServedShape candidate : candidates) {
+                all.add(candidate);
+            }
+        }
+        return all;
+    }
+
+    /// Folds each merged-away declaration's property values into the shape owning the name, keeping the owner's
+    /// value where both set a property, then points the loser's holder at the owner's so a stale reference reads
+    /// the same values. Mirrors [Material#mergeFrom]; a conflict is logged rather than fatal, matching the
+    /// oredict-divergence policy rather than the variant one, since a property cannot make a material generate
+    /// against a backing object that does not match.
+    void mergeProperties() {
+        requireResolved("merge shape properties");
+        for (Map.Entry<Shape, Shape> entry : aliasToCanonical.entrySet()) {
+            ServedShape loser = (ServedShape) entry.getKey();
+            ServedShape winner = (ServedShape) entry.getValue();
+            winner.properties()
+                .mergeFrom(winner, loser.getModId(), loser.properties());
+            loser.properties()
+                .redirectTo(winner.properties());
+        }
+    }
+
+    private static ServedShape candidateOwnedBy(List<ServedShape> candidates, String modid) {
+        for (ServedShape candidate : candidates) {
             if (candidate.getModId().equals(modid)) {
                 return candidate;
             }
@@ -81,7 +115,7 @@ final class ShapeUnification {
     /// Rejects a name whose candidates declare different variant lists. Unlike oredict divergence, this is not
     /// safely ignorable: the non-owning candidates' materials would otherwise be generating variants the owner's
     /// backing blocks do not have.
-    private void requireIdenticalVariants(String name, List<Shape> candidates, Shape canonical) {
+    private void requireIdenticalVariants(String name, List<? extends Shape> candidates, Shape canonical) {
         List<String> ownerVariants = canonical.getVariants();
         for (Shape candidate : candidates) {
             if (candidate == canonical) continue;
@@ -94,7 +128,7 @@ final class ShapeUnification {
         }
     }
 
-    private void logOreDictDivergence(String name, List<Shape> candidates, Shape canonical) {
+    private void logOreDictDivergence(String name, List<? extends Shape> candidates, Shape canonical) {
         Set<String> ownerPrefixes = Set.copyOf(canonical.getOreDicts());
         for (Shape candidate : candidates) {
             if (candidate == canonical) continue;
@@ -121,7 +155,7 @@ final class ShapeUnification {
     }
 
     /// Every canonical shape, in the order their names were first registered. Only available after [#resolve].
-    Collection<Shape> canonicalShapes() {
+    Collection<ServedShape> canonicalShapes() {
         requireResolved("list canonical shapes");
         return canonicalByName.values();
     }

@@ -24,12 +24,20 @@ final class ShapeBlockVariants implements BackedShape {
     private final VariantSet<ShapeBlock> blocks;
 
     private final ServedMaterials served = new ServedMaterials();
+    private final ShapeProperties props = new ShapeProperties();
 
+    /// The per-variant blocks are separate [Shape] instances that [ShapeRegistry#getBlockShapes] hands out, so
+    /// their property holders redirect to the group's: a property declared on the group reads back from any of
+    /// them, and there is one map to freeze.
     private ShapeBlockVariants(String modid, String name, List<String> oreDicts, VariantSet<ShapeBlock> blocks) {
         this.modid = modid;
         this.name = name;
         this.oreDicts = oreDicts;
         this.blocks = blocks;
+        for (ShapeBlock block : blocks.values()) {
+            block.properties()
+                .redirectTo(props);
+        }
     }
 
     /// Builds the variant group and its backing blocks, one per name in `variantNames`, each registered as
@@ -107,6 +115,11 @@ final class ShapeBlockVariants implements BackedShape {
 
     @Override
     public Material[] getServedMaterials() { return served.get(); }
+
+    @Override
+    public ShapeProperties properties() {
+        return props;
+    }
 
     /// The itemstack of `material` in the first declared variant; see [VariantSet#first].
     @Override

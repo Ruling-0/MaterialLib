@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.List;
+import java.util.Map;
 
 /// A form a material can take, such as an ingot, gear, block, or fluid.
 ///
@@ -31,4 +32,21 @@ public interface Shape {
     /// empty for a shape with no variants (the common case, and every non-block shape). Shapes sharing a name must
     /// declare identical variant lists, or unification fails; see [ShapeUnification].
     default List<String> getVariants() { return List.of(); }
+
+    /// Resolves a property for this shape: its own value, else the property's default. A shape that lost
+    /// unification reads the owner's values, so the reference a mod kept from declaring it stays correct.
+    ///
+    /// Unlike [Material#getProperty] there is no inheritance tier: shapes have no grouping analogous to [Family].
+    /// Values are declared through the shape builders and altered through [MaterialLibAPI#editShape].
+    default <T> T getProperty(Property<T> property) {
+        return property.getDefaultValue();
+    }
+
+    /// True if this shape sets the property explicitly; the property default does not count.
+    default boolean hasProperty(Property<?> property) {
+        return false;
+    }
+
+    /// The values set on this shape, excluding defaults.
+    default Map<Property<?>, Object> getOwnProperties() { return Map.of(); }
 }

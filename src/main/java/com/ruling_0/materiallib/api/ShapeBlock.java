@@ -54,6 +54,7 @@ public class ShapeBlock extends Block implements BackedShape {
     private final BlockIconPather iconPather;
 
     private final ServedMaterials served = new ServedMaterials();
+    private final ShapeProperties props = new ShapeProperties();
     private final ShapeIcons icons = new ShapeIcons(false);
     private IIcon baseIcon;
     private boolean warnedMissingBaseTexture;
@@ -140,6 +141,11 @@ public class ShapeBlock extends Block implements BackedShape {
 
     @Override
     public Material[] getServedMaterials() { return served.get(); }
+
+    @Override
+    public ShapeProperties properties() {
+        return props;
+    }
 
     @Override
     public ItemStack getStack(Material material, int amount) {

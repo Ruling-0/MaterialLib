@@ -1,5 +1,7 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Map;
+
 /// A [Shape] the registry binds to the materials that generate it, whether the shape has a backing item or
 /// block.
 ///
@@ -13,4 +15,22 @@ interface ServedShape extends Shape {
     void bindServedMaterials(Material[] materials);
 
     Material[] getServedMaterials();
+
+    /// This shape's property values. The holder is composed into each implementation rather than inherited,
+    /// since they extend unrelated Minecraft types; the [Shape] property accessors are answered from it here so
+    /// each implementation only supplies the holder.
+    ShapeProperties properties();
+
+    @Override
+    default <T> T getProperty(Property<T> property) {
+        return properties().get(property);
+    }
+
+    @Override
+    default boolean hasProperty(Property<?> property) {
+        return properties().has(property);
+    }
+
+    @Override
+    default Map<Property<?>, Object> getOwnProperties() { return properties().view(); }
 }
