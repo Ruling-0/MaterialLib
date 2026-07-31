@@ -34,7 +34,7 @@ final class ShapeText {
     static String displayName(Shape shape, String displayNameFormat, Material material) {
         String overrideKey = ShapeNaming.overrideKey(shape, material);
         if (StatCollector.canTranslate(overrideKey)) return StatCollector.translateToLocal(overrideKey);
-        return ShapeNaming.format(displayNameFormat, localizedMaterialName(material));
+        return ShapeNaming.format(displayNameFormat, material.getLocalizedName());
     }
 
     /// Appends a shape stack's tooltip: the material's and its families' custom tooltip lines, then -- with
@@ -61,11 +61,6 @@ final class ShapeText {
                 lines.add(attribution("tooltip.materiallib.materialSource", "Material added by ", material.getModId()));
             }
         }
-    }
-
-    private static String localizedMaterialName(Material material) {
-        String key = ShapeNaming.materialNameKey(material);
-        return StatCollector.canTranslate(key) ? StatCollector.translateToLocal(key) : material.getName();
     }
 
     /// The display name for a stack whose damage maps to no live material.
