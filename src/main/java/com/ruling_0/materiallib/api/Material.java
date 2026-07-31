@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.minecraft.util.StatCollector;
+
 import com.ruling_0.materiallib.MaterialLib;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
@@ -72,6 +74,12 @@ public final class Material {
     public String getName() {
         if (canonical != this) return canonical.getName();
         return name;
+    }
+
+    public String getLocalizedName() {
+        if (canonical != this) return canonical.getLocalizedName();
+        String key = ShapeNaming.materialNameKey(this);
+        return StatCollector.canTranslate(key) ? StatCollector.translateToLocal(key) : name;
     }
 
     /// The registry key, `modid:name`.
