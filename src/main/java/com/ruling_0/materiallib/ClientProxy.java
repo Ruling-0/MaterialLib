@@ -3,6 +3,7 @@ package com.ruling_0.materiallib;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.MinecraftForge;
 
+import com.ruling_0.materiallib.api.IconSetBinder;
 import com.ruling_0.materiallib.api.ShapeBlock;
 import com.ruling_0.materiallib.api.ShapeBlockRenderingHandler;
 import com.ruling_0.materiallib.api.ShapeFluidIcons;
@@ -30,5 +31,6 @@ public class ClientProxy extends CommonProxy {
             }
         }
         MinecraftForge.EVENT_BUS.register(new ShapeFluidIcons());
+        MinecraftForge.EVENT_BUS.register(new IconSetBinder());
     }
 }

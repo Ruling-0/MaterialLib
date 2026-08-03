@@ -1,5 +1,6 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.List;
 import java.util.Objects;
 
 import com.ruling_0.materiallib.MaterialLib;
@@ -19,9 +20,13 @@ public final class StandardProperties {
     /// [MaterialLibAPI#newMaterial]; builders and edits reject attempts to set or remove it.
     public static final Property<TextureSet> TEXTURE_SET = Property.of(MaterialLib.MODID, "textureSet");
 
-    /// The fallback texture set, for if a texture does not exist within the normal texture set. Null when unset.
-    public static final Property<TextureSet> FALLBACK_TEXTURE_SET = Property.of(MaterialLib.MODID,
-        "fallbackTextureSet");
+    /// The ordered fallback texture sets, tried in order after [#TEXTURE_SET] when a texture is missing from it.
+    /// Null when unset; an empty list is equivalent. A material-level list replaces a family-level one entirely
+    /// (standard property shadowing), so a material narrowing its art must restate the tail, e.g. `[DULL, NONE]`
+    /// on a material whose family declares `[NONE]`. Store an immutable list; the value is shared, never
+    /// defensively copied.
+    public static final Property<List<TextureSet>> FALLBACK_TEXTURE_SETS = Property.of(MaterialLib.MODID,
+        "fallbackTextureSets");
 
     /// ARGB tint applied to the material's textures.
     public static final Property<Integer> TINT = Property.of(MaterialLib.MODID, "tint", 0xFFFFFFFF);

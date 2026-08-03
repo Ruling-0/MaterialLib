@@ -15,6 +15,7 @@ public final class ItemShapeBuilder {
     private final String name;
     private String[] oreDicts;
     private String displayNameFormat;
+    private String iconName;
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
 
@@ -39,6 +40,14 @@ public final class ItemShapeBuilder {
         return this;
     }
 
+    /// Sets the name this shape's textures are filed under inside each texture set, defaulting to the shape name,
+    /// so several shapes can share one art file (e.g. every wire gauge drawing `wire.png`). Under shape
+    /// unification the owning declaration's alias wins, like every other constructor-borne attribute.
+    public ItemShapeBuilder iconName(String iconName) {
+        this.iconName = Objects.requireNonNull(iconName, "iconName must not be null");
+        return this;
+    }
+
     /// Sets a property value on the shape. Values are read back through [Shape#getProperty] and may be altered
     /// by another mod through [MaterialLibAPI#editShape].
     public <T> ItemShapeBuilder property(Property<T> property, T value) {
@@ -57,6 +66,9 @@ public final class ItemShapeBuilder {
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         ShapeItem shape = new ShapeItem(modid, name, format, prefixes);
+        if (iconName != null) {
+            shape.setIconName(iconName);
+        }
         shape.properties().setAll(shape, properties);
         return ShapeRegistry.instance().register(shape);
     }

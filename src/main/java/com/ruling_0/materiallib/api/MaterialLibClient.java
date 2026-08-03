@@ -1,5 +1,6 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.List;
 import java.util.Objects;
 
 import net.minecraftforge.client.IItemRenderer;
@@ -8,6 +9,7 @@ import com.ruling_0.materiallib.MaterialLib;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 /// The client-side entry point of MaterialLib, for behavior that exists only on the client.
@@ -20,8 +22,22 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 public final class MaterialLibClient {
 
     private static final Reference2ObjectOpenHashMap<Material, IItemRenderer> itemRenderers = new Reference2ObjectOpenHashMap<>();
+    private static final List<IconSet> iconSets = new ObjectArrayList<>();
 
     private MaterialLibClient() {}
+
+    /// Creates and registers an icon set named `name` on `atlas`; see [IconSet]. Call from a mod's client proxy
+    /// during preInit, or any time before the first texture stitch -- a set created later binds only on the next
+    /// resource reload. Unlike a shape, an icon set registers nothing with the game, so it is not bound to the
+    /// registration window; duplicate names are independent handles rather than an error, and cost no extra atlas
+    /// space because identical icon paths dedupe at registration.
+    public static IconSet newIconSet(String modid, String name, IconSet.Atlas atlas) {
+        IconSet set = new IconSet(modid, name, atlas);
+        iconSets.add(set);
+        return set;
+    }
+
+    static List<IconSet> getIconSets() { return iconSets; }
 
     /// Renders every item shape of `material` through `renderer`. Call from a mod's client proxy.
     public static void setItemRenderer(Material material, IItemRenderer renderer) {

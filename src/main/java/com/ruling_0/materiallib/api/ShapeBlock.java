@@ -55,6 +55,7 @@ public class ShapeBlock extends Block implements BackedShape {
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeProperties props = new ShapeProperties();
     private final ShapeIcons icons = new ShapeIcons(false);
+    private String iconNameOverride;
     private IIcon baseIcon;
     private boolean warnedMissingBaseTexture;
     private int renderType = 0;
@@ -167,10 +168,23 @@ public class ShapeBlock extends Block implements BackedShape {
         }
     }
 
+    /// The name this block's textures are filed under inside each texture set, defaulting to the shape name -- or,
+    /// for one variant's backing block, to the variant group's name, which [#registerBlockIcons] then extends with
+    /// the variant. A subclass registered through [MaterialLibAPI#registerBlockShape] may override this to share
+    /// another shape's art; shapes built through [BlockShapeBuilder] use [BlockShapeBuilder#iconName] instead.
+    protected String iconName() {
+        if (iconNameOverride != null) return iconNameOverride;
+        return groupName != null ? groupName : name;
+    }
+
+    void setIconName(String iconName) { this.iconNameOverride = Names.validate("block shape icon name", iconName); }
+
     @Override
     @SideOnly(Side.CLIENT)
     public void registerBlockIcons(IIconRegister register) {
-        List<String> candidates = groupName != null ? List.of(name, groupName) : List.of(name);
+        String iconName = iconName();
+        List<String> candidates = groupName != null ?
+            List.of(ShapeNaming.variantBlockName(iconName, variant), iconName) : List.of(iconName);
         icons.bind(register, served.get(), candidates, this::iconPathFor);
         if (baseTexture != null) {
             baseIcon = registerBaseIcon(register);
@@ -233,6 +247,21 @@ public class ShapeBlock extends Block implements BackedShape {
             return baseIcon;
         }
         return icons.get(meta);
+    }
+
+    /// The icon bound for `material` on this shape, or the transparent placeholder when none resolved. Valid only
+    /// after the block atlas has stitched. Icons re-bind on every resource reload, so a caller compositing this
+    /// icon itself must hold the shape and call this per use rather than cache the returned [IIcon].
+    @SideOnly(Side.CLIENT)
+    public IIcon getMaterialIcon(Material material) {
+        return icons.get(material.getIndex());
+    }
+
+    /// The `_OVERLAY` icon bound for `material` on this shape, or null when its resolved texture set has none;
+    /// see [#getMaterialIcon] for the caching contract.
+    @SideOnly(Side.CLIENT)
+    public IIcon getMaterialOverlayIcon(Material material) {
+        return icons.getOverlayOrNull(material.getIndex());
     }
 
     @Override

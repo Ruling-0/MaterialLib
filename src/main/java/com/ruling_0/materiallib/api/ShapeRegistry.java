@@ -258,6 +258,45 @@ public final class ShapeRegistry {
         return variants.blockFor(variant);
     }
 
+    /// The backing item of the item shape owning `name`, or null when no shape owns that name. Fails when the name
+    /// is owned by a block or fluid shape instead. Intended for a mod that draws a material's shape art in its own
+    /// renderer; see [ShapeItem#getMaterialIcon].
+    public ShapeItem getItemShape(String name) {
+        requireResolved("look up a shape by name");
+        ServedShape shape = servedByName.get(name);
+        if (shape == null) return null;
+        if (!(shape instanceof ShapeItem item)) {
+            throw new IllegalArgumentException(shape + " is not an item shape");
+        }
+        return item;
+    }
+
+    /// The backing block of the variant-less block shape owning `name`, or null when no shape owns that name.
+    /// Fails when the name is owned by an item or fluid shape, or by a block shape declared with
+    /// [BlockShapeBuilder#variants] -- address those through [#getBlockShape(String, String)].
+    public ShapeBlock getBlockShape(String name) {
+        requireResolved("look up a shape by name");
+        ServedShape shape = servedByName.get(name);
+        if (shape == null) return null;
+        if (!(shape instanceof ShapeBlock block)) {
+            throw new IllegalArgumentException(shape + " is not a variant-less block shape");
+        }
+        return block;
+    }
+
+    /// The backing block of one variant of the block shape owning `name`, or null when no shape owns that name.
+    /// Fails when the name is owned by an item or fluid shape, by a variant-less block shape, or when `variant`
+    /// was not declared.
+    public ShapeBlock getBlockShape(String name, String variant) {
+        requireResolved("look up a shape by name");
+        ServedShape shape = servedByName.get(name);
+        if (shape == null) return null;
+        if (!(shape instanceof ShapeBlockVariants variants)) {
+            throw new IllegalArgumentException(shape + " is not a variant block shape");
+        }
+        return variants.blockFor(variant);
+    }
+
     /// The shape, variant, and material a MaterialLib block encodes at the given metadata, or null when `block`
     /// was not registered by MaterialLib; see [BlockMaterialInfo] for the result's null fields.
     BlockMaterialInfo lookupBlock(Block block, int metadata) {
