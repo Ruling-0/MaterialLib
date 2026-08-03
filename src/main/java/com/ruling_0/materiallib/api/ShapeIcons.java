@@ -21,13 +21,18 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// attempt to unset it, so a material built through the public API is never missing one. [#tryBind] still treats a
 /// null value defensively, the same as a texture set whose file does not exist, rather than assume the guarantee
 /// always holds; [MaterialRegistry] separately warns at resolve if it ever finds one broken. A null
-/// [StandardProperties#FALLBACK_TEXTURE_SET] is the routine case (most materials never set it, and unlike
-/// [StandardProperties#TINT] it has no default), so it is treated as "no fallback available", never a warning.
+/// [StandardProperties#FALLBACK_TEXTURE_SETS] is the routine case (most materials never set it, and unlike
+/// [StandardProperties#TINT] it has no default), so it is treated as "no fallback available", never a warning;
+/// so is a null entry inside the list.
 final class ShapeIcons {
 
     /// The transparent placeholder icon path, present on both the item and block atlases; also used by
     /// [ShapeFluid#registerIcons] for a fluid whose material has no texture set.
     static final String EMPTY_ICON = MaterialLib.MODID + ":empty";
+
+    /// The suffix marking a shape texture's companion overlay layer, appended to the base icon path; see
+    /// [TextureSet#overlayPath].
+    static final String OVERLAY_SUFFIX = "_OVERLAY";
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<IIcon> overlaysByIndex = new Int2ObjectOpenHashMap<>();
@@ -95,15 +100,16 @@ final class ShapeIcons {
             String.join(", ", unbound.subList(0, examples)));
     }
 
-    /// Registers `material`'s icon from `perMaterialIconPath`, if set and it names a file that exists on this
-    /// atlas, returning whether it did. `perMaterialIconPath` itself may be null, the routine case when no
-    /// override is configured for this shape at all.
+    /// Registers `material`'s icon, and its `_OVERLAY` sibling if one exists, from `perMaterialIconPath`, if set
+    /// and it names a file that exists on this atlas, returning whether it did. `perMaterialIconPath` itself may
+    /// be null, the routine case when no override is configured for this shape at all.
     private boolean bindPerMaterialOverride(IIconRegister register, Material material,
                                             Function<Material, String> perMaterialIconPath) {
         if (perMaterialIconPath == null) return false;
         String path = perMaterialIconPath.apply(material);
         if (path == null || !checkResLoc(path)) return false;
         iconsByIndex.put(material.getIndex(), register.registerIcon(path));
+        putOverlay(register, material, path + OVERLAY_SUFFIX);
         return true;
     }
 
@@ -113,42 +119,61 @@ final class ShapeIcons {
         return icon != null ? icon : emptyIcon;
     }
 
-    /// The overlay icon for a material index
+    /// The overlay icon for a material index, or the empty placeholder if none resolved.
     IIcon getOverlay(int index) {
         IIcon icon = overlaysByIndex.get(index);
-        return icon != null ? overlaysByIndex.get(index) : emptyIcon;
+        return icon != null ? icon : emptyIcon;
+    }
+
+    /// The overlay icon for a material index, or null if none resolved, for a caller that composites the overlay
+    /// itself and needs to distinguish "no overlay" from the transparent placeholder. [#setIcons] stores an
+    /// explicit null for a material whose winning texture set has no `_OVERLAY` file, so a plain map miss covers
+    /// both that case and an index nothing ever bound.
+    IIcon getOverlayOrNull(int index) {
+        return overlaysByIndex.get(index);
     }
 
     /// Resolves and registers `material`'s icon (and overlay, if any) under `shapeName`, trying its texture set,
-    /// then its fallback texture set, then the same two on each of its unification alternatives. A null texture
-    /// set -- the routine case for the optional fallback, or a broken material for the mandatory primary one -- is
-    /// treated like a texture set whose file does not exist, so the search moves on instead of crashing. Returns
-    /// whether an icon was bound; false leaves the material without one, for the caller to retry under another
-    /// shape name or fall back to the empty placeholder icon (see [#get]).
+    /// then each of its fallback texture sets in order, then the same chain on each of its unification
+    /// alternatives. Returns whether an icon was bound; false leaves the material without one, for the caller to
+    /// retry under another shape name or fall back to the empty placeholder icon (see [#get]).
     private boolean tryBind(IIconRegister register, Material material, String shapeName) {
-        TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
+        if (tryBindFromSets(
+            register,
+            material,
+            material.getProperty(StandardProperties.TEXTURE_SET),
+            material.getProperty(StandardProperties.FALLBACK_TEXTURE_SETS),
+            shapeName)) {
+            return true;
+        }
+        for (Material alternative : material.getAlternatives()) {
+            if (tryBindFromSets(
+                register,
+                alternative,
+                alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET),
+                alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SETS),
+                shapeName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /// Registers `material`'s icon from the first of `textureSet` then `fallbacks` that carries `shapeName`,
+    /// returning whether one did. A null texture set -- the routine case for the optional fallback list, or a
+    /// broken material for the mandatory primary one -- is treated like a texture set whose file does not exist,
+    /// so the search moves on instead of crashing.
+    private boolean tryBindFromSets(IIconRegister register, Material material, TextureSet textureSet,
+                                    List<TextureSet> fallbacks, String shapeName) {
         if (textureSet == null) {
             warnMissingTextureSet(material, shapeName);
         }
         else if (bindIfExists(register, material, textureSet, shapeName)) {
             return true;
         }
-        TextureSet fallback = material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET);
-        if (fallback != null && bindIfExists(register, material, fallback, shapeName)) {
-            return true;
-        }
-        for (Material alternative : material.getAlternatives()) {
-            TextureSet alternativeTextureSet = alternative
-                .getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET);
-            if (alternativeTextureSet == null) {
-                warnMissingTextureSet(alternative, shapeName);
-            }
-            else if (bindIfExists(register, alternative, alternativeTextureSet, shapeName)) {
-                return true;
-            }
-            TextureSet alternativeFallback = alternative
-                .getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET);
-            if (alternativeFallback != null && bindIfExists(register, alternative, alternativeFallback, shapeName)) {
+        if (fallbacks == null) return false;
+        for (TextureSet fallback : fallbacks) {
+            if (fallback != null && bindIfExists(register, material, fallback, shapeName)) {
                 return true;
             }
         }
@@ -166,11 +191,14 @@ final class ShapeIcons {
 
     private void setIcons(IIconRegister register, Material material, TextureSet textureSet, String shapeName) {
         iconsByIndex.put(material.getIndex(), register.registerIcon(textureSet.iconPath(shapeName)));
-        String overlayPath = textureSet.overlayPath(shapeName);
-        if (checkResLoc(overlayPath)) {
-            overlaysByIndex.put(material.getIndex(), register.registerIcon(overlayPath));
-        }
-        else overlaysByIndex.put(material.getIndex(), null);
+        putOverlay(register, material, textureSet.overlayPath(shapeName));
+    }
+
+    /// Registers `material`'s overlay from `overlayPath` when that file exists, or records an explicit null when
+    /// it does not, so [#getOverlayOrNull] reports "this material has no overlay" rather than "never bound".
+    private void putOverlay(IIconRegister register, Material material, String overlayPath) {
+        overlaysByIndex
+            .put(material.getIndex(), checkResLoc(overlayPath) ? register.registerIcon(overlayPath) : null);
     }
 
     /// Logs once per material that it has no [StandardProperties#TEXTURE_SET], so a mod author notices instead of

@@ -28,7 +28,7 @@ public final class TextureSet {
     }
 
     public String overlayPath(String shapeName) {
-        return modid + ":materials/" + name + "/" + shapeName + "_OVERLAY";
+        return iconPath(shapeName) + ShapeIcons.OVERLAY_SUFFIX;
     }
 
     @Override

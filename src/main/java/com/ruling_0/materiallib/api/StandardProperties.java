@@ -1,5 +1,6 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.List;
 import java.util.Objects;
 
 import com.ruling_0.materiallib.MaterialLib;
@@ -21,18 +22,22 @@ public final class StandardProperties {
     /// null value rather than assume the guarantee always holds.
     public static final Property<TextureSet> TEXTURE_SET = Property.of(MaterialLib.MODID, "textureSet");
 
-    /// The fallback texture set, for if a texture does not exist within the normal texture set. Optional and null
-    /// by default, unlike [#TINT] which falls back to a concrete default value: most materials never set this, and
-    /// [ShapeIcons] treats a null value as "no fallback available" rather than as an error.
-    public static final Property<TextureSet> FALLBACK_TEXTURE_SET = Property.of(MaterialLib.MODID,
-        "fallbackTextureSet");
+    /// The ordered fallback texture sets, tried in order after [#TEXTURE_SET] when a texture is missing from it.
+    /// Optional and null by default, unlike [#TINT] which falls back to a concrete default value: most materials
+    /// never set this, and [ShapeIcons] treats a null value -- an empty list is equivalent -- as "no fallback
+    /// available" rather than as an error. A material-level list replaces a family-level one entirely (standard
+    /// property shadowing), so a material narrowing its art must restate the tail, e.g. `[DULL, NONE]` on a
+    /// material whose family declares `[NONE]`. Store an immutable list; the value is shared, never defensively
+    /// copied.
+    public static final Property<List<TextureSet>> FALLBACK_TEXTURE_SETS = Property.of(MaterialLib.MODID,
+        "fallbackTextureSets");
 
     /// ARGB tint applied to the material's textures.
     public static final Property<Integer> TINT = Property.of(MaterialLib.MODID, "tint", 0xFFFFFFFF);
 
     /// ARGB tint applied to a fluid shape's fill icon in place of [#TINT], for a fluid whose art already encodes
     /// its color (e.g. dedicated, hand-drawn fluid art) and so must not also receive the material's general tint.
-    /// Optional and null by default, like [#FALLBACK_TEXTURE_SET]: most materials never set this, and [ShapeFluid]/
+    /// Optional and null by default, like [#FALLBACK_TEXTURE_SETS]: most materials never set this, and [ShapeFluid]/
     /// [ShapeFluidInContainer] fall back to [#TINT] when it is unset. Applies only to the fluid fill layer (and the
     /// matching fill layer of any fluid-in-container shape holding it) -- every other shape a material generates
     /// (dust, ingot, block, etc.) always uses [#TINT].

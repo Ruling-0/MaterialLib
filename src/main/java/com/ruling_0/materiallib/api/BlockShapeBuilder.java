@@ -17,6 +17,7 @@ public final class BlockShapeBuilder {
     private final String name;
     private String[] oreDicts;
     private String displayNameFormat;
+    private String iconName;
     private String[] variants;
     private final Map<String, String> variantBases = new LinkedHashMap<>();
     private BlockDropFunction dropsFn;
@@ -44,6 +45,16 @@ public final class BlockShapeBuilder {
     /// [ShapeNaming].
     public BlockShapeBuilder displayName(String displayNameFormat) {
         this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
+        return this;
+    }
+
+    /// Sets the name this shape's textures are filed under inside each texture set, defaulting to the shape name,
+    /// so several shapes can share one art file (e.g. every item-pipe size drawing the matching fluid-pipe art).
+    /// A shape with [#variants] extends the alias per variant the same way it extends the shape name, trying
+    /// `<alias>_<variant>` before `<alias>`. Under shape unification the owning declaration's alias wins, like
+    /// every other constructor-borne attribute.
+    public BlockShapeBuilder iconName(String iconName) {
+        this.iconName = Objects.requireNonNull(iconName, "iconName must not be null");
         return this;
     }
 
@@ -132,13 +143,16 @@ public final class BlockShapeBuilder {
         BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn);
         if (variants == null) {
             ShapeBlock shape = new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior, iconPather);
+            if (iconName != null) {
+                shape.setIconName(iconName);
+            }
             shape.properties()
                 .setAll(shape, properties);
             return ShapeRegistry.instance()
                 .register(shape);
         }
-        ShapeBlockVariants group = ShapeBlockVariants
-            .create(modid, name, format, prefixes, List.of(variants), variantBases, behavior, iconPather);
+        ShapeBlockVariants group = ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants),
+            variantBases, behavior, iconPather, iconName);
         group.properties()
             .setAll(group, properties);
         return ShapeRegistry.instance()
