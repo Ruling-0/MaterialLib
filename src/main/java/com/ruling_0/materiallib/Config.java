@@ -28,11 +28,13 @@ public class Config {
         unifyOreDict = configuration.getBoolean(
             "unifyOreDict",
             CATEGORY_ORE_DICT_UNIFICATION,
-            true,
+            false,
             "Make MaterialLib's own item the canonical oredict entry for every name a MaterialLib shape backs, " +
                 "so a consumer mod's own recipe unification can fold other mods' items registered under the " +
                 "same name onto it. MaterialLib never rewrites recipes itself; this only builds the lookup a " +
-                "consumer mod queries through MaterialLibAPI.");
+                "consumer mod queries through MaterialLibAPI. Off by default: a consumer that runs its own " +
+                "unificator over the same names (GregTech does) must be the only authority over them, so this " +
+                "is opted into by a pack that has no such consumer.");
         unifyOreDictExcludedNames = readStringSet(
             configuration,
             "excludedOreDictNames",
