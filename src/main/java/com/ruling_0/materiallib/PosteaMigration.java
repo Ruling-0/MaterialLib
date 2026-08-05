@@ -54,7 +54,7 @@ public final class PosteaMigration {
     private static boolean transformStack(String originalId, NBTTagCompound tag) {
         MaterialMigration migration = active;
         if (migration == null || !tag.hasKey("Damage")) return false;
-        int result = migration.lookup(tag.getShort("Damage"));
+        int result = migration.lookup(tag.getInteger("Damage"));
         if (result == MaterialMigration.UNCHANGED) return false;
         if (result == MaterialMigration.DELETE) {
             tag.removeTag("id");
