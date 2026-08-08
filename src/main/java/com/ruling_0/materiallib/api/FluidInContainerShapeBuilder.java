@@ -8,7 +8,6 @@ import net.minecraft.item.ItemStack;
 
 import net.minecraftforge.fluids.FluidContainerRegistry;
 
-import cpw.mods.fml.common.registry.GameRegistry;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 
 /// Builds and registers a simple fluid-in-container [Shape] backed by a [ShapeFluidInContainer]. Obtained from
@@ -57,27 +56,11 @@ public final class FluidInContainerShapeBuilder {
     }
 
     /// Sets the item returned when the fluid is drained from the container to an empty container item registered
-    /// through [MaterialLibAPI#registerEmptyContainer(String, String)]. The handle's item exists from the moment
-    /// shapes resolve, so unlike [#emptyContainer(String, int)] this needs no deferral.
+    /// through [MaterialLibAPI#registerEmptyContainer(String, String)]. Use this over [#emptyContainer(ItemStack)]
+    /// for an item that does not exist yet at MaterialLib's preInit; the handle binds when shapes resolve.
     public FluidInContainerShapeBuilder emptyContainer(EmptyContainerHandle emptyContainer) {
         this.emptyContainer = new EmptyContainer.Registered(
             Objects.requireNonNull(emptyContainer, "emptyContainer must not be null"));
-        return this;
-    }
-
-    /// Sets the item returned when the fluid is drained from the container by identifier (`modid:name`) and
-    /// metadata, resolved once at MaterialLib's init -- after every mod's items exist -- instead of immediately.
-    /// Use this over [#emptyContainer(ItemStack)] for an item registered by a mod that has not loaded yet at
-    /// MaterialLib's preInit. Fails loudly at resolution if no such item is registered.
-    public FluidInContainerShapeBuilder emptyContainer(String itemName, int meta) {
-        Objects.requireNonNull(itemName, "itemName must not be null");
-        int colon = itemName.indexOf(':');
-        if (colon < 0) {
-            throw new IllegalArgumentException("itemName \"" + itemName + "\" must be of the form modid:name");
-        }
-        String itemModid = itemName.substring(0, colon);
-        String itemOnlyName = itemName.substring(colon + 1);
-        this.emptyContainer = new EmptyContainer.Deferred(itemModid, itemOnlyName, meta, GameRegistry::findItem);
         return this;
     }
 

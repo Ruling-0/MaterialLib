@@ -14,11 +14,6 @@ class FluidInContainerShapeBuilderTest {
     }
 
     @Test
-    void emptyContainerRejectsAnIdentifierWithoutAModid() {
-        assertThrows(IllegalArgumentException.class, () -> builder.emptyContainer("gt.metaitem.01", 32000));
-    }
-
-    @Test
     void emptyIconRejectsANullPath() {
         assertThrows(NullPointerException.class, () -> builder.emptyIcon(null));
     }

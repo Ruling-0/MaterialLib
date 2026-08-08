@@ -51,8 +51,8 @@ public class ShapeFluidInContainer extends ShapeItem {
     }
 
     /// As the six-argument constructor, but with an ordered list of fluid shapes this container can hold (see
-    /// [FluidInContainerShapeBuilder#fluid(Shape...)]), a possibly-deferred [EmptyContainer], and an optional base
-    /// icon path override (see [FluidInContainerShapeBuilder#emptyIcon]); null uses [#emptyIconPath]'s default.
+    /// [FluidInContainerShapeBuilder#fluid(Shape...)]), any form of [EmptyContainer], and an optional base icon
+    /// path override (see [FluidInContainerShapeBuilder#emptyIcon]); null uses [#emptyIconPath]'s default.
     ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
                           EmptyContainer emptyContainer, int volume, String emptyIconPath, String... oreDicts) {
         super(modid, name, displayNameFormat, oreDicts);
@@ -94,8 +94,8 @@ public class ShapeFluidInContainer extends ShapeItem {
     }
 
     /// Registers a [FluidContainerRegistry] mapping for each served material, filling this item at the material's
-    /// index from its fluid in `fluidByMaterial`. Called from MaterialLib's init, before init-phase shape
-    /// consumers run and after fluids are registered at resolve; resolves this container's [EmptyContainer] once.
+    /// index from its fluid in `fluidByMaterial`. Called at resolve, after fluids and any registered empty
+    /// container items exist; resolves this container's [EmptyContainer] once.
     void registerContainers(Map<Material, ShapeFluid> fluidByMaterial) {
         ItemStack empty = emptyContainer != null ? emptyContainer.resolve() : null;
         for (Material material : getServedMaterials()) {
