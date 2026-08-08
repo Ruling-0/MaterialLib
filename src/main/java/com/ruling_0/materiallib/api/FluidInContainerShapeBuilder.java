@@ -52,6 +52,15 @@ public final class FluidInContainerShapeBuilder {
         return this;
     }
 
+    /// Sets the item returned when the fluid is drained from the container to an empty container item registered
+    /// through [MaterialLibAPI#registerEmptyContainer(String, String)]. The handle's item exists from the moment
+    /// shapes resolve, so unlike [#emptyContainer(String, int)] this needs no deferral.
+    public FluidInContainerShapeBuilder emptyContainer(EmptyContainerHandle emptyContainer) {
+        this.emptyContainer = new EmptyContainer.Registered(
+            Objects.requireNonNull(emptyContainer, "emptyContainer must not be null"));
+        return this;
+    }
+
     /// Sets the item returned when the fluid is drained from the container by identifier (`modid:name`) and
     /// metadata, resolved once at MaterialLib's init -- after every mod's items exist -- instead of immediately.
     /// Use this over [#emptyContainer(ItemStack)] for an item registered by a mod that has not loaded yet at
