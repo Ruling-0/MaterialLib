@@ -45,7 +45,6 @@ public final class ShapeRegistry {
     private Map<String, String> persistedOwners = new LinkedHashMap<>();
     private Map<String, String> assignedOwners = new LinkedHashMap<>();
     private boolean resolved;
-    private boolean containersRegistered;
 
     ShapeRegistry() {}
 
@@ -178,8 +177,8 @@ public final class ShapeRegistry {
     }
 
     /// Picks each name's owner, registers the owner's backing object and the item behind each empty container,
-    /// binds each shape to the materials that generate it, registers fluids, validates fluid containers, and
-    /// registers the oredict entries. Fluid container mappings register separately; see [#registerFluidContainers].
+    /// binds each shape to the materials that generate it, registers fluids and the fluid container mappings, and
+    /// registers the oredict entries.
     /// Invoked by MaterialLib's preInit handler after [MaterialRegistry#resolve]; other mods must not call this.
     public void resolve() {
         requireRegistration("resolve shapes");
@@ -188,33 +187,16 @@ public final class ShapeRegistry {
         collectCanonicalShapes();
         registerEmptyContainers();
         bindServedMaterials();
-        validateFluidContainers();
         registerFluids();
+        registerFluidContainers();
         registerOreDictionary();
         resolved = true;
         MaterialLib.LOG.info("Resolved {} item shapes, {} block shapes, and {} fluid shapes", itemShapes.size(),
             blockShapes.size(), fluidShapes.size());
     }
 
-    /// Registers each fluid-in-container shape's [net.minecraftforge.fluids.FluidContainerRegistry] mappings,
-    /// resolving any deferred empty container item (see [FluidInContainerShapeBuilder#emptyContainer(String, int)]).
-    /// Invoked once by MaterialLib's init handler, before init-phase shape consumers run, so mods generating
-    /// container recipes during init see a complete container registry; other mods must not call this.
-    public void registerFluidContainers() {
-        requireResolved("register fluid containers");
-        if (containersRegistered) {
-            throw new IllegalStateException("Cannot register fluid containers: they have already registered");
-        }
-        containersRegistered = true;
-        for (ShapeFluidInContainer container : containerShapes) {
-            List<ShapeFluid> canonicalFluids = canonicalFluidsOf(container);
-            container.registerContainers(fluidByMaterial(container, canonicalFluids));
-        }
-        MaterialLib.LOG.info("Registered fluid containers for {} shapes", containerShapes.size());
-    }
-
     /// Runs every init-phase shape consumer once per (shape, material) pair for the shape it targets.
-    /// Invoked once by MaterialLib's init handler, after [#registerFluidContainers]; other mods must not call this.
+    /// Invoked once by MaterialLib's init handler; other mods must not call this.
     public void runInitConsumers() {
         requireResolved("run shape consumers");
         consumers.run(ShapeConsumers.Phase.INIT, servedByName);
@@ -230,7 +212,7 @@ public final class ShapeRegistry {
     /// Sorts every canonical shape into its type and registers each backing item or block with FML under
     /// MaterialLib's domain (`materiallib:<name>`). The domain is MaterialLib's because this runs in MaterialLib's
     /// preInit handler (FML restriction). Fluid shapes register their Forge fluids later, once served materials are
-    /// known; fluid containers register their container mappings later still, at MaterialLib's init (see
+    /// known; fluid containers register their container mappings later still, at the end of resolve (see
     /// [#registerFluidContainers]).
     private void collectCanonicalShapes() {
         for (Shape shape : unification.canonicalShapes()) {
@@ -330,9 +312,10 @@ public final class ShapeRegistry {
         }
     }
 
-    /// Enforces that every material generating a fluid-in-container shape also generates at least one of the fluid
-    /// shapes it can hold.
-    private void validateFluidContainers() {
+    /// Registers each fluid-in-container shape's [net.minecraftforge.fluids.FluidContainerRegistry] mappings, first
+    /// enforcing that every material generating a container also generates at least one of the fluid shapes that
+    /// container can hold.
+    private void registerFluidContainers() {
         for (ShapeFluidInContainer container : containerShapes) {
             List<ShapeFluid> canonicalFluids = canonicalFluidsOf(container);
             Map<Material, ShapeFluid> byMaterial = fluidByMaterial(container, canonicalFluids);
@@ -345,7 +328,9 @@ public final class ShapeRegistry {
                             "container's fluid shapes");
                 }
             }
+            container.registerContainers(byMaterial);
         }
+        MaterialLib.LOG.info("Registered fluid containers for {} shapes", containerShapes.size());
     }
 
     /// Each served material of `container` mapped to the fallback-selected fluid shape it generates, following
