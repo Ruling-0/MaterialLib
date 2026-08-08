@@ -22,4 +22,9 @@ class FluidInContainerShapeBuilderTest {
     void emptyIconRejectsANullPath() {
         assertThrows(NullPointerException.class, () -> builder.emptyIcon(null));
     }
+
+    @Test
+    void emptyContainerRejectsANullHandle() {
+        assertThrows(NullPointerException.class, () -> builder.emptyContainer((EmptyContainerHandle) null));
+    }
 }
