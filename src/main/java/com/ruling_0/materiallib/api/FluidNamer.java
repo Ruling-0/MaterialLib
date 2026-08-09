@@ -6,8 +6,13 @@ import java.util.Locale;
 ///
 /// Set through [FluidShapeBuilder#fluidName], invoked once per served material at resolve, immediately before that
 /// material's fluid is registered or reused. The returned name must be non-null, non-empty, lowercase (Forge
-/// lowercases silently instead of rejecting), and unique across every fluid shape resolving this session. A name
-/// already present in Forge's fluid registry is reused rather than re-skinned, the same as when no namer is set.
+/// lowercases silently instead of rejecting), free of ':', and unique across every fluid shape resolving this
+/// session; a duplicate within the session fails resolve, since the later material's fluid would silently lose its
+/// display name, tint, icons, and configuration. Whitespace is permitted, as legacy Forge fluid names contain
+/// spaces.
+///
+/// A name already present in Forge's fluid registry from outside MaterialLib is reused rather than re-skinned, the
+/// same as when no namer is set.
 @FunctionalInterface
 public interface FluidNamer {
 
