@@ -8,7 +8,9 @@ import java.util.Map;
 /// Shapes that share a name unify onto one owner (see [ShapeUnification]). [#loadInto] feeds the saved owners
 /// to the registry before it resolves, so an existing name keeps its owner even when a mod that also declares it is
 /// added. [#saveFrom] writes the resolved assignment back. The shape's saved identity does not depend on the
-/// owner, so a wrong owner changes only which mod's item or block backs the shape, never the stored stacks.
+/// owner, so a wrong owner changes only which mod's item or block backs the shape, never the stored stacks. Fluid
+/// shapes are the exception: only the owner's [FluidNamer] names its fluids, so candidates whose namers disagree
+/// store different names. Resolve logs an error when candidates for one name would name a fluid differently.
 public final class ShapeOwnerStore {
 
     private static final String FILE_NAME = "shape-owners.json";

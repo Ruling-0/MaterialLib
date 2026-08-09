@@ -88,6 +88,45 @@ public class ShapeFluid implements ServedShape {
         return namer.name(this, material);
     }
 
+    /// The first served material this shape and `candidate` name differently, or null when both name every served
+    /// material identically.
+    Material firstNameDivergence(ShapeFluid candidate) {
+        for (Material material : served.get()) {
+            if (!fluidName(material).equals(candidate.fluidName(material))) {
+                return material;
+            }
+        }
+        return null;
+    }
+
+    /// Logs where `candidate`, a fluid shape unified onto this one, would have named or configured this shape's
+    /// fluids differently: only this shape's names reach Forge's fluid registry, so a divergent candidate means the
+    /// fluid names written into world saves depend on the owner election.
+    void logCandidateDivergence(ShapeFluid candidate) {
+        try {
+            Material diverging = firstNameDivergence(candidate);
+            if (diverging != null) {
+                MaterialLib.LOG.error(
+                    "Fluid shapes {} and {} share a name but name the fluid of {} differently ({} vs {}); " +
+                        "registering only the owner's names, so stored fluid stacks depend on which mod owns the shape",
+                    Names.key(modid, name),
+                    Names.key(candidate.modid, candidate.name),
+                    diverging.getKey(),
+                    fluidName(diverging),
+                    candidate.fluidName(diverging));
+            }
+        }
+        catch (RuntimeException e) {
+            MaterialLib.LOG.error("Fluid namer of {} failed while comparing its names against {}", candidate, this, e);
+        }
+        if (candidate.configurer != NO_OP_CONFIGURER && candidate.configurer != configurer) {
+            MaterialLib.LOG.warn(
+                "Fluid shapes {} and {} share a name but set different fluid configurers; only the owner's runs",
+                Names.key(modid, name),
+                Names.key(candidate.modid, candidate.name));
+        }
+    }
+
     /// Registers one Forge fluid per served material, validating and reserving each material's fluid name against
     /// `usedFluidNames`, shared across every fluid shape resolving this session.
     void registerFluids(Set<String> usedFluidNames) {
