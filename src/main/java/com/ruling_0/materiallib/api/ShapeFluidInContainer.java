@@ -44,6 +44,27 @@ public class ShapeFluidInContainer extends ShapeItem {
             emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, oreDicts);
     }
 
+    /// As the six-argument constructor, but with an ordered list of fluid shapes this container can hold. Each entry
+    /// must be a fluid shape; the container binds each material to the first entry that material generates (see
+    /// [FluidInContainerShapeBuilder#fluid(Shape...)]). `emptyContainer` is the item returned when the fluid is
+    /// drained, or null for a container consumed on drain.
+    protected ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
+                                    ItemStack emptyContainer, int volume, String... oreDicts) {
+        this(modid, name, displayNameFormat, fluidShapes,
+            emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, oreDicts);
+    }
+
+    /// As the [#ShapeFluidInContainer(String, String, String, List, ItemStack, int, String...)] overload, but
+    /// draining to an empty container item registered through [MaterialLibAPI#registerEmptyContainer(String, String)]
+    /// whose handle binds when shapes resolve. A container consumed on drain uses the [ItemStack] overload with a
+    /// null stack.
+    protected ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
+                                    EmptyContainerHandle emptyContainer, int volume, String... oreDicts) {
+        this(modid, name, displayNameFormat, fluidShapes,
+            new EmptyContainer.Registered(Objects.requireNonNull(emptyContainer, "emptyContainer must not be null")),
+            volume, oreDicts);
+    }
+
     /// As the six-argument constructor, but with an ordered list of fluid shapes this container can hold (see
     /// [FluidInContainerShapeBuilder#fluid(Shape...)]) and any form of [EmptyContainer].
     ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
@@ -51,6 +72,11 @@ public class ShapeFluidInContainer extends ShapeItem {
         super(modid, name, displayNameFormat, oreDicts);
         if (fluidShapes == null || fluidShapes.isEmpty()) {
             throw new IllegalArgumentException("fluidShapes must not be null or empty");
+        }
+        for (Shape fluidShape : fluidShapes) {
+            if (!(fluidShape instanceof ShapeFluid)) {
+                throw new IllegalArgumentException(fluidShape + " is not a fluid shape");
+            }
         }
         this.fluidShapes = List.copyOf(fluidShapes);
         this.emptyContainer = emptyContainer;

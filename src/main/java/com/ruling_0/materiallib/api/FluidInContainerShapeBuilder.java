@@ -91,11 +91,6 @@ public final class FluidInContainerShapeBuilder {
             throw new IllegalStateException(
                 "Fluid container shape " + Names.key(modid, name) + " needs a fluid; call fluid(...) before build()");
         }
-        for (Shape fluidShape : fluidShapes) {
-            if (!(fluidShape instanceof ShapeFluid)) {
-                throw new IllegalArgumentException(fluidShape + " is not a fluid shape");
-            }
-        }
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
