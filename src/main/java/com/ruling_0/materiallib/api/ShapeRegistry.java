@@ -474,7 +474,19 @@ public final class ShapeRegistry {
     private void registerFluids() {
         Set<String> usedFluidNames = new ObjectOpenHashSet<>();
         for (ShapeFluid fluid : fluidShapes) {
+            logCandidateDivergence(fluid);
             fluid.registerFluids(usedFluidNames);
+        }
+    }
+
+    /// Logs where a fluid shape that lost the election for `canonical`'s name would have named or configured its
+    /// fluids differently. Namer output is per material, so divergence is only checkable once served materials are
+    /// bound, not while unification resolves.
+    private void logCandidateDivergence(ShapeFluid canonical) {
+        for (Shape candidate : unification.candidatesOf(canonical)) {
+            if (candidate != canonical && candidate instanceof ShapeFluid candidateFluid) {
+                canonical.logCandidateDivergence(candidateFluid);
+            }
         }
     }
 

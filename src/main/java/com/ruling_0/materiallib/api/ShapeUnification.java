@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +159,14 @@ final class ShapeUnification {
     Collection<ServedShape> canonicalShapes() {
         requireResolved("list canonical shapes");
         return canonicalByName.values();
+    }
+
+    /// Every shape registered as a candidate for `shape`'s name, in registration order, or the shape alone when
+    /// its name was never contested. Only available after [#resolve].
+    List<Shape> candidatesOf(Shape shape) {
+        requireResolved("list name candidates");
+        List<Shape> candidates = candidatesByName.get(shape.getName());
+        return candidates != null ? Collections.unmodifiableList(candidates) : List.of(shape);
     }
 
     private void requireResolved(String what) {

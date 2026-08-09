@@ -1,6 +1,8 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.Locale;
 
@@ -60,5 +62,30 @@ class ShapeFluidTest {
         ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", null, null, pather);
 
         assertEquals(texture.iconPath("molten"), molten.iconPath(iron));
+    }
+
+    @Test
+    void namerDivergenceIsDetectedPerServedMaterial() {
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
+            .build();
+        ShapeFluid canonical = new ShapeFluid("examplemod", "molten", "Molten %s");
+        canonical.bindServedMaterials(new Material[] { iron });
+        ShapeFluid candidate = new ShapeFluid("othermod", "molten", "Molten %s",
+            (shape, material) -> "legacy." + material.getName()
+                .toLowerCase(Locale.ENGLISH),
+            null);
+
+        assertSame(iron, canonical.firstNameDivergence(candidate));
+    }
+
+    @Test
+    void agreeingNamersReportNoDivergence() {
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
+            .build();
+        ShapeFluid canonical = new ShapeFluid("examplemod", "molten", "Molten %s");
+        canonical.bindServedMaterials(new Material[] { iron });
+        ShapeFluid candidate = new ShapeFluid("othermod", "molten", "Molten %s");
+
+        assertNull(canonical.firstNameDivergence(candidate));
     }
 }

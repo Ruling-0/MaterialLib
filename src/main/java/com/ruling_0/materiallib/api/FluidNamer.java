@@ -13,6 +13,9 @@ import java.util.Locale;
 ///
 /// A name already present in Forge's fluid registry from outside MaterialLib is reused rather than re-skinned, the
 /// same as when no namer is set.
+///
+/// Every shape registered as a candidate for one shape name should produce identical names, as registered fluid
+/// names persist in world saves and only the owner's namer runs; resolve logs an error when candidates diverge.
 @FunctionalInterface
 public interface FluidNamer {
 
