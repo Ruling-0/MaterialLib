@@ -43,6 +43,22 @@ class FluidNamingTest {
     }
 
     @Test
+    void aNameContainingAColonIsRejected() {
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> FluidNaming.validate("molten:testiron", molten, iron, new HashSet<>()));
+    }
+
+    @Test
+    void aNameContainingWhitespaceIsAccepted() {
+        Set<String> usedNames = new HashSet<>();
+
+        assertEquals(
+            "acid naquadah emulsion",
+            FluidNaming.validate("acid naquadah emulsion", molten, iron, usedNames));
+    }
+
+    @Test
     void aNameAlreadyUsedThisResolveIsRejected() {
         Set<String> usedNames = new HashSet<>();
         FluidNaming.validate("molten.testiron", molten, iron, usedNames);
