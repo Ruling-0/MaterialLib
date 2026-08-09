@@ -10,7 +10,8 @@ final class FluidNaming {
 
     /// Validates `name`, produced by a [FluidNamer] for `shape` and `material`, and records it into `usedNames` so
     /// a later duplicate within the same resolve is rejected. Returns `name` unchanged. Rejects a null or empty
-    /// name, one that is not already lowercase, or one already present in `usedNames`.
+    /// name, one that is not already lowercase, one containing ':', or one already present in `usedNames`.
+    /// Whitespace is permitted, as legacy Forge fluid names contain spaces.
     static String validate(String name, Shape shape, Material material, Set<String> usedNames) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException(
@@ -20,6 +21,11 @@ final class FluidNaming {
             throw new IllegalArgumentException(
                 "Fluid namer for " + shape + " and " + material.getKey() + " returned \"" + name +
                     "\", which is not lowercase; Forge would lowercase it silently instead of rejecting it");
+        }
+        if (name.indexOf(':') >= 0) {
+            throw new IllegalArgumentException(
+                "Fluid namer for " + shape + " and " + material.getKey() + " returned \"" + name +
+                    "\", which contains ':'");
         }
         if (!usedNames.add(name)) {
             throw new IllegalStateException(
