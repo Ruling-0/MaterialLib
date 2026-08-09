@@ -2,6 +2,8 @@ package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Test;
 
 class ShapeFluidTest {
@@ -23,7 +25,7 @@ class ShapeFluidTest {
         Material iron = registry.newMaterial("examplemod", "TestIron", texture)
             .build();
         FluidNamer namer = (shape, material) -> "legacy." + material.getName()
-            .toLowerCase();
+            .toLowerCase(Locale.ENGLISH);
         ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", namer, null);
 
         assertEquals("legacy.testiron", molten.fluidName(iron));
