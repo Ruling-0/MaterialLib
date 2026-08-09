@@ -13,4 +13,13 @@ interface ServedShape extends Shape {
     void bindServedMaterials(Material[] materials);
 
     Material[] getServedMaterials();
+
+    /// Whether `material` generates this shape. The materials are canonical instances, so this compares by
+    /// identity.
+    default boolean serves(Material material) {
+        for (Material served : getServedMaterials()) {
+            if (served == material) return true;
+        }
+        return false;
+    }
 }

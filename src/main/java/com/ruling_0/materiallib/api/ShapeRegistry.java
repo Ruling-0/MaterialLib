@@ -163,17 +163,10 @@ public final class ShapeRegistry {
 
     /// Rejects a material that does not generate a shape.
     private static void requireServes(ServedShape shape, Material material) {
-        if (!serves(shape, material)) {
+        if (!shape.serves(material)) {
             throw new IllegalArgumentException(
                 "Material " + material.getKey() + " does not generate shape " + shape);
         }
-    }
-
-    private static boolean serves(ServedShape shape, Material material) {
-        for (Material served : shape.getServedMaterials()) {
-            if (served == material) return true;
-        }
-        return false;
     }
 
     /// Picks each name's owner, registers the owner's backing object and the item behind each empty container,
