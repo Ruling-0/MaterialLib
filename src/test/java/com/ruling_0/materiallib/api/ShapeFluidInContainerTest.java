@@ -3,8 +3,11 @@ package com.ruling_0.materiallib.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+
+import net.minecraft.item.ItemStack;
 
 import org.junit.jupiter.api.Test;
 
@@ -54,5 +57,35 @@ class ShapeFluidInContainerTest {
         assertEquals(
             "gregtech:items/cell_base",
             ShapeFluidInContainer.resolveEmptyIconPath("testmod", "cell", "gregtech:items/cell_base"));
+    }
+
+    @Test
+    void aSubclassCanHoldMultipleFluidsInFallbackOrder() {
+        TestContainer cell = new TestContainer(List.of(liquid, gas));
+
+        assertEquals(List.of(liquid, gas), cell.getFluidShapes());
+    }
+
+    @Test
+    void aNonFluidShapeIsRejectedAtConstruction() {
+        List<Shape> fluidShapes = List.of(liquid, new TestShape("testmod", "plate"));
+
+        assertThrows(IllegalArgumentException.class, () -> new TestContainer(fluidShapes));
+    }
+
+    @Test
+    void theHandleConstructorRejectsANullHandle() {
+        assertThrows(NullPointerException.class, () -> new TestContainer(List.of(liquid), null));
+    }
+
+    private static final class TestContainer extends ShapeFluidInContainer {
+
+        TestContainer(List<Shape> fluidShapes) {
+            super("testmod", "cell", "%s Cell", fluidShapes, (ItemStack) null, 1000, "cell");
+        }
+
+        TestContainer(List<Shape> fluidShapes, EmptyContainerHandle emptyContainer) {
+            super("testmod", "cell", "%s Cell", fluidShapes, emptyContainer, 1000, "cell");
+        }
     }
 }
