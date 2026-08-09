@@ -16,6 +16,15 @@ interface ServedShape extends Shape {
 
     Material[] getServedMaterials();
 
+    /// Whether `material` generates this shape. The materials are canonical instances, so this compares by
+    /// identity.
+    default boolean serves(Material material) {
+        for (Material served : getServedMaterials()) {
+            if (served == material) return true;
+        }
+        return false;
+    }
+
     /// This shape's property values. The holder is composed into each implementation rather than inherited,
     /// since they extend unrelated Minecraft types; the [Shape] property accessors are answered from it here so
     /// each implementation only supplies the holder.

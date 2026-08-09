@@ -112,9 +112,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     /// The first of `fluidShapes` that `material` generates, or null if none do.
     static ShapeFluid selectFluid(Material material, List<ShapeFluid> fluidShapes) {
         for (ShapeFluid fluid : fluidShapes) {
-            for (Material served : fluid.getServedMaterials()) {
-                if (served == material) return fluid;
-            }
+            if (fluid.serves(material)) return fluid;
         }
         return null;
     }
