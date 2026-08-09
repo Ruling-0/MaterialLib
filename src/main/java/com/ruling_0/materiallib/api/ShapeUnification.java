@@ -163,9 +163,9 @@ final class ShapeUnification {
 
     /// Every shape registered as a candidate for `shape`'s name, in registration order, or the shape alone when
     /// its name was never contested. Only available after [#resolve].
-    List<Shape> candidatesOf(Shape shape) {
+    List<ServedShape> candidatesOf(ServedShape shape) {
         requireResolved("list name candidates");
-        List<Shape> candidates = candidatesByName.get(shape.getName());
+        List<ServedShape> candidates = candidatesByName.get(shape.getName());
         return candidates != null ? Collections.unmodifiableList(candidates) : List.of(shape);
     }
 

@@ -57,7 +57,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     protected ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
                                     ItemStack emptyContainer, int volume, String... oreDicts) {
         this(modid, name, displayNameFormat, fluidShapes,
-            emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, oreDicts);
+            emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, null, oreDicts);
     }
 
     /// As the [#ShapeFluidInContainer(String, String, String, List, ItemStack, int, String...)] overload, but
@@ -68,7 +68,7 @@ public class ShapeFluidInContainer extends ShapeItem {
                                     EmptyContainerHandle emptyContainer, int volume, String... oreDicts) {
         this(modid, name, displayNameFormat, fluidShapes,
             new EmptyContainer.Registered(Objects.requireNonNull(emptyContainer, "emptyContainer must not be null")),
-            volume, oreDicts);
+            volume, null, oreDicts);
     }
 
     /// As the six-argument constructor, but with an ordered list of fluid shapes this container can hold (see
