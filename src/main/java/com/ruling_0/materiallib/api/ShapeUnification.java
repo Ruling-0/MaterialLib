@@ -52,9 +52,9 @@ final class ShapeUnification {
         for (Map.Entry<String, List<Shape>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
             List<Shape> candidates = entry.getValue();
-            String ownerModid = OwnerElection
-                .choose("Shape", name, candidates, Shape::getModId, persistedOwners.get(name), "registered");
-            Shape canonical = candidateOwnedBy(candidates, ownerModid);
+            Shape canonical = OwnerElection.chooseCandidate("Shape", name, candidates, Shape::getModId,
+                persistedOwners.get(name), "registered");
+            String ownerModid = canonical.getModId();
             canonicalByName.put(name, canonical);
             for (Shape candidate : candidates) {
                 if (candidate != canonical) {
@@ -67,15 +67,6 @@ final class ShapeUnification {
         }
         resolved = true;
         return owners;
-    }
-
-    private static Shape candidateOwnedBy(List<Shape> candidates, String modid) {
-        for (Shape candidate : candidates) {
-            if (candidate.getModId().equals(modid)) {
-                return candidate;
-            }
-        }
-        throw new IllegalStateException("No candidate shape is owned by " + modid);
     }
 
     private void logOreDictDivergence(String name, List<Shape> candidates, Shape canonical) {

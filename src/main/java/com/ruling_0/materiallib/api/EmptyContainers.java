@@ -10,9 +10,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 /// Collapses empty container registrations that share a name down to a single owning mod, electing the owner the
 /// same way [ShapeUnification] elects a shape's.
 ///
-/// No owner is persisted, unlike for shapes: the item registers as `materiallib:<name>` whichever mod owns it, so
-/// its identity is already stable across sessions. The owner decides only the icon domain and the lang key, and the
-/// alphabetical election is deterministic for a given set of mods.
+/// Unlike for shapes, no owner is persisted: the item registers as `materiallib:<name>` regardless of owner, so
+/// its identity is already stable across sessions, and the owner decides only the icon and the lang key.
 final class EmptyContainers {
 
     private final Object2ObjectLinkedOpenHashMap<String, List<EmptyContainerHandle>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();
@@ -44,10 +43,9 @@ final class EmptyContainers {
         Map<String, EmptyContainerHandle> owners = new LinkedHashMap<>();
         for (Map.Entry<String, List<EmptyContainerHandle>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
-            List<EmptyContainerHandle> candidates = entry.getValue();
-            String ownerModid = OwnerElection
-                .choose("Empty container", name, candidates, EmptyContainerHandle::getModId, null, "registered");
-            owners.put(name, candidateOwnedBy(candidates, ownerModid));
+            EmptyContainerHandle owner = OwnerElection.chooseCandidate("Empty container", name, entry.getValue(),
+                EmptyContainerHandle::getModId, null, "registered");
+            owners.put(name, owner);
         }
         resolved = true;
         return owners;
@@ -57,15 +55,6 @@ final class EmptyContainers {
     List<EmptyContainerHandle> candidatesOf(String name) {
         List<EmptyContainerHandle> candidates = candidatesByName.get(name);
         return candidates != null ? candidates : List.of();
-    }
-
-    private static EmptyContainerHandle candidateOwnedBy(List<EmptyContainerHandle> candidates, String modid) {
-        for (EmptyContainerHandle candidate : candidates) {
-            if (candidate.getModId().equals(modid)) {
-                return candidate;
-            }
-        }
-        throw new IllegalStateException("No candidate empty container is owned by " + modid);
     }
 
     private void requireRegistration(String what) {

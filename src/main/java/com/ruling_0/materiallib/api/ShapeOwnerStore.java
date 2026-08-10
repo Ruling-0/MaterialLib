@@ -10,7 +10,7 @@ import java.util.Map;
 /// added. [#saveFrom] writes the resolved assignment back. The shape's saved identity does not depend on the
 /// owner, so a wrong owner changes only which mod's item or block backs the shape, never the stored stacks. Fluid
 /// shapes are the exception: only the owner's [FluidNamer] names its fluids, so candidates whose namers disagree
-/// store different names. Resolve logs an error when candidates for one name would name a fluid differently.
+/// store different names.
 public final class ShapeOwnerStore {
 
     private static final String FILE_NAME = "shape-owners.json";

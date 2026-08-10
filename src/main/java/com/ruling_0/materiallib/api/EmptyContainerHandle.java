@@ -6,9 +6,9 @@ import net.minecraft.item.ItemStack;
 /// A mod's claim on an empty container item, returned by
 /// [MaterialLibAPI#registerEmptyContainer(String, String, String)].
 ///
-/// Registration only records the claim; the item is created and registered with FML when shapes resolve, so a
-/// handle only builds stacks from then on. Handles registered for the same name by different mods all bind to the
-/// one item elected for that name, so a handle held by a non-owning mod still builds stacks of the owner's item.
+/// Registration only records the claim; the item is created and registered with FML when shapes resolve. Handles
+/// registered for the same name by different mods all bind to the one item elected for that name, so a handle held
+/// by a non-owning mod still builds stacks of the owner's item.
 public final class EmptyContainerHandle {
 
     private final String modid;
@@ -38,7 +38,7 @@ public final class EmptyContainerHandle {
         return new ItemStack(item, amount);
     }
 
-    /// The icon path this handle asks for, or `<modid>:materials/<name>` when it asked for none.
+    /// The icon path given at registration, or `<modid>:materials/<name>` when none was set.
     String iconPathOrDefault() {
         return iconPath != null ? iconPath : modid + ":materials/" + name;
     }

@@ -26,12 +26,8 @@ class FluidNamingTest {
     }
 
     @Test
-    void aNullNameIsRejected() {
+    void aNullOrEmptyNameIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> FluidNaming.validate(null, molten, iron, new HashSet<>()));
-    }
-
-    @Test
-    void anEmptyNameIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> FluidNaming.validate("", molten, iron, new HashSet<>()));
     }
 

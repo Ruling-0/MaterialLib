@@ -29,15 +29,9 @@ public final class FluidInContainerShapeBuilder {
 
     /// Sets the ordered fluid shapes this container can hold; required, at least one. The container binds, per
     /// material, to the first listed shape that material generates (GT's `cell`, for example, holds a material's
-    /// liquid or gas); a material generating none of them fails validation at resolve. Pass the shape returned by
+    /// liquid or gas); a material generating none of them fails validation at resolve. Pass shapes returned by
     /// [MaterialLibAPI#newFluidShape].
     public FluidInContainerShapeBuilder fluid(Shape... fluidShapes) {
-        if (fluidShapes == null || fluidShapes.length == 0) {
-            throw new IllegalArgumentException("fluid(...) needs at least one fluid shape");
-        }
-        for (Shape fluidShape : fluidShapes) {
-            Objects.requireNonNull(fluidShape, "fluidShape must not be null");
-        }
         this.fluidShapes = List.of(fluidShapes);
         return this;
     }
@@ -50,9 +44,9 @@ public final class FluidInContainerShapeBuilder {
         return this;
     }
 
-    /// Sets the item returned when the fluid is drained from the container to an empty container item registered
-    /// through [MaterialLibAPI#registerEmptyContainer(String, String)]. Use this over [#emptyContainer(ItemStack)]
-    /// for an item that does not exist yet at MaterialLib's preInit; the handle binds when shapes resolve.
+    /// As [#emptyContainer(ItemStack)], but draining to an empty container item registered through
+    /// [MaterialLibAPI#registerEmptyContainer(String, String)], for an item that does not exist yet during
+    /// registration.
     public FluidInContainerShapeBuilder emptyContainer(EmptyContainerHandle emptyContainer) {
         this.emptyContainer = new EmptyContainer.Registered(
             Objects.requireNonNull(emptyContainer, "emptyContainer must not be null"));

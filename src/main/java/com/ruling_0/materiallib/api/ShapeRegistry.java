@@ -204,9 +204,8 @@ public final class ShapeRegistry {
 
     /// Sorts every canonical shape into its type and registers each backing item or block with FML under
     /// MaterialLib's domain (`materiallib:<name>`). The domain is MaterialLib's because this runs in MaterialLib's
-    /// preInit handler (FML restriction). Fluid shapes register their Forge fluids later, once served materials are
-    /// known; fluid containers register their container mappings later still, at the end of resolve (see
-    /// [#registerFluidContainers]).
+    /// preInit handler (FML restriction). Fluid shapes register their Forge fluids, and fluid containers their
+    /// container mappings, later -- once served materials are known.
     private void collectCanonicalShapes() {
         for (Shape shape : unification.canonicalShapes()) {
             if (!(shape instanceof ServedShape served)) {
@@ -231,7 +230,7 @@ public final class ShapeRegistry {
                 }
                 else {
                     throw new IllegalStateException(
-                        backed + " is a backed shape but neither an item nor a block shape.");
+                        backed + " is a backed shape but neither an item nor a block shape");
                 }
             }
             else {
@@ -317,9 +316,8 @@ public final class ShapeRegistry {
         }
     }
 
-    /// Registers each fluid-in-container shape's [net.minecraftforge.fluids.FluidContainerRegistry] mappings, first
-    /// enforcing that every material generating a container also generates at least one of the fluid shapes that
-    /// container can hold.
+    /// Registers each fluid-in-container shape's container mappings, first enforcing that every material
+    /// generating a container also generates at least one of the fluid shapes that container can hold.
     private void registerFluidContainers() {
         for (ShapeFluidInContainer container : containerShapes) {
             List<ShapeFluid> canonicalFluids = canonicalFluidsOf(container);
@@ -338,9 +336,8 @@ public final class ShapeRegistry {
         MaterialLib.LOG.info("Registered fluid containers for {} shapes", containerShapes.size());
     }
 
-    /// Each served material of `container` mapped to the fallback-selected fluid shape it generates, following
-    /// unification so the container maps to the same fluid the material generates. A material generating none of
-    /// the container's fluid shapes is omitted.
+    /// Each served material of `container` mapped to the first of `canonicalFluids` it generates; a material
+    /// generating none of them is omitted.
     private Map<Material, ShapeFluid> fluidByMaterial(ShapeFluidInContainer container,
                                                       List<ShapeFluid> canonicalFluids) {
         Map<Material, ShapeFluid> byMaterial = new Reference2ObjectLinkedOpenHashMap<>();

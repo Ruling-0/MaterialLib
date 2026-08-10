@@ -3,8 +3,7 @@ package com.ruling_0.materiallib.api;
 import net.minecraft.item.ItemStack;
 
 /// The item a [ShapeFluidInContainer] returns when its fluid is drained: either an [ItemStack] already known when
-/// the container shape is built, or an empty container item MaterialLib registers itself. Either way it is resolved
-/// to a stack once, when shapes resolve.
+/// the container shape is built, or an empty container item MaterialLib registers itself.
 sealed interface EmptyContainer {
 
     /// Resolves to the item stack, a fresh copy each call.

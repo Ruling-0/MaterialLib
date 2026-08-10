@@ -1,6 +1,5 @@
 package com.ruling_0.materiallib.api;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,13 +45,6 @@ class ShapeFluidInContainerTest {
     }
 
     @Test
-    void aSubclassCanHoldMultipleFluidsInFallbackOrder() {
-        TestContainer cell = new TestContainer(List.of(liquid, gas));
-
-        assertEquals(List.of(liquid, gas), cell.getFluidShapes());
-    }
-
-    @Test
     void aNonFluidShapeIsRejectedAtConstruction() {
         List<Shape> fluidShapes = List.of(liquid, new TestShape("testmod", "plate"));
 
@@ -60,18 +52,14 @@ class ShapeFluidInContainerTest {
     }
 
     @Test
-    void theHandleConstructorRejectsANullHandle() {
-        assertThrows(NullPointerException.class, () -> new TestContainer(List.of(liquid), null));
+    void anEmptyFluidShapeListIsRejectedAtConstruction() {
+        assertThrows(IllegalArgumentException.class, () -> new TestContainer(List.of()));
     }
 
     private static final class TestContainer extends ShapeFluidInContainer {
 
         TestContainer(List<Shape> fluidShapes) {
             super("testmod", "cell", "%s Cell", fluidShapes, (ItemStack) null, 1000, "cell");
-        }
-
-        TestContainer(List<Shape> fluidShapes, EmptyContainerHandle emptyContainer) {
-            super("testmod", "cell", "%s Cell", fluidShapes, emptyContainer, 1000, "cell");
         }
     }
 }

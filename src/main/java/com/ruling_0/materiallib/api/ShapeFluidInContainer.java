@@ -44,20 +44,17 @@ public class ShapeFluidInContainer extends ShapeItem {
             emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, oreDicts);
     }
 
-    /// As the six-argument constructor, but with an ordered list of fluid shapes this container can hold. Each entry
-    /// must be a fluid shape; the container binds each material to the first entry that material generates (see
-    /// [FluidInContainerShapeBuilder#fluid(Shape...)]). `emptyContainer` is the item returned when the fluid is
-    /// drained, or null for a container consumed on drain.
+    /// As [#ShapeFluidInContainer(String, String, String, ShapeFluid, ItemStack, int, String...)], but holding any
+    /// of the ordered `fluidShapes`, each of which must be a fluid shape (see
+    /// [FluidInContainerShapeBuilder#fluid(Shape...)]).
     protected ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
                                     ItemStack emptyContainer, int volume, String... oreDicts) {
         this(modid, name, displayNameFormat, fluidShapes,
             emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, oreDicts);
     }
 
-    /// As the [#ShapeFluidInContainer(String, String, String, List, ItemStack, int, String...)] overload, but
-    /// draining to an empty container item registered through [MaterialLibAPI#registerEmptyContainer(String, String)]
-    /// whose handle binds when shapes resolve. A container consumed on drain uses the [ItemStack] overload with a
-    /// null stack.
+    /// As [#ShapeFluidInContainer(String, String, String, List, ItemStack, int, String...)], but draining to an
+    /// empty container item registered through [MaterialLibAPI#registerEmptyContainer(String, String)].
     protected ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
                                     EmptyContainerHandle emptyContainer, int volume, String... oreDicts) {
         this(modid, name, displayNameFormat, fluidShapes,
@@ -65,8 +62,8 @@ public class ShapeFluidInContainer extends ShapeItem {
             volume, oreDicts);
     }
 
-    /// As the six-argument constructor, but with an ordered list of fluid shapes this container can hold (see
-    /// [FluidInContainerShapeBuilder#fluid(Shape...)]) and any form of [EmptyContainer].
+    /// As [#ShapeFluidInContainer(String, String, String, List, ItemStack, int, String...)], accepting any form of
+    /// [EmptyContainer].
     ShapeFluidInContainer(String modid, String name, String displayNameFormat, List<Shape> fluidShapes,
                           EmptyContainer emptyContainer, int volume, String... oreDicts) {
         super(modid, name, displayNameFormat, oreDicts);
@@ -99,12 +96,11 @@ public class ShapeFluidInContainer extends ShapeItem {
 
     /// Registers a [FluidContainerRegistry] mapping for each served material, filling this item at the material's
     /// index from its fluid in `fluidByMaterial`. Called at resolve, after fluids and any registered empty
-    /// container items exist; resolves this container's [EmptyContainer] once.
+    /// container items exist.
     void registerContainers(Map<Material, ShapeFluid> fluidByMaterial) {
         ItemStack empty = emptyContainer != null ? emptyContainer.resolve() : null;
         for (Material material : getServedMaterials()) {
-            FluidStack fluidStack = fluidByMaterial.get(material)
-                .fluidStack(material, volume);
+            FluidStack fluidStack = fluidByMaterial.get(material).fluidStack(material, volume);
             ItemStack filled = getStack(material, 1);
             boolean registered = empty != null ?
                 FluidContainerRegistry.registerFluidContainer(fluidStack, filled, empty.copy()) :

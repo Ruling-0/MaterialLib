@@ -6,9 +6,9 @@ import java.util.function.Function;
 
 import com.ruling_0.materiallib.MaterialLib;
 
-/// The owner-election policy shared by material and shape unification, kept in one place so the two cannot
-/// drift: a name is owned by its persisted owner when that mod supplied a candidate this session, else by the
-/// alphabetically first candidate modid.
+/// The owner-election policy shared by the material, shape, and empty container unifications, kept in one place so
+/// they cannot drift: a name is owned by its persisted owner when that mod supplied a candidate this session, else
+/// by the alphabetically first candidate modid.
 final class OwnerElection {
 
     private OwnerElection() {}
@@ -35,5 +35,17 @@ final class OwnerElection {
                 owner);
         }
         return owner;
+    }
+
+    /// Elects the owning candidate for `name`; as [#choose], returning the candidate rather than its modid.
+    static <T> T chooseCandidate(String kind, String name, List<T> candidates, Function<T, String> modidOf,
+                                 String persistedOwner, String candidateVerb) {
+        String owner = choose(kind, name, candidates, modidOf, persistedOwner, candidateVerb);
+        for (T candidate : candidates) {
+            if (modidOf.apply(candidate).equals(owner)) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("No " + kind + " candidate for " + name + " is owned by " + owner);
     }
 }

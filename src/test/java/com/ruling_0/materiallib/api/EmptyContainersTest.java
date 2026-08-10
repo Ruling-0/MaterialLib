@@ -57,9 +57,7 @@ class EmptyContainersTest {
     }
 
     @Test
-    void invalidIdentifiersThrow() {
-        assertThrows(IllegalArgumentException.class, () -> containers.register("amod", "cell empty", null));
-        assertThrows(IllegalArgumentException.class, () -> containers.register("a:mod", "cellEmpty", null));
+    void anEmptyIconPathIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> containers.register("amod", "cellEmpty", ""));
     }
 

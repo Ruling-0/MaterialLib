@@ -7,8 +7,8 @@ import net.minecraft.item.Item;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-/// The item backing an empty container registration: a plain single-icon item, carrying no material in its damage
-/// value unlike the items behind item shapes.
+/// The item backing an empty container registration: a plain single-icon item carrying no material in its damage
+/// value.
 final class EmptyContainerItem extends Item {
 
     private final String iconPath;

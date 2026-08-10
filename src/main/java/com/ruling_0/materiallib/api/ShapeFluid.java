@@ -49,8 +49,9 @@ public class ShapeFluid implements ServedShape {
         this(modid, name, displayNameFormat, null, null);
     }
 
-    /// As the three-argument constructor, additionally setting this shape's [FluidNamer] and [FluidConfigurer]. A
-    /// null namer defaults to [FluidNamer#DEFAULT]; a null configurer performs no extra configuration.
+    /// As [#ShapeFluid(String, String, String)], additionally setting this shape's [FluidNamer] and
+    /// [FluidConfigurer]. A null namer defaults to [FluidNamer#DEFAULT]; a null configurer performs no extra
+    /// configuration.
     public ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer,
                       FluidConfigurer configurer) {
         this.modid = Names.validate("fluid shape modid", modid);
@@ -82,8 +83,7 @@ public class ShapeFluid implements ServedShape {
     @Override
     public Material[] getServedMaterials() { return served.get(); }
 
-    /// The Forge fluid name for a material in this shape, as produced by this shape's [FluidNamer] (e.g.
-    /// `molten.testiron` by default).
+    /// The Forge fluid name for a material in this shape, as produced by this shape's [FluidNamer].
     String fluidName(Material material) {
         return namer.name(this, material);
     }
@@ -100,8 +100,7 @@ public class ShapeFluid implements ServedShape {
     }
 
     /// Logs where `candidate`, a fluid shape unified onto this one, would have named or configured this shape's
-    /// fluids differently: only this shape's names reach Forge's fluid registry, so a divergent candidate means the
-    /// fluid names written into world saves depend on the owner election.
+    /// fluids differently.
     void logCandidateDivergence(ShapeFluid candidate) {
         try {
             Material diverging = firstNameDivergence(candidate);
