@@ -30,16 +30,15 @@ final class ShapeIcons {
         bind(register, materials, List.of(shapeName));
     }
 
-    /// Registers one icon per served material from its texture set, trying each name in `shapeNameCandidates` in
-    /// order and keeping the first that resolves. A variant block shape passes `<shapeName>_<variant>` before
-    /// `<shapeName>`, so a variant needs no texture of its own unless it looks different from the plain shape.
+    /// Registers one icon per served material, from the highest-priority texture source that resolves any name in
+    /// `shapeNameCandidates`; within one source, earlier names win. A variant block shape passes
+    /// `<shapeName>_<variant>` before `<shapeName>`, so a variant needs no texture of its own unless it looks
+    /// different from the plain shape.
     void bind(IIconRegister register, Material[] materials, List<String> shapeNameCandidates) {
         iconsByIndex.clear();
         overlaysByIndex.clear();
         for (Material material : materials) {
-            for (String shapeName : shapeNameCandidates) {
-                if (tryBind(register, material, shapeName)) break;
-            }
+            bindMaterial(register, material, shapeNameCandidates);
         }
         emptyIcon = register.registerIcon(EMPTY_ICON);
     }
@@ -55,30 +54,39 @@ final class ShapeIcons {
         return icon != null ? overlaysByIndex.get(index) : emptyIcon;
     }
 
-    /// Resolves and registers `material`'s icon (and overlay, if any) under `shapeName`, trying its texture set,
-    /// then its fallback texture set, then the same two on each of its unification alternatives. Returns whether
-    /// an icon was bound.
-    private boolean tryBind(IIconRegister register, Material material, String shapeName) {
-        String path = material.getProperty(StandardProperties.TEXTURE_SET).iconPath(shapeName);
-        if (checkResLoc(path)) {
-            setIcons(register, material, shapeName, false);
-            return true;
+    /// Binds `material`'s icon from the highest-priority source that resolves any candidate name: the material's
+    /// own texture set, then its fallback texture set, then each unification alternative's texture set and
+    /// fallback set. Source-major order keeps a material's own plain-shape texture ahead of a lower source's
+    /// variant texture.
+    private void bindMaterial(IIconRegister register, Material material, List<String> shapeNameCandidates) {
+        if (tryBindSet(register, material, material.getProperty(StandardProperties.TEXTURE_SET), shapeNameCandidates,
+            false)) {
+            return;
         }
-        path = material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET).iconPath(shapeName);
-        if (checkResLoc(path)) {
-            setIcons(register, material, shapeName, true);
-            return true;
+        if (tryBindSet(register, material, material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET),
+            shapeNameCandidates, true)) {
+            return;
         }
         for (Material alternative : material.getAlternatives()) {
-            path = alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET).iconPath(shapeName);
-            if (checkResLoc(path)) {
-                setIcons(register, alternative, shapeName, false);
-                return true;
+            if (tryBindSet(register, alternative,
+                alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET), shapeNameCandidates, false)) {
+                return;
             }
-            path = alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET)
-                .iconPath(shapeName);
-            if (checkResLoc(path)) {
-                setIcons(register, alternative, shapeName, true);
+            if (tryBindSet(register, alternative,
+                alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SET), shapeNameCandidates,
+                true)) {
+                return;
+            }
+        }
+    }
+
+    /// Registers `material`'s icon (and overlay, if any) from `textureSet` under the first candidate name whose
+    /// texture file exists. Returns whether an icon was bound.
+    private boolean tryBindSet(IIconRegister register, Material material, TextureSet textureSet,
+                               List<String> shapeNameCandidates, boolean fallback) {
+        for (String shapeName : shapeNameCandidates) {
+            if (checkResLoc(textureSet.iconPath(shapeName))) {
+                setIcons(register, material, shapeName, fallback);
                 return true;
             }
         }
