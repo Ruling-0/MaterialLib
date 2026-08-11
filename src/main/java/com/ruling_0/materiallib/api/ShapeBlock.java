@@ -111,6 +111,10 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     public List<String> getOreDicts() { return oreDicts; }
 
+    /// The declared shape name of the [ShapeBlockVariants] group this block backs, or null when this block is not
+    /// a variant's backing block.
+    String getGroupName() { return groupName; }
+
     @Override
     public String toString() {
         return "ShapeBlock[" + Names.key(modid, name) + "]";

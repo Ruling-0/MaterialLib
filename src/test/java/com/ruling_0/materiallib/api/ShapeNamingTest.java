@@ -31,6 +31,15 @@ class ShapeNamingTest {
     }
 
     @Test
+    void overrideKeyByNameMatchesTheShapeForm() {
+        Material iron = material("examplemod", "TestIron");
+
+        assertEquals(
+            "shape.examplemod.testOre.examplemod.TestIron",
+            ShapeNaming.overrideKey("examplemod", "testOre", iron));
+    }
+
+    @Test
     void requireValidFormatRejectsAFormatThatCannotTakeAStringArgument() {
         assertThrows(IllegalArgumentException.class, () -> ShapeNaming.requireValidFormat("%d"));
     }
