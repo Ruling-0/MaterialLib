@@ -123,6 +123,7 @@ public class CommandMatInfo extends CommandBase {
     private static String type(Shape shape) {
         if (shape instanceof ShapeFluidInContainer) return "fluid container";
         if (shape instanceof ShapeBlock) return "block";
+        if (!shape.getVariants().isEmpty()) return "block";
         return "item";
     }
 
