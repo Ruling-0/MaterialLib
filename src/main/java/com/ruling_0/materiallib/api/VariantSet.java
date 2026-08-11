@@ -8,8 +8,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 /// An ordered, named collection of one value per variant, keyed by the variant names declared through
-/// [BlockShapeBuilder#variants]. Preserves declaration order so the first variant can be selected as the fallback
-/// for oredict registration and the unqualified [ShapeRegistry#getStack(Material, Shape, int)].
+/// [BlockShapeBuilder#variants], in declaration order.
 final class VariantSet<T> {
 
     private final List<String> names;
@@ -42,8 +41,7 @@ final class VariantSet<T> {
         return names;
     }
 
-    /// The value for the first declared variant, the fallback used where a caller has no variant of its own to
-    /// pick (oredict, the unqualified [ShapeRegistry#getStack(Material, Shape, int)]).
+    /// The value for the first declared variant.
     T first() {
         return byName.get(names.get(0));
     }

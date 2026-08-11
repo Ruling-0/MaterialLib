@@ -34,9 +34,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
 /// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) in the solid render
 /// pass, under the tinted material icon drawn in the alpha pass; see [#registerBlockIcons] and [#canRenderInPass].
-/// Drops, hardness,
-/// resistance, and harvest level may be overridden per material and variant through [BlockShapeBuilder]'s behavior
-/// hooks; a hook left unset preserves the vanilla default it replaces.
+/// Drops, hardness, resistance, and harvest level may be overridden per material and variant through
+/// [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla default it replaces.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;
@@ -158,7 +157,7 @@ public class ShapeBlock extends Block implements BackedShape {
         }
     }
 
-    /// A block with no base texture renders as a single tinted layer, as always. A block with a base texture
+    /// A block with no base texture renders as a single tinted layer. A block with a base texture
     /// renders in two passes -- the untinted base in the solid pass 0, and the tinted material icon over it in
     /// the alpha-blended pass 1 (pass 1 draws after pass 0, and the material texture's transparent pixels let
     /// the base show through). The item form never sets an active render pass (pass -1) and shows the tinted

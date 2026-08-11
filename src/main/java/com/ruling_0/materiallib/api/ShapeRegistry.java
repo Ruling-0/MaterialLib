@@ -166,8 +166,8 @@ public final class ShapeRegistry {
         return variants.getStack(material, variant, amount);
     }
 
-    /// The backing block of a variant-less block shape, for a consumer (e.g. worldgen) to place directly. The
-    /// shape must be a block shape declared with no variants.
+    /// The backing block of a variant-less block shape. The shape must be a block shape declared with no
+    /// variants.
     Block getBlock(Shape shape) {
         requireResolved("look up a block");
         Shape canonical = unification.canonical(shape);
@@ -177,8 +177,8 @@ public final class ShapeRegistry {
         return block;
     }
 
-    /// The backing block of one variant of a block shape declared with [BlockShapeBuilder#variants], for a
-    /// consumer (e.g. worldgen) to place directly. Fails when `variant` was not declared.
+    /// The backing block of one variant of a block shape declared with [BlockShapeBuilder#variants]. Fails when
+    /// `variant` was not declared.
     Block getBlock(Shape shape, String variant) {
         requireResolved("look up a block");
         Shape canonical = unification.canonical(shape);
@@ -189,8 +189,7 @@ public final class ShapeRegistry {
     }
 
     /// The shape, variant, and material a MaterialLib block encodes at the given metadata, or null when `block`
-    /// was not registered by MaterialLib. `variant` is null on the result for a variant-less block shape; `material`
-    /// is null when the metadata maps to no live material.
+    /// was not registered by MaterialLib; see [BlockMaterialInfo] for the result's null fields.
     BlockMaterialInfo lookupBlock(Block block, int metadata) {
         requireResolved("look up a block");
         Shape shape = shapeByBlock.get(block);

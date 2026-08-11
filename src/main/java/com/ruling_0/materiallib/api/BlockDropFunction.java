@@ -5,8 +5,7 @@ import java.util.List;
 import net.minecraft.item.ItemStack;
 
 /// A callback computing the drops of a block [Shape], set through [BlockShapeBuilder#drops]. Replaces the default
-/// of dropping the placed block itself, letting a shape (e.g. a small ore) drop an item instead, or vary drops by
-/// fortune or silk touch.
+/// of dropping the placed block itself (e.g. a small ore dropping an item instead).
 @FunctionalInterface
 public interface BlockDropFunction {
 

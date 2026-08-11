@@ -57,7 +57,7 @@ final class ShapeIcons {
 
     /// Resolves and registers `material`'s icon (and overlay, if any) under `shapeName`, trying its texture set,
     /// then its fallback texture set, then the same two on each of its unification alternatives. Returns whether
-    /// an icon was bound; false leaves the material without one, for the caller to retry under another shape name.
+    /// an icon was bound.
     private boolean tryBind(IIconRegister register, Material material, String shapeName) {
         String path = material.getProperty(StandardProperties.TEXTURE_SET).iconPath(shapeName);
         if (checkResLoc(path)) {

@@ -47,10 +47,10 @@ public final class BlockShapeBuilder {
     /// its own backing block, named `<shapeName>_<variant>` (see [ShapeNaming#variantBlockName]), sharing the
     /// materials the shape generates but able to differ in texture (see [ShapeIcons]) and behavior (see
     /// [#drops], [#hardness], [#resistance], [#harvestLevel]). Omit this call for a shape with no variants, the
-    /// common case; a shape with variants must declare at least one, and names must be unique and valid
-    /// identifiers. Shapes sharing this shape's name must declare the identical variant list, or unification fails
-    /// loudly; see [ShapeUnification]. [MaterialLibAPI#getStack(Material, Shape, int)] and oredict registration
-    /// use the first declared variant; [MaterialLibAPI#getStack(Material, Shape, String, int)] and
+    /// common case. A shape with variants must declare at least one; names must be unique and valid identifiers.
+    /// Shapes sharing this shape's name must declare the identical variant list, or unification fails loudly; see
+    /// [ShapeUnification]. [MaterialLibAPI#getStack(Material, Shape, int)] and oredict registration use the first
+    /// declared variant; [MaterialLibAPI#getStack(Material, Shape, String, int)] and
     /// [MaterialLibAPI#getBlock(Shape, String)] address a specific one.
     public BlockShapeBuilder variants(String... variants) {
         this.variants = variants;
@@ -60,8 +60,8 @@ public final class BlockShapeBuilder {
     /// Declares the untinted background texture drawn under `variant`'s tinted material icon (e.g. the stone
     /// background of an ore), as a full icon path (`"minecraft:blocks/stone"`) independent of any material's
     /// texture set. `texture` is registered as a second render pass; see [ShapeBlock#canRenderInPass]. Optional --
-    /// a variant with no base texture renders as a single tinted layer, as today. `variant` must be one of the
-    /// names passed to [#variants].
+    /// a variant with no base texture renders as a single tinted layer. `variant` must be one of the names passed
+    /// to [#variants].
     public BlockShapeBuilder variantBase(String variant, String texture) {
         Objects.requireNonNull(variant, "variant must not be null");
         if (texture == null || texture.isEmpty()) {
@@ -72,8 +72,7 @@ public final class BlockShapeBuilder {
     }
 
     /// Overrides what a block of this shape drops when broken, replacing the default of dropping the placed
-    /// block itself. Called with the fortune level and whether the break was silk-touched. Needed for e.g. a
-    /// small ore that drops an item, never the block.
+    /// block itself (e.g. a small ore dropping an item, never the block).
     public BlockShapeBuilder drops(BlockDropFunction drops) {
         this.dropsFn = Objects.requireNonNull(drops, "drops must not be null");
         return this;

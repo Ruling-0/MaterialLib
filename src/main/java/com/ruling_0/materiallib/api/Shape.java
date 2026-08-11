@@ -28,7 +28,6 @@ public interface Shape {
     List<String> getOreDicts();
 
     /// The variant names a block shape declares through [BlockShapeBuilder#variants], in declaration order, or
-    /// empty for a shape with no variants (the common case, and every non-block shape). Shapes sharing a name must
-    /// declare identical variant lists, or unification fails; see [ShapeUnification].
+    /// empty for a shape with no variants (the common case, and every non-block shape).
     default List<String> getVariants() { return List.of(); }
 }

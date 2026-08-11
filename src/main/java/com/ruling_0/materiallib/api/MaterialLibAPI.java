@@ -141,16 +141,14 @@ public final class MaterialLibAPI {
         return ShapeRegistry.instance().getBlock(shape);
     }
 
-    /// The backing block of one variant of a block shape declared with [BlockShapeBuilder#variants], for a
-    /// consumer (e.g. worldgen) to place directly at a material's index (see [Material#getIndex]) as the block
-    /// metadata. Fails when `variant` was not declared. Only available after shapes have resolved.
+    /// As [#getBlock(Shape)], but for one variant of a block shape declared with [BlockShapeBuilder#variants].
+    /// Fails when `variant` was not declared. Only available after shapes have resolved.
     public static Block getBlock(Shape shape, String variant) {
         return ShapeRegistry.instance().getBlock(shape, variant);
     }
 
     /// The shape, variant, and material a MaterialLib block encodes at the given metadata, or null when `block`
-    /// was not registered by MaterialLib. Lets worldgen, NEI, and debug tooling resolve a placed block back to
-    /// what generated it. Only available after shapes have resolved.
+    /// was not registered by MaterialLib. Only available after shapes have resolved.
     public static BlockMaterialInfo lookupBlock(Block block, int metadata) {
         return ShapeRegistry.instance().lookupBlock(block, metadata);
     }

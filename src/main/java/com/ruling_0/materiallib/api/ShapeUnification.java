@@ -70,9 +70,8 @@ final class ShapeUnification {
         return owners;
     }
 
-    /// Rejects a name whose candidates declare different variant lists. Unlike oredict divergence, this is not
-    /// safely ignorable: the non-owning candidates' materials would otherwise be generating variants the owner's
-    /// backing blocks do not have.
+    /// Rejects a name whose candidates declare different variant lists. Unlike oredict divergence, a mismatch is
+    /// fatal: the non-owning candidates' materials would generate variants the owner's backing blocks do not have.
     private void requireIdenticalVariants(String name, List<Shape> candidates, Shape canonical) {
         List<String> ownerVariants = canonical.getVariants();
         for (Shape candidate : candidates) {
@@ -81,7 +80,7 @@ final class ShapeUnification {
                 throw new IllegalStateException(
                     "Shapes " + canonical.getModId() + ":" + name + " and " + candidate.getModId() + ":" + name +
                         " share a name but declare different variants (" + ownerVariants + " vs " +
-                        candidate.getVariants() + "); shapes sharing a name must declare identical variant lists");
+                        candidate.getVariants() + ")");
             }
         }
     }

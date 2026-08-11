@@ -10,12 +10,8 @@ import net.minecraft.item.ItemStack;
 /// The group of backing [ShapeBlock]s for one block [Shape] declared with [BlockShapeBuilder#variants]: one
 /// registered block per variant, named `<shapeName>_<variant>` so each keeps a stable save identity of its own
 /// (see [ShapeNaming#variantBlockName]). Materials generate the group once, through the [Shape] this class
-/// implements; the resulting per-material [Material#getShapes] set is shared by every variant block. Shapes
-/// sharing this shape's name must declare the identical variant list, or unification fails loudly; see
-/// [ShapeUnification].
-///
-/// A shape with no declared variants stays a plain [ShapeBlock] instead; this class only exists once
-/// [BlockShapeBuilder#variants] is called.
+/// implements; the resulting per-material [Material#getShapes] set is shared by every variant block. A shape with
+/// no declared variants stays a plain [ShapeBlock] instead.
 final class ShapeBlockVariants implements BackedShape {
 
     private final String modid;
