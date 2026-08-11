@@ -11,7 +11,9 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
 
 import com.ruling_0.materiallib.api.BlockMaterialInfo;
 import com.ruling_0.materiallib.api.Family;
@@ -65,7 +67,16 @@ public class CommandMatInfo extends CommandBase {
     /// The shape, variant, and material of the block `player` is looking at, or null when it is out of range or
     /// not a block MaterialLib registered.
     private static BlockMaterialInfo lookAtBlock(EntityPlayerMP player) {
-        MovingObjectPosition target = player.rayTrace(32.0D, 1.0F);
+        // EntityLivingBase#rayTrace is client-only in 1.7.10; this is the server-side look-vector math from
+        // Item#getMovingObjectPositionFromPlayer.
+        Vec3 eyes = Vec3.createVectorHelper(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+        float pitch = -player.rotationPitch * (float) Math.PI / 180.0F;
+        float yaw = -player.rotationYaw * (float) Math.PI / 180.0F - (float) Math.PI;
+        float cosPitch = -MathHelper.cos(pitch);
+        Vec3 look = Vec3
+            .createVectorHelper(MathHelper.sin(yaw) * cosPitch, MathHelper.sin(pitch), MathHelper.cos(yaw) * cosPitch);
+        Vec3 reach = eyes.addVector(look.xCoord * 32.0D, look.yCoord * 32.0D, look.zCoord * 32.0D);
+        MovingObjectPosition target = player.worldObj.rayTraceBlocks(eyes, reach);
         if (target == null || target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
             return null;
         }
