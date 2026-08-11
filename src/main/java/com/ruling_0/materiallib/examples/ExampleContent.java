@@ -22,7 +22,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// The testFrame block shape reaches both materials through the Test family; the testGear
 /// item shape, ingot and block shapes, test fluid shape, testBucket fluid-in-container shape, and testOre
 /// block shape are generated on the materials directly. testOre demonstrates block shape variants: a stone
-/// and a granite variant, each with its own untinted vanilla-stone base texture under the tinted material
+/// and a cobblestone variant, each with its own untinted vanilla base texture under the tinted material
 /// icon. A consumer on testGear adds a shapeless recipe per material crafting its ingot into its gear, and
 /// lang overrides on TestGold show per-pair display names.
 public final class ExampleContent {
@@ -56,9 +56,9 @@ public final class ExampleContent {
         Shape testOre = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "testOre")
             .displayName("%s Ore")
             .oreDict("ore")
-            .variants("stone", "granite")
-            .variantBase("stone", "minecraft:blocks/stone")
-            .variantBase("granite", "minecraft:blocks/stone_granite")
+            .variants("stone", "cobblestone")
+            .variantBase("stone", "minecraft:stone")
+            .variantBase("cobblestone", "minecraft:cobblestone")
             .build();
 
         Shape testFluid = MaterialLibAPI.newFluidShape(MaterialLib.MODID, "test")

@@ -58,10 +58,10 @@ public final class BlockShapeBuilder {
     }
 
     /// Declares the untinted background texture drawn under `variant`'s tinted material icon (e.g. the stone
-    /// background of an ore), as a full icon path (`"minecraft:blocks/stone"`) independent of any material's
-    /// texture set. `texture` is registered as a second render pass; see [ShapeBlock#canRenderInPass]. Optional --
-    /// a variant with no base texture renders as a single tinted layer. `variant` must be one of the names passed
-    /// to [#variants].
+    /// background of an ore), as a `domain:path` icon identifier (`"minecraft:stone"`) independent of any
+    /// material's texture set; the `blocks/` folder is implicit. `texture` is registered as a second render pass;
+    /// see [ShapeBlock#canRenderInPass]. Optional -- a variant with no base texture renders as a single tinted
+    /// layer. `variant` must be one of the names passed to [#variants].
     public BlockShapeBuilder variantBase(String variant, String texture) {
         Objects.requireNonNull(variant, "variant must not be null");
         if (texture == null || texture.isEmpty()) {
