@@ -215,7 +215,9 @@ public class ShapeBlock extends Block implements BackedShape {
     public float getExplosionResistance(Entity exploder, World world, int x, int y, int z, double explosionX,
                                         double explosionY, double explosionZ) {
         Material material = behavior.resistance() != null ? materialAt(world, x, y, z) : null;
-        return material != null ? behavior.resistance().apply(material, variant) :
+        // The hook takes setResistance units; vanilla stores blockResistance * 3 and getExplosionResistance
+        // divides by 5, so the same conversion keeps hook values comparable to setResistance calls.
+        return material != null ? behavior.resistance().apply(material, variant) * 3.0F / 5.0F :
             super.getExplosionResistance(exploder, world, x, y, z, explosionX, explosionY, explosionZ);
     }
 

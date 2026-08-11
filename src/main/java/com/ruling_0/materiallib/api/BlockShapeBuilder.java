@@ -84,7 +84,8 @@ public final class BlockShapeBuilder {
         return this;
     }
 
-    /// Overrides a block of this shape's explosion resistance, replacing the default of `10.0`.
+    /// Overrides a block of this shape's explosion resistance, replacing the default of `10.0`. Values are in
+    /// [net.minecraft.block.Block#setResistance] units, so `10.0F` matches the unhooked default.
     public BlockShapeBuilder resistance(BlockFloatFunction resistance) {
         this.resistanceFn = Objects.requireNonNull(resistance, "resistance must not be null");
         return this;
