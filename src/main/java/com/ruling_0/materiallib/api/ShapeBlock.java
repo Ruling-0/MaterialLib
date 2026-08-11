@@ -219,6 +219,14 @@ public class ShapeBlock extends Block implements BackedShape {
             super.getExplosionResistance(exploder, world, x, y, z, explosionX, explosionY, explosionZ);
     }
 
+    /// Forge's harvest gate only consults [#getHarvestLevel] when a harvest tool class is set (see
+    /// ForgeHooks.canHarvestBlock), so a shape with a harvest level hook declares pickaxe, matching legacy
+    /// GregTech ore blocks.
+    @Override
+    public String getHarvestTool(int metadata) {
+        return behavior.harvestLevel() != null ? "pickaxe" : super.getHarvestTool(metadata);
+    }
+
     @Override
     public int getHarvestLevel(int metadata) {
         Material material = behavior.harvestLevel() != null ? materialFor(metadata) : null;

@@ -91,6 +91,7 @@ public final class BlockShapeBuilder {
     }
 
     /// Overrides a block of this shape's required harvest level, replacing the vanilla default of none required.
+    /// Setting a hook declares the block's harvest tool class as `pickaxe`, so the level gates pickaxe tiers.
     public BlockShapeBuilder harvestLevel(BlockHarvestLevelFunction harvestLevel) {
         this.harvestLevelFn = Objects.requireNonNull(harvestLevel, "harvestLevel must not be null");
         return this;
