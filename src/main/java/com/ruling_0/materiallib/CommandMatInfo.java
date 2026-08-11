@@ -48,20 +48,29 @@ public class CommandMatInfo extends CommandBase {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
-        ItemStack stack = player.getCurrentEquippedItem();
-        if (stack != null) {
-            Shape shape = shapeOf(stack);
-            if (shape != null) {
-                report(sender, shape, null, MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage()));
-                return;
-            }
-        }
+        if (reportHeldItem(sender, player.getCurrentEquippedItem())) return;
         BlockMaterialInfo info = lookAtBlock(player);
         if (info != null) {
             report(sender, info.shape(), info.variant(), info.material());
             return;
         }
         send(sender, "Hold a MaterialLib shape item, or look at a MaterialLib shape block, to inspect it");
+    }
+
+    /// Reports the held stack when it is a MaterialLib shape item or shape block item, returning whether it was.
+    /// A held block item resolves through [MaterialLibAPI#lookupBlock], so a variant's backing block reports the
+    /// declared shape and variant rather than the derived block name.
+    private static boolean reportHeldItem(ICommandSender sender, ItemStack stack) {
+        if (stack == null) return false;
+        if (stack.getItem() instanceof ShapeItem item) {
+            report(sender, item, null, MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage()));
+            return true;
+        }
+        BlockMaterialInfo info = MaterialLibAPI
+            .lookupBlock(Block.getBlockFromItem(stack.getItem()), stack.getItemDamage());
+        if (info == null) return false;
+        report(sender, info.shape(), info.variant(), info.material());
+        return true;
     }
 
     /// The shape, variant, and material of the block `player` is looking at, or null when it is out of range or
@@ -109,12 +118,6 @@ public class CommandMatInfo extends CommandBase {
             return String.format("0x%08X", value);
         }
         return String.valueOf(value);
-    }
-
-    private static Shape shapeOf(ItemStack stack) {
-        if (stack.getItem() instanceof ShapeItem item) return item;
-        if (Block.getBlockFromItem(stack.getItem()) instanceof ShapeBlock block) return block;
-        return null;
     }
 
     private static String type(Shape shape) {
