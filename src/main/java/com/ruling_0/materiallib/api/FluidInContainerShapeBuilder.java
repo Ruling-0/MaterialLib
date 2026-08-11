@@ -1,6 +1,5 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.List;
 import java.util.Objects;
 
 import net.minecraft.item.ItemStack;
@@ -15,7 +14,7 @@ public final class FluidInContainerShapeBuilder {
 
     private final String modid;
     private final String name;
-    private List<Shape> fluidShapes;
+    private Shape fluidShape;
     private EmptyContainer emptyContainer;
     private int volume = FluidContainerRegistry.BUCKET_VOLUME;
     private String[] oreDicts;
@@ -27,12 +26,9 @@ public final class FluidInContainerShapeBuilder {
         this.name = name;
     }
 
-    /// Sets the ordered fluid shapes this container can hold; required, at least one. The container binds, per
-    /// material, to the first listed shape that material generates (GT's `cell`, for example, holds a material's
-    /// liquid or gas); a material generating none of them fails validation at resolve. Pass shapes returned by
-    /// [MaterialLibAPI#newFluidShape].
-    public FluidInContainerShapeBuilder fluid(Shape... fluidShapes) {
-        this.fluidShapes = List.of(fluidShapes);
+    /// Sets the fluid this container holds; required. Pass the shape returned by [MaterialLibAPI#newFluidShape].
+    public FluidInContainerShapeBuilder fluid(Shape fluidShape) {
+        this.fluidShape = Objects.requireNonNull(fluidShape, "fluidShape must not be null");
         return this;
     }
 
@@ -81,7 +77,7 @@ public final class FluidInContainerShapeBuilder {
             throw new IllegalStateException(
                 "Fluid container shape " + Names.key(modid, name) + " was already built");
         }
-        if (fluidShapes == null) {
+        if (fluidShape == null) {
             throw new IllegalStateException(
                 "Fluid container shape " + Names.key(modid, name) + " needs a fluid; call fluid(...) before build()");
         }
@@ -89,6 +85,6 @@ public final class FluidInContainerShapeBuilder {
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         return ShapeRegistry.instance()
-            .register(new ShapeFluidInContainer(modid, name, format, fluidShapes, emptyContainer, volume, prefixes));
+            .register(new ShapeFluidInContainer(modid, name, format, fluidShape, emptyContainer, volume, prefixes));
     }
 }
