@@ -42,6 +42,7 @@ public final class ShapeRegistry {
     private final List<ShapeFluid> fluidShapesView = Collections.unmodifiableList(fluidShapes);
     private final List<ShapeFluidInContainer> containerShapes = new ObjectArrayList<>();
     private final Object2ObjectOpenHashMap<String, ShapeType> typeByName = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<String, String> blockNameClaims = new Object2ObjectOpenHashMap<>();
     private final ShapeConsumers consumers = new ShapeConsumers();
     private final Object2ObjectOpenHashMap<String, ServedShape> servedByName = new Object2ObjectOpenHashMap<>();
     private final Map<Block, Shape> shapeByBlock = new Reference2ObjectOpenHashMap<>();
@@ -72,7 +73,31 @@ public final class ShapeRegistry {
     Shape register(ServedShape shape) {
         requireRegistration("register shape " + Names.key(shape.getModId(), shape.getName()));
         recordType(shape.getName(), typeOf(shape));
+        claimBlockNames(shape);
         return unification.register(shape);
+    }
+
+    /// Reserves the FML registry names a block shape's backing blocks will register under: the shape name for a
+    /// variant-less block shape, or each derived `<shapeName>_<variant>` name (see
+    /// [ShapeNaming#variantBlockName]). Shapes sharing a declared name unify onto one backing block, so a name is
+    /// only rejected when a different declared name claims the same registry name.
+    private void claimBlockNames(Shape shape) {
+        if (typeOf(shape) != ShapeType.BLOCK) return;
+        if (shape.getVariants().isEmpty()) {
+            claimBlockName(shape.getName(), shape.getName());
+            return;
+        }
+        for (String variant : shape.getVariants()) {
+            claimBlockName(ShapeNaming.variantBlockName(shape.getName(), variant), shape.getName());
+        }
+    }
+
+    private void claimBlockName(String registryName, String shapeName) {
+        String existing = blockNameClaims.putIfAbsent(registryName, shapeName);
+        if (existing != null && !existing.equals(shapeName)) {
+            throw new IllegalStateException(
+                "Shapes " + existing + " and " + shapeName + " both register a block named " + registryName);
+        }
     }
 
     /// Records a mod's claim on an empty container name and returns its handle. The owner is chosen and the item
