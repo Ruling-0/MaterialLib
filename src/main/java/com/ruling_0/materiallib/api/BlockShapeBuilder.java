@@ -103,6 +103,11 @@ public final class BlockShapeBuilder {
         if (built) {
             throw new IllegalStateException("Block shape " + Names.key(modid, name) + " was already built");
         }
+        if (variants == null && !variantBases.isEmpty()) {
+            throw new IllegalStateException(
+                "Block shape " + Names.key(modid, name) +
+                    " declares a variant base texture but no variants; call variants(...) before build()");
+        }
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
