@@ -21,6 +21,7 @@ public final class BlockShapeBuilder {
     private BlockFloatFunction hardnessFn;
     private BlockFloatFunction resistanceFn;
     private BlockHarvestLevelFunction harvestLevelFn;
+    private String harvestTool;
     private boolean built;
 
     BlockShapeBuilder(String modid, String name) {
@@ -92,9 +93,21 @@ public final class BlockShapeBuilder {
     }
 
     /// Overrides a block of this shape's required harvest level, replacing the vanilla default of none required.
-    /// Setting a hook declares the block's harvest tool class as `pickaxe`, so the level gates pickaxe tiers.
+    /// Setting a hook declares the block's harvest tool class as `pickaxe` unless [#harvestTool] overrides it.
     public BlockShapeBuilder harvestLevel(BlockHarvestLevelFunction harvestLevel) {
         this.harvestLevelFn = Objects.requireNonNull(harvestLevel, "harvestLevel must not be null");
+        return this;
+    }
+
+    /// Sets the tool class whose tools harvest a block of this shape (e.g. `wrench`), replacing the `pickaxe`
+    /// class a [#harvestLevel] hook declares by default. The class is matched verbatim against tool items'
+    /// declared classes. Without a [#harvestLevel] hook, any tool of the class harvests the block.
+    public BlockShapeBuilder harvestTool(String tool) {
+        Objects.requireNonNull(tool, "tool must not be null");
+        if (tool.isEmpty()) {
+            throw new IllegalArgumentException("harvest tool class must not be empty");
+        }
+        this.harvestTool = tool;
         return this;
     }
 
@@ -111,7 +124,7 @@ public final class BlockShapeBuilder {
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn);
+        BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn, harvestTool);
         if (variants == null) {
             return ShapeRegistry.instance()
                 .register(new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior));

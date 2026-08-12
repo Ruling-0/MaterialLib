@@ -51,6 +51,7 @@ public final class ExampleContent {
         Shape testFrame = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "testFrame")
             .displayName("%s Frame")
             .oreDict("frameGt")
+            .harvestTool("wrench")
             .build();
 
         Shape testOre = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "testOre")

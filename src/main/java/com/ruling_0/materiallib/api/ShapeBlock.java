@@ -34,8 +34,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
 /// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) in the solid render
 /// pass, under the tinted material icon drawn in the alpha pass; see [#registerBlockIcons] and [#canRenderInPass].
-/// Drops, hardness, resistance, and harvest level may be overridden per material and variant through
-/// [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla default it replaces.
+/// Drops, hardness, resistance, and harvest level may be overridden per material and variant, and the harvest
+/// tool class per shape, through [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla
+/// default it replaces.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;
@@ -226,10 +227,11 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// Forge's harvest gate only consults [#getHarvestLevel] when a harvest tool class is set (see
-    /// ForgeHooks.canHarvestBlock), so a shape with a harvest level hook declares pickaxe, matching legacy
-    /// GregTech ore blocks.
+    /// ForgeHooks.canHarvestBlock), so a harvest level hook with no declared tool defaults to pickaxe,
+    /// matching legacy GregTech ore blocks.
     @Override
     public String getHarvestTool(int metadata) {
+        if (behavior.harvestTool() != null) return behavior.harvestTool();
         return behavior.harvestLevel() != null ? "pickaxe" : super.getHarvestTool(metadata);
     }
 
