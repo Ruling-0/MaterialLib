@@ -10,7 +10,6 @@ import net.minecraftforge.oredict.OreDictionary;
 import com.ruling_0.materiallib.Config;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.registry.GameRegistry;
 
 /// Unifies foreign mods' oredict registrations onto MaterialLib's own items: for every oredict name a MaterialLib
 /// shape backs, MaterialLib's own stack is the canonical stack, mirroring at a MaterialLib scale what GregTech's
@@ -30,7 +29,7 @@ public final class OreDictUnificator {
 
     private static final OreDictUnificator INSTANCE = new OreDictUnificator();
 
-    private OreDictAssociations associations = new OreDictAssociations(true, Set.of(), Set.of());
+    private OreDictAssociations associations = new OreDictAssociations(false, Set.of(), Set.of());
 
     private OreDictUnificator() {}
 
@@ -55,9 +54,11 @@ public final class OreDictUnificator {
     }
 
     /// Replays every oredict entry already registered under a name MaterialLib now backs, then starts listening
-    /// for later registrations; see the class javadoc. Invoked once by [ShapeRegistry#resolve], after every
-    /// shape has registered its oredict entries; other mods must not call this.
+    /// for later registrations; see the class javadoc. No-op when unification is disabled. Invoked once by
+    /// [ShapeRegistry#resolve], after every shape has registered its oredict entries; other mods must not call
+    /// this.
     void finishRegistration() {
+        if (!associations.isEnabled()) return;
         for (String name : associations.canonicalNames()) {
             for (ItemStack stack : OreDictionary.getOres(name)) {
                 recordForeign(name, stack);
@@ -72,15 +73,17 @@ public final class OreDictUnificator {
     }
 
     private void recordForeign(String oreDictName, ItemStack stack) {
+        if (!associations.isCanonicalName(oreDictName)) return;
         associations.associate(oreDictName, modIdOf(stack), stack);
     }
 
-    /// The mod that owns `stack`'s item, by its registered domain -- not whichever mod's code happens to be
-    /// active when an [OreDictionary.OreRegisterEvent] fires, which the catch-up replay in [#finishRegistration]
-    /// cannot attribute to any particular mod anyway.
+    /// The domain of `stack`'s item in the game registry, or the empty string for an item the registry does not
+    /// know.
     private static String modIdOf(ItemStack stack) {
-        GameRegistry.UniqueIdentifier id = GameRegistry.findUniqueIdentifierFor(stack.getItem());
-        return id == null ? "" : id.modId;
+        String registryName = stack.getItem().delegate.name();
+        if (registryName == null) return "";
+        int colon = registryName.indexOf(':');
+        return colon < 0 ? "" : registryName.substring(0, colon);
     }
 
     /// The stack MaterialLib backs as canonical for `oreDictName`; see [OreDictAssociations#resolveOreDict].

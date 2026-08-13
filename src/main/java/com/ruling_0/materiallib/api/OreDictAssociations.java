@@ -1,10 +1,8 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,6 +11,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 
 import net.minecraftforge.oredict.OreDictionary;
+
+import com.ruling_0.materiallib.MaterialLib;
 
 /// Tracks, per oredict name MaterialLib backs, the single MaterialLib stack that is canonical for it, and every
 /// foreign stack another mod registered under that same name -- the data a consumer needs to fold a foreign item
@@ -35,7 +35,6 @@ final class OreDictAssociations {
     private final Set<ItemKey> canonicalKeys = new HashSet<>();
     private final Map<ItemKey, ItemStack> exactAssociations = new HashMap<>();
     private final Map<Item, ItemStack> wildcardAssociations = new HashMap<>();
-    private final Map<String, List<PendingForeignEntry>> pendingByName = new HashMap<>();
 
     OreDictAssociations(boolean enabled, Set<String> excludedNames, Set<String> excludedModIds) {
         this.enabled = enabled;
@@ -43,39 +42,27 @@ final class OreDictAssociations {
         this.excludedModIds = Set.copyOf(excludedModIds);
     }
 
-    /// Declares `stack` the canonical item MaterialLib backs for `oreDictName`, then replays any foreign
-    /// registration recorded under that name before MaterialLib claimed it (see [#associate]). No-op when
-    /// unification is disabled or `oreDictName` is excluded, so MaterialLib makes no canonical claim on it and
-    /// whatever else owns the name stays canonical.
+    /// Declares `stack` the canonical item MaterialLib backs for `oreDictName`. A name already claimed keeps its
+    /// first claim. No-op when unification is disabled or `oreDictName` is excluded, so MaterialLib makes no
+    /// canonical claim on it and whatever else owns the name stays canonical.
     void registerCanonical(String oreDictName, ItemStack stack) {
         if (!enabled || excludedNames.contains(oreDictName)) return;
-        canonicalByName.put(oreDictName, stack);
-        canonicalKeys.add(ItemKey.of(stack));
-        List<PendingForeignEntry> pending = pendingByName.remove(oreDictName);
-        if (pending != null) {
-            for (PendingForeignEntry entry : pending) {
-                associate(entry.oreDictName(), entry.modId(), entry.stack());
-            }
+        ItemStack claimed = canonicalByName.putIfAbsent(oreDictName, stack);
+        if (claimed != null) {
+            MaterialLib.LOG.warn("Oredict name {} is already canonical for {}, ignoring the claim by {}",
+                oreDictName, claimed, stack);
+            return;
         }
+        canonicalKeys.add(ItemKey.of(stack));
     }
 
     /// Records that `stack`, registered under `oreDictName` by `modId`, resolves onto MaterialLib's canonical
-    /// stack for that name -- called for both a foreign mod's own
-    /// [net.minecraftforge.oredict.OreDictionary.OreRegisterEvent] and the catch-up replay of entries already in
-    /// the dictionary before MaterialLib claims its names (see [OreDictUnificator]). When `oreDictName` is not
-    /// yet claimed by [#registerCanonical], the entry is buffered and replayed if the name is claimed later;
-    /// buffered entries for a name MaterialLib never claims are simply never used.
-    ///
-    /// No-op when unification is disabled, `modId` is excluded, or `stack` already is the canonical stack (a mod
-    /// re-registering MaterialLib's own item under its own name).
+    /// stack for that name. No-op when unification is disabled, `oreDictName` is not claimed as canonical,
+    /// `modId` is excluded, or `stack` already is a canonical stack.
     void associate(String oreDictName, String modId, ItemStack stack) {
         if (!enabled) return;
         ItemStack canonical = canonicalByName.get(oreDictName);
-        if (canonical == null) {
-            pendingByName.computeIfAbsent(oreDictName, ignored -> new ArrayList<>())
-                .add(new PendingForeignEntry(oreDictName, modId, stack));
-            return;
-        }
+        if (canonical == null) return;
         if (excludedModIds.contains(modId)) return;
         ItemKey key = ItemKey.of(stack);
         if (canonicalKeys.contains(key)) return;
@@ -96,15 +83,17 @@ final class OreDictAssociations {
     }
 
     /// `stack` unified onto MaterialLib's canonical item: a copy backed by the canonical item and damage value,
-    /// at `stack`'s own size and carrying a copy of its NBT, when `stack` is a known foreign association;
-    /// `stack` itself, unchanged, when unification is disabled or no association applies.
+    /// at `stack`'s own size and carrying a copy of its NBT, when `stack` is a known foreign association; a plain
+    /// copy of `stack` when unification is disabled or no association applies. The caller owns the returned
+    /// stack. A null stack, or one with no item, is returned as it came.
     ItemStack unify(ItemStack stack) {
-        if (!enabled || stack == null || stack.getItem() == null) return stack;
+        if (stack == null || stack.getItem() == null) return stack;
+        if (!enabled) return stack.copy();
         ItemStack canonical = exactAssociations.get(ItemKey.of(stack));
         if (canonical == null) {
             canonical = wildcardAssociations.get(stack.getItem());
         }
-        if (canonical == null) return stack;
+        if (canonical == null) return stack.copy();
         ItemStack result = withAmount(canonical, stack.stackSize);
         if (stack.hasTagCompound()) {
             result.setTagCompound((NBTTagCompound) stack.getTagCompound()
@@ -112,6 +101,8 @@ final class OreDictAssociations {
         }
         return result;
     }
+
+    boolean isEnabled() { return enabled; }
 
     /// Whether MaterialLib backs `oreDictName` as canonical, i.e. [#resolveOreDict] would return a stack for it.
     boolean isCanonicalName(String oreDictName) {
@@ -134,8 +125,6 @@ final class OreDictAssociations {
         copy.stackSize = amount;
         return copy;
     }
-
-    private record PendingForeignEntry(String oreDictName, String modId, ItemStack stack) {}
 
     private record ItemKey(Item item, int meta) {
 

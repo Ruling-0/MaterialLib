@@ -2,8 +2,8 @@ package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Set;
@@ -24,6 +24,14 @@ class OreDictAssociationsTest {
 
     private static OreDictAssociations enabled() {
         return new OreDictAssociations(true, Set.of(), Set.of());
+    }
+
+    private static void assertUnifiesToACopyOfItself(OreDictAssociations associations, ItemStack stack) {
+        ItemStack unified = associations.unify(stack);
+        assertNotSame(stack, unified);
+        assertEquals(stack.getItem(), unified.getItem());
+        assertEquals(stack.getItemDamage(), unified.getItemDamage());
+        assertEquals(stack.stackSize, unified.stackSize);
     }
 
     @Test
@@ -64,8 +72,7 @@ class OreDictAssociationsTest {
         assertNull(associations.resolveOreDict("ingotTestIron"));
         assertFalse(associations.isCanonicalName("ingotTestIron"));
         assertFalse(associations.isCanonical(canonicalStack));
-        ItemStack foreign = new ItemStack(foreignItem, 1, 0);
-        assertSame(foreign, associations.unify(foreign));
+        assertUnifiesToACopyOfItself(associations, new ItemStack(foreignItem, 1, 0));
     }
 
     @Test
@@ -82,44 +89,19 @@ class OreDictAssociationsTest {
     }
 
     @Test
-    void catchUpRegistrationBeforeCanonicalIsClaimedIsBufferedAndReplayed() {
-        OreDictAssociations associations = enabled();
-        ItemStack foreign = new ItemStack(foreignItem, 7, 0);
-
-        associations.associate("ingotTestIron", "foreignmod", foreign);
-        associations.registerCanonical("ingotTestIron", canonicalStack);
-        ItemStack unified = associations.unify(foreign);
-
-        assertEquals(mlItem, unified.getItem());
-        assertEquals(7, unified.stackSize);
-    }
-
-    @Test
-    void aBufferedEntryForANameNeverClaimedIsSimplyNeverUsed() {
-        OreDictAssociations associations = enabled();
-        ItemStack foreign = new ItemStack(foreignItem, 1, 0);
-
-        associations.associate("ingotGhost", "foreignmod", foreign);
-
-        assertFalse(associations.isCanonicalName("ingotGhost"));
-        assertSame(foreign, associations.unify(foreign));
-    }
-
-    @Test
-    void unifyingAStackWithNoAssociationReturnsItUnchanged() {
-        OreDictAssociations associations = enabled();
-        associations.registerCanonical("ingotTestIron", canonicalStack);
-        ItemStack unrelated = new ItemStack(foreignItem, 1, 0);
-
-        assertSame(unrelated, associations.unify(unrelated));
-    }
-
-    @Test
-    void unifyingTheCanonicalStackItselfReturnsItUnchanged() {
+    void unifyingAStackWithNoAssociationReturnsACopyOfIt() {
         OreDictAssociations associations = enabled();
         associations.registerCanonical("ingotTestIron", canonicalStack);
 
-        assertSame(canonicalStack, associations.unify(canonicalStack));
+        assertUnifiesToACopyOfItself(associations, new ItemStack(foreignItem, 1, 0));
+    }
+
+    @Test
+    void unifyingTheCanonicalStackItselfReturnsACopyOfIt() {
+        OreDictAssociations associations = enabled();
+        associations.registerCanonical("ingotTestIron", canonicalStack);
+
+        assertUnifiesToACopyOfItself(associations, canonicalStack);
     }
 
     @Test
@@ -129,8 +111,7 @@ class OreDictAssociationsTest {
 
         associations.associate("ingotTestIron", "someothermod", new ItemStack(mlItem, 1, 0));
 
-        ItemStack probe = new ItemStack(mlItem, 1, 0);
-        assertSame(probe, associations.unify(probe));
+        assertUnifiesToACopyOfItself(associations, new ItemStack(mlItem, 1, 0));
     }
 
     @Test
@@ -141,7 +122,7 @@ class OreDictAssociationsTest {
 
         associations.associate("ingotTestIron", "excludedmod", foreign);
 
-        assertSame(foreign, associations.unify(foreign));
+        assertUnifiesToACopyOfItself(associations, foreign);
     }
 
     @Test
