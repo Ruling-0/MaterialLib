@@ -22,11 +22,11 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// the registry enforces that at resolve.
 ///
 /// Renders in two passes: an untinted empty-container texture underneath the texture set's texture for this
-/// shape, which supplies the fluid fill and is tinted with [StandardProperties#TINT]. The container looks the
-/// same for every material, so the empty texture is a property of the shape rather than of a texture set: it
-/// defaults to `<modid>:materials/<name>_empty` in the shape's own domain, or the path
-/// [FluidInContainerShapeBuilder#emptyIcon] sets. For a path naming no existing texture file, see
-/// [#registerIcons].
+/// shape, which supplies the fluid fill and is tinted with [StandardProperties#CELL_TINT] when the material sets
+/// it, or with the fluid's fill tint (see [ShapeFluid#tintOf]) otherwise. The container looks the same for every
+/// material, so the empty texture is a property of the shape rather than of a texture set: it defaults to
+/// `<modid>:materials/<name>_empty` in the shape's own domain, or the path [FluidInContainerShapeBuilder#emptyIcon]
+/// sets. For a path naming no existing texture file, see [#registerIcons].
 public class ShapeFluidInContainer extends ShapeItem {
 
     private final Shape fluidShape;
@@ -143,9 +143,7 @@ public class ShapeFluidInContainer extends ShapeItem {
         return emptyIcon;
     }
 
-    /// White for the untinted container base in pass 0, and the fill tint for every later pass:
-    /// [StandardProperties#CELL_TINT] when the material sets it, or the fluid fill tint (see [ShapeFluid#tintOf])
-    /// otherwise.
+    /// White for the untinted container base in pass 0, the fill tint (see the class doc) for every later pass.
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {

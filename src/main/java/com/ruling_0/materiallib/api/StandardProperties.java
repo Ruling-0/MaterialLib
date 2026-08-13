@@ -27,8 +27,8 @@ public final class StandardProperties {
     public static final Property<Integer> TINT = Property.of(MaterialLib.MODID, "tint", 0xFFFFFFFF);
 
     /// ARGB tint applied to a fluid shape's fill icon in place of [#TINT], for fluid art that already encodes its
-    /// color. Null when unset, falling back to [#TINT]. Applies only to the fluid fill layer; every other shape a
-    /// material generates uses [#TINT].
+    /// color. Null when unset, falling back to [#TINT]. Applies to a fluid's fill layer and to the fill layer of a
+    /// [ShapeFluidInContainer] holding it; every other shape uses [#TINT].
     public static final Property<Integer> FLUID_TINT = Property.of(MaterialLib.MODID, "fluidTint");
 
     /// ARGB tint applied to a [ShapeBlock#hasBaseTexture] composite's overlay icon layer in place of [#TINT], for

@@ -13,18 +13,15 @@ import org.junit.jupiter.api.Test;
 class ExampleContentTest {
 
     @Test
-    void testOreStoneBaseTextureResolvesToTheVanillaStoneTexture() {
-        ResourceLocation location = ResourceUtil
+    void variantBaseTexturesResolveToTheVanillaBlockTextures() {
+        ResourceLocation stone = ResourceUtil
             .getCompleteBlockTextureResourceLocation(ExampleContent.TEST_ORE_STONE_BASE_TEXTURE);
-        assertEquals("minecraft", location.getResourceDomain());
-        assertEquals("textures/blocks/stone.png", location.getResourcePath());
-    }
+        assertEquals("minecraft", stone.getResourceDomain());
+        assertEquals("textures/blocks/stone.png", stone.getResourcePath());
 
-    @Test
-    void testOreCobblestoneBaseTextureResolvesToTheVanillaCobblestoneTexture() {
-        ResourceLocation location = ResourceUtil
+        ResourceLocation cobblestone = ResourceUtil
             .getCompleteBlockTextureResourceLocation(ExampleContent.TEST_ORE_COBBLESTONE_BASE_TEXTURE);
-        assertEquals("minecraft", location.getResourceDomain());
-        assertEquals("textures/blocks/cobblestone.png", location.getResourcePath());
+        assertEquals("minecraft", cobblestone.getResourceDomain());
+        assertEquals("textures/blocks/cobblestone.png", cobblestone.getResourcePath());
     }
 }
