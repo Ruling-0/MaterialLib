@@ -36,12 +36,10 @@ import cpw.mods.fml.relauncher.SideOnly;
 ///
 /// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
 /// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) under the tinted
-/// material icon; see [#registerBlockIcons]. [ShapeBlockRenderingHandler] composites both layers -- in world and in
-/// every item form (GUI slot, hotbar, held, and dropped) -- in a single draw per block, driven by [#getIcon],
-/// [#getRenderColor], and [#colorMultiplier] through [#layerOverride]; see [#hasBaseTexture]. Drops, hardness,
-/// resistance, and harvest level may be overridden per material and variant, and the harvest tool class per
-/// shape, through [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla default it
-/// replaces.
+/// material icon, composited by [ShapeBlockRenderingHandler]; see [#registerBlockIcons] and [#hasBaseTexture].
+/// Drops, hardness, resistance, and harvest level may be overridden per material and variant, and the harvest tool
+/// class per shape, through [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla default
+/// it replaces.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;
@@ -175,12 +173,7 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// Registers [#baseTexture] if it names an existing file, or the [ShapeIcons#EMPTY_ICON] placeholder -- logged
-    /// once -- if it does not, the same existence-checked fallback [ShapeIcons] uses for a material's texture-set
-    /// icon. Without this check a bad base texture path renders as Minecraft's own unlogged missing-texture
-    /// checkerboard instead of a diagnosable warning. The existence check and the registration both resolve
-    /// [#baseTexture] itself -- never a derived or re-formatted copy of it -- so they always agree; see
-    /// [com.gtnewhorizon.gtnhlib.util.ResourceUtil#getCompleteBlockTextureResourceLocation] for how that single
-    /// string maps to the file the check looks for.
+    /// once -- if it does not.
     private IIcon registerBaseIcon(IIconRegister register) {
         if (ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(baseTexture))) {
             return register.registerIcon(baseTexture);
@@ -197,30 +190,20 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// Whether this variant draws a base texture layer under the tinted material icon; see [#registerBlockIcons].
-    /// [ClientProxy][com.ruling_0.materiallib.ClientProxy] uses this to decide which block shapes need
-    /// [#setRenderType] pointed at [ShapeBlockRenderingHandler] -- a plain block shape has nothing to composite and
-    /// keeps the vanilla full-cube render type (0).
     public boolean hasBaseTexture() {
         return baseTexture != null;
     }
 
-    /// This block's [#getRenderType]; [ClientProxy][com.ruling_0.materiallib.ClientProxy] sets this once, at
-    /// preInit, to [ShapeBlockRenderingHandler]'s render ID for every block [#hasBaseTexture]. Never called on the
-    /// dedicated server, where [ShapeBlockRenderingHandler] itself must never classload.
+    /// Sets the render type [#getRenderType] reports: [ShapeBlockRenderingHandler]'s render ID for a
+    /// [#hasBaseTexture] composite, or the vanilla full-cube default (0). Client only.
     public void setRenderType(int renderType) { this.renderType = renderType; }
 
     @Override
     public int getRenderType() { return renderType; }
 
     /// Forces [#getIcon], [#getRenderColor], and [#colorMultiplier] to resolve the base layer (0) or the tinted
-    /// overlay layer (1) regardless of metadata, or -1 to resolve the base layer by default.
-    /// [ShapeBlockRenderingHandler] toggles this around each of the two draws its single [#hasBaseTexture]
-    /// composite needs -- both the world and the item-form (GUI slot, hotbar, held, and dropped) renderers set it
-    /// explicitly before every draw, so -1 is only reached by other code that calls [#getIcon] or [#getRenderColor]
-    /// directly, e.g. a mod inspecting an icon outside `RenderItem` entirely. The untinted base is a recognizable
-    /// icon in that case, where the tinted overlay alone renders as a transparent slot with a few floating tinted
-    /// flecks, since the overlay icon is a sparse, mostly-transparent layer meant to be drawn over the base, never
-    /// standalone.
+    /// overlay layer (1). The resting value -1 resolves the base layer, the only one recognizable on its own for a
+    /// caller reading icons outside [ShapeBlockRenderingHandler]'s draws.
     void setLayerOverride(int layer) { layerOverride = layer; }
 
     /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
@@ -257,13 +240,10 @@ public class ShapeBlock extends Block implements BackedShape {
         return tintFor(world.getBlockMetadata(x, y, z));
     }
 
-    /// The RGB tint of the material at the given metadata, or white when the metadata maps to no live material.
-    /// Block render colors carry no alpha, so the resolved ARGB value is masked to its low 24 bits. For a
-    /// [#hasBaseTexture] composite, this resolves the overlay layer's tint: [StandardProperties#BLOCK_OVERLAY_TINT]
-    /// when the material sets it, or [StandardProperties#TINT] otherwise, the same fallback [ShapeFluid] uses for
-    /// [StandardProperties#FLUID_TINT]. A plain block shape with no base texture -- e.g. a material's compressed
-    /// storage block -- has no overlay layer to speak of and resolves [StandardProperties#BLOCK_TINT] when the
-    /// material sets it, or [StandardProperties#TINT] otherwise.
+    /// The RGB tint of the material at the given metadata, or white when the metadata maps to no live material:
+    /// [StandardProperties#BLOCK_OVERLAY_TINT] for a [#hasBaseTexture] composite's overlay layer,
+    /// [StandardProperties#BLOCK_TINT] for a plain block, [StandardProperties#TINT] when the specific property is
+    /// unset. Block render colors carry no alpha, so the resolved ARGB value is masked to its low 24 bits.
     private int tintFor(int meta) {
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         if (material == null) return 0xFFFFFF;

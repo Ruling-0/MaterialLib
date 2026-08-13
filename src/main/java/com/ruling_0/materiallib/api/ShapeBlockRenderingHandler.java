@@ -13,33 +13,18 @@ import cpw.mods.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 
 /// Renders a [ShapeBlock#hasBaseTexture] composite -- an untinted base texture under a tinted material icon -- as a
-/// single draw, in world and in every item form (GUI slot, hotbar, held, and dropped).
-/// [com.ruling_0.materiallib.ClientProxy]
-/// registers one instance of this handler for every such block, through [#RENDER_ID] and [ShapeBlock#setRenderType];
-/// a block with no base texture keeps the vanilla full-cube render type (0) and never reaches this class.
+/// single draw, in world and in every item form (GUI slot, hotbar, held, and dropped). A block with no base
+/// texture keeps the vanilla full-cube render type and never reaches this handler; see [ShapeBlock#setRenderType].
 ///
-/// Both [#renderWorldBlock] and [#renderInventoryBlock] draw the base layer and the tinted overlay back-to-back
-/// into the same [Tessellator] batch, toggling [ShapeBlock#setLayerOverride] between the two so [ShapeBlock#getIcon],
-/// [ShapeBlock#getRenderColor], and [ShapeBlock#colorMultiplier] resolve the base layer for the first draw and the
-/// overlay for the second -- the composite that used to take two separate render passes (world chunk tessellation's
-/// solid and alpha passes, or two `renderBlockAsItem` calls) now happens in one. Because the two layers share a
-/// tessellator batch, their coplanar quads are submitted back-to-back with identical vertex data, so the depth test
-/// resolves the tie deterministically in submission order instead of z-fighting the way two independent draw calls
-/// would; this is the same technique GT5-Unofficial's `gregtech.common.render.GTRendererBlock` uses for its own
-/// texture-array composites.
+/// Both [#renderWorldBlock] and [#renderInventoryBlock] draw the two layers back-to-back into the same
+/// [Tessellator] batch, toggling [ShapeBlock#setLayerOverride] so [ShapeBlock#getIcon],
+/// [ShapeBlock#getRenderColor], and [ShapeBlock#colorMultiplier] resolve the base for the first draw and the
+/// overlay for the second. Sharing one batch submits the coplanar quads with identical vertex data, so the depth
+/// test resolves the tie in submission order instead of z-fighting.
 ///
-/// Composite blocks keep the vanilla render-pass defaults (`getRenderBlockPass` 0, `canRenderInPass` only pass 0),
-/// so the whole composite -- opaque base included -- lives in the solid chunk pass, where the alpha test cuts out
-/// the overlay's transparent pixels the same way it did for legacy GT ores (whose composite quads all draw in pass
-/// 0 too: every GT `ITexture` gates itself by its `IIconContainer#canRenderInPass`, default pass 0). The overlay
-/// icons are cutout textures, not translucent ones, so the blended pass buys nothing; an opaque cube there would
-/// instead sort against genuine translucents (water, glass) and pay for translucency sorting in Angelica's mesher.
-/// Item contexts likewise cut out via the alpha test alone: `RenderItem` and `ItemRenderer` only enable blending
-/// for a block whose `getRenderBlockPass` is nonzero, and the default 0 gives the composite the same alpha-tested
-/// draw legacy ore items always had.
-///
-/// This handler holds no mutable state, so one instance is safe to reuse from any thread a world mesher (e.g.
-/// Angelica's Celeritas) calls it from.
+/// The whole composite draws in the solid chunk pass (the vanilla render-pass defaults), where the alpha test cuts
+/// out the overlay's transparent pixels; the overlay icons are cutout textures, not translucent ones, matching
+/// legacy GT ore blocks.
 @SideOnly(Side.CLIENT)
 public final class ShapeBlockRenderingHandler implements ISimpleBlockRenderingHandler {
 

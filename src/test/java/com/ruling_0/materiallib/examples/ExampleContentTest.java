@@ -8,12 +8,8 @@ import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins testOre's declared variant base textures against
-/// [ResourceUtil#getCompleteBlockTextureResourceLocation]'s convention, independent of any live Minecraft resource
-/// manager (see `ShapeBlockTest`'s javadoc for why the existence check itself still needs a live client). A
-/// `blocks/` segment folded into the identifier -- e.g. `"minecraft:blocks/stone"` instead of `"minecraft:stone"`
-/// -- resolves to a path no vanilla jar has (`textures/blocks/blocks/stone.png`) and silently falls back to the
-/// transparent placeholder icon; this test would have failed against that regression.
+/// Pins testOre's declared variant base textures to [ResourceUtil#getCompleteBlockTextureResourceLocation]'s
+/// convention: no `blocks/` segment in the identifier, naming files the 1.7.10 vanilla jar ships.
 class ExampleContentTest {
 
     @Test

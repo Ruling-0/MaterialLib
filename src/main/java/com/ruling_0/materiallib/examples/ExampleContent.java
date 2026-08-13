@@ -28,13 +28,8 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// TestGold show per-pair display names.
 public final class ExampleContent {
 
-    /// The base texture testOre's `stone` variant draws under its tinted material icon; see [#register]. Package
-    /// visible so [ExampleContentTest][com.ruling_0.materiallib.examples.ExampleContentTest] pins it against
-    /// [com.gtnewhorizon.gtnhlib.util.ResourceUtil#getCompleteBlockTextureResourceLocation]'s convention -- a
-    /// path with no `blocks/` segment, since that prefix is implicit in the base path the resource-location lookup
-    /// already applies, naming a file that actually ships in this Minecraft version's vanilla jar. A doubled
-    /// `blocks/` segment, or a texture 1.7.10 never shipped (granite/diorite/andesite stone variants are a 1.8+
-    /// feature), resolves to a nonexistent file and silently falls back to the transparent placeholder icon.
+    /// The base texture testOre's `stone` variant draws under its tinted material icon. Must name a texture the
+    /// 1.7.10 vanilla jar ships, with no `blocks/` segment (that folder is implicit in block icon identifiers).
     static final String TEST_ORE_STONE_BASE_TEXTURE = "minecraft:stone";
 
     /// As [#TEST_ORE_STONE_BASE_TEXTURE], for testOre's `cobblestone` variant.

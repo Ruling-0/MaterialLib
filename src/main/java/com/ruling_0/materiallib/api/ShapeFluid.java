@@ -176,9 +176,8 @@ public class ShapeFluid implements ServedShape {
     }
 
     /// Binds each material's still and flowing fluid icon from [#iconPath], or the [ShapeIcons#EMPTY_ICON]
-    /// placeholder -- logged once per material -- if that path names no existing texture file, the same
-    /// existence-checked fallback [ShapeIcons] uses for a block or item shape's icon. Fluid textures live on the
-    /// block atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
+    /// placeholder -- logged once per material -- if that path names no existing texture file. Fluid textures live
+    /// on the block atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
     @SideOnly(Side.CLIENT)
     void registerIcons(IIconRegister register) {
         for (Material material : served.get()) {
@@ -212,7 +211,7 @@ public class ShapeFluid implements ServedShape {
     }
 
     /// A material's fluid, naming itself from the shape's display format and coloring itself with the material's
-    /// [StandardProperties#TINT] so renderers that read [Fluid#getColor] tint the fluid per material. 1.7.10 fluids
+    /// fill tint (see [#tintOf]) so renderers that read [Fluid#getColor] tint the fluid per material. 1.7.10 fluids
     /// expose no color setter, only an overridable [Fluid#getColor], which is why this is a subclass.
     private final class MaterialFluid extends Fluid {
 
@@ -234,9 +233,7 @@ public class ShapeFluid implements ServedShape {
     }
 
     /// The ARGB fill tint for `material`'s fluid: [StandardProperties#FLUID_TINT] when set, or
-    /// [StandardProperties#TINT] otherwise. [ShapeFluidInContainer] falls back to this for its own fill layer when
-    /// the material sets no [StandardProperties#CELL_TINT]; a caller reading a fluid (rather than an item) color
-    /// masks off the alpha byte itself, as [Fluid#getColor] expects (see [MaterialFluid#getColor]).
+    /// [StandardProperties#TINT] otherwise.
     static int tintOf(Material material) {
         Integer fluidTint = material.getProperty(StandardProperties.FLUID_TINT);
         return fluidTint != null ? fluidTint : material.getProperty(StandardProperties.TINT);

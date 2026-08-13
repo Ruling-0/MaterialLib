@@ -8,13 +8,8 @@ import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins [ResourceUtil]'s block-texture path construction, the same construction
-/// [ShapeBlock#registerBaseIcon] uses both to existence-check a variant's base texture and, on success, to
-/// register it -- independent of any live Minecraft resource manager (see [ShapeBlockTest]'s javadoc for why the
-/// existence check itself still needs a live client). A wrong construction here would make a real texture
-/// (`minecraft:stone`) register as if it were missing, or send a mixed-case cross-mod domain
-/// (`GalacticraftCore:moon`) looking under the wrong domain; 1.7.10 resource lookups are case-sensitive against
-/// the packed jar entries a resource pack actually declares.
+/// Pins the block-texture path construction [ShapeBlock]'s base-texture existence check and registration both
+/// resolve through. 1.7.10 resource lookups are case-sensitive, so a mixed-case domain must survive intact.
 class ResourceUtilBaseTexturePathTest {
 
     @Test

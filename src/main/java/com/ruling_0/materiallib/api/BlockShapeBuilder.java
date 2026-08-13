@@ -61,12 +61,10 @@ public final class BlockShapeBuilder {
 
     /// Declares the untinted background texture drawn under `variant`'s tinted material icon (e.g. the stone
     /// background of an ore), as a `domain:path` icon identifier (`"minecraft:stone"`) independent of any
-    /// material's texture set -- the same convention [TextureSet#iconPath] uses, resolved the same way; do not
-    /// include the `blocks/` folder, it is implicit (see
-    /// [com.gtnewhorizon.gtnhlib.util.ResourceUtil#getCompleteBlockTextureResourceLocation]). `texture` is
-    /// composited under the tinted material icon by [ShapeBlockRenderingHandler]; see [ShapeBlock#hasBaseTexture].
-    /// Optional -- a variant with no base texture renders as a single tinted layer. `variant` must be one of the
-    /// names passed to [#variants].
+    /// material's texture set; the `blocks/` folder is implicit (see
+    /// [com.gtnewhorizon.gtnhlib.util.ResourceUtil#getCompleteBlockTextureResourceLocation]).
+    /// [ShapeBlockRenderingHandler] composites the two layers. Optional -- a variant with no base texture renders
+    /// as a single tinted layer. `variant` must be one of the names passed to [#variants].
     public BlockShapeBuilder variantBase(String variant, String texture) {
         Objects.requireNonNull(variant, "variant must not be null");
         if (texture == null || texture.isEmpty()) {
