@@ -176,8 +176,8 @@ public class ShapeFluid implements ServedShape {
     }
 
     /// Binds each material's still and flowing fluid icon from [#iconPath], or the [ShapeIcons#EMPTY_ICON]
-    /// placeholder -- logged once per material -- if that path names no existing texture file. Fluid textures live
-    /// on the block atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
+    /// placeholder if that path names no existing texture file. Fluid textures live on the block atlas, so this
+    /// runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
     @SideOnly(Side.CLIENT)
     void registerIcons(IIconRegister register) {
         for (Material material : served.get()) {

@@ -171,8 +171,8 @@ public class ShapeBlock extends Block implements BackedShape {
         }
     }
 
-    /// Registers [#baseTexture] if it names an existing file, or the [ShapeIcons#EMPTY_ICON] placeholder -- logged
-    /// once -- if it does not.
+    /// Registers [#baseTexture] if it names an existing file, or the [ShapeIcons#EMPTY_ICON] placeholder if it
+    /// does not.
     private IIcon registerBaseIcon(IIconRegister register) {
         if (ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(baseTexture))) {
             return register.registerIcon(baseTexture);

@@ -102,7 +102,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     }
 
     /// Registers this container's fill icons, then its base icon at [#emptyIconPath], or the
-    /// [ShapeIcons#EMPTY_ICON] placeholder -- logged once -- if that path names no existing texture file.
+    /// [ShapeIcons#EMPTY_ICON] placeholder if that path names no existing texture file.
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister register) {
