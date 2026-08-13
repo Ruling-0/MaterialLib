@@ -56,7 +56,6 @@ public class ShapeBlock extends Block implements BackedShape {
     private final ShapeIcons icons = new ShapeIcons(false);
     private IIcon baseIcon;
     private boolean warnedMissingBaseTexture;
-    private int layerOverride = -1;
     private int renderType = 0;
 
     /// Creates a block shape backed by a [net.minecraft.block.material.Material#iron] block. `oreDicts` are the
@@ -195,16 +194,24 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// Sets the render type [#getRenderType] reports: [ShapeBlockRenderingHandler]'s render ID for a
-    /// [#hasBaseTexture] composite, or the vanilla full-cube default (0). Client only.
+    /// [#hasBaseTexture] composite, or the vanilla full-cube default (0).
+    @SideOnly(Side.CLIENT)
     public void setRenderType(int renderType) { this.renderType = renderType; }
 
     @Override
     public int getRenderType() { return renderType; }
 
-    /// Forces [#getIcon], [#getRenderColor], and [#colorMultiplier] to resolve the base layer (0) or the tinted
-    /// overlay layer (1). The resting value -1 resolves the base layer, the only one recognizable on its own for a
-    /// caller reading icons outside [ShapeBlockRenderingHandler]'s draws.
-    void setLayerOverride(int layer) { layerOverride = layer; }
+    /// This variant's base texture icon, or null when it declares none.
+    @SideOnly(Side.CLIENT)
+    IIcon baseIcon() {
+        return baseIcon;
+    }
+
+    /// The material icon bound at the given metadata; see [ShapeIcons#get].
+    @SideOnly(Side.CLIENT)
+    IIcon materialIcon(int meta) {
+        return icons.get(meta);
+    }
 
     /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
     /// to them. The default implementation defers to this block's [BlockIconPather]. A subclass may override this
@@ -216,7 +223,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
-        if (baseTexture != null && layerOverride != 1) {
+        if (baseTexture != null) {
             return baseIcon;
         }
         return icons.get(meta);
@@ -225,7 +232,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderColor(int meta) {
-        if (baseTexture != null && layerOverride != 1) {
+        if (baseTexture != null) {
             return 0xFFFFFF;
         }
         return tintFor(meta);
@@ -234,7 +241,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int colorMultiplier(IBlockAccess world, int x, int y, int z) {
-        if (baseTexture != null && layerOverride != 1) {
+        if (baseTexture != null) {
             return 0xFFFFFF;
         }
         return tintFor(world.getBlockMetadata(x, y, z));
@@ -244,7 +251,8 @@ public class ShapeBlock extends Block implements BackedShape {
     /// [StandardProperties#BLOCK_OVERLAY_TINT] for a [#hasBaseTexture] composite's overlay layer,
     /// [StandardProperties#BLOCK_TINT] for a plain block, [StandardProperties#TINT] when the specific property is
     /// unset. Block render colors carry no alpha, so the resolved ARGB value is masked to its low 24 bits.
-    private int tintFor(int meta) {
+    @SideOnly(Side.CLIENT)
+    int tintFor(int meta) {
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         if (material == null) return 0xFFFFFF;
         Integer override = material.getProperty(

@@ -33,14 +33,8 @@ class ShapeBlockTest {
 
     @Test
     void layerZeroIsUntintedWhenABaseTextureExists() {
-        withBaseTexture.setLayerOverride(0);
-        try {
-            assertEquals(0xFFFFFF, withBaseTexture.getRenderColor(0));
-            assertEquals(0xFFFFFF, withBaseTexture.getRenderColor(999));
-        }
-        finally {
-            withBaseTexture.setLayerOverride(-1);
-        }
+        assertEquals(0xFFFFFF, withBaseTexture.getRenderColor(0));
+        assertEquals(0xFFFFFF, withBaseTexture.getRenderColor(999));
     }
 
     @Test

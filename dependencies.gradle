@@ -40,6 +40,9 @@ dependencies {
 
     implementation('com.github.GTNewHorizons:Postea:1.2.5:dev')
 
+    // Only for the @ThreadSafeISBRH annotation; an unresolvable annotation class is ignored at runtime.
+    compileOnly('com.github.GTNewHorizons:Angelica:2.1.49:dev') { transitive = false }
+
     // EndlessIDs required for >16 materials
     runtimeOnly('com.falsepattern:chunkapi-mc1.7.10:0.8.3:dev')
     runtimeOnly('com.falsepattern:endlessids-mc1.7.10:1.7.3:dev')
