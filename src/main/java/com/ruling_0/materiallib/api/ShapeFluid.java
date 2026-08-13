@@ -24,7 +24,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
 /// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve, configures
 /// newly registered fluids through this shape's [FluidConfigurer], and, on the client, binds each fluid's still and
-/// flowing icons from this shape's [FluidIconPather] when it names an existing file (see
+/// flowing icons from this shape's [IconPather] when it names an existing file (see
 /// [FluidShapeBuilder#iconPath]), and otherwise from the material's texture sets -- the same chain [ShapeIcons]
 /// walks for an item or block icon.
 ///
@@ -42,7 +42,7 @@ public class ShapeFluid implements ServedShape {
     private final String displayNameFormat;
     private final FluidNamer namer;
     private final FluidConfigurer configurer;
-    private final FluidIconPather iconPather;
+    private final IconPather iconPather;
 
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeProperties props = new ShapeProperties();
@@ -65,9 +65,9 @@ public class ShapeFluid implements ServedShape {
     }
 
     /// As [#ShapeFluid(String, String, String, FluidNamer, FluidConfigurer)], additionally setting this shape's
-    /// [FluidIconPather], or null for none; see [#resolveIconPath].
+    /// [IconPather], or null for none; see [#resolveIconPath].
     ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer, FluidConfigurer configurer,
-               FluidIconPather iconPather) {
+               IconPather iconPather) {
         this.modid = Names.validate("fluid shape modid", modid);
         this.name = Names.validate("fluid shape name", name);
         this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
@@ -198,7 +198,7 @@ public class ShapeFluid implements ServedShape {
         }
     }
 
-    /// The icon path to register for `material`'s fluid: this shape's [FluidIconPather] when set and it names an
+    /// The icon path to register for `material`'s fluid: this shape's [IconPather] when set and it names an
     /// existing file, otherwise the first name `material`'s texture-set chain resolves (see [ShapeIcons#resolve]),
     /// or the [ShapeIcons#EMPTY_ICON] placeholder when neither does. Never null.
     String resolveIconPath(Material material) {

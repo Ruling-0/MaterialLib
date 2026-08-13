@@ -50,7 +50,7 @@ public class ShapeBlock extends Block implements BackedShape {
     private final String variant;
     private final String baseTexture;
     private final BlockBehavior behavior;
-    private final BlockIconPather iconPather;
+    private final IconPather iconPather;
 
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeProperties props = new ShapeProperties();
@@ -80,7 +80,7 @@ public class ShapeBlock extends Block implements BackedShape {
     /// background icon path, independent of any material's texture set, or null for none; `iconPather` is this
     /// shape's optional [BlockShapeBuilder#iconPath] override, or null for none.
     ShapeBlock(String modid, String name, String displayNameFormat, String[] oreDicts, String groupName,
-               String variant, String baseTexture, BlockBehavior behavior, BlockIconPather iconPather) {
+               String variant, String baseTexture, BlockBehavior behavior, IconPather iconPather) {
         this(
             net.minecraft.block.material.Material.iron,
             modid,
@@ -96,7 +96,7 @@ public class ShapeBlock extends Block implements BackedShape {
 
     private ShapeBlock(net.minecraft.block.material.Material blockMaterial, String modid, String name,
                        String displayNameFormat, String[] oreDicts, String groupName, String variant,
-                       String baseTexture, BlockBehavior behavior, BlockIconPather iconPather) {
+                       String baseTexture, BlockBehavior behavior, IconPather iconPather) {
         super(blockMaterial);
         this.modid = Names.validate("block shape modid", modid);
         this.name = Names.validate("block shape name", name);
@@ -234,7 +234,7 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
-    /// to them. The default implementation defers to this block's [BlockIconPather]. A subclass may override this
+    /// to them. The default implementation defers to this block's [IconPather]. A subclass may override this
     /// directly.
     protected String iconPathFor(Material material) {
         return iconPather != null ? iconPather.iconPath(this, material) : null;

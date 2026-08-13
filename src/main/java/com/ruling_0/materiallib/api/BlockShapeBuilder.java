@@ -25,7 +25,7 @@ public final class BlockShapeBuilder {
     private BlockFloatFunction resistanceFn;
     private BlockHarvestLevelFunction harvestLevelFn;
     private String harvestTool;
-    private BlockIconPather iconPather;
+    private IconPather iconPather;
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
 
@@ -127,8 +127,8 @@ public final class BlockShapeBuilder {
         return this;
     }
 
-    /// Sets the per-material icon path override, in place of the material's texture set; see [BlockIconPather].
-    public BlockShapeBuilder iconPath(BlockIconPather pather) {
+    /// Sets the per-material icon path override, tried ahead of the material's texture set; see [IconPather].
+    public BlockShapeBuilder iconPath(IconPather pather) {
         this.iconPather = Objects.requireNonNull(pather, "pather must not be null");
         return this;
     }

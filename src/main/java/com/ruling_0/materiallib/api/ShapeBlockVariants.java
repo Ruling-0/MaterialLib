@@ -42,7 +42,7 @@ final class ShapeBlockVariants implements BackedShape {
     /// null for none). Fails when `variantBases` names a variant not in `variantNames`.
     static ShapeBlockVariants create(String modid, String name, String displayNameFormat, String[] oreDicts,
                                      List<String> variantNames, Map<String, String> variantBases,
-                                     BlockBehavior behavior, BlockIconPather iconPather, String iconName) {
+                                     BlockBehavior behavior, IconPather iconPather, String iconName) {
         List<String> validatedOreDicts = Names.validateOreDicts(oreDicts);
         requireDeclaredVariants(variantNames, variantBases.keySet(), "a variant base texture");
         String[] oreDictsArray = validatedOreDicts.toArray(new String[0]);
