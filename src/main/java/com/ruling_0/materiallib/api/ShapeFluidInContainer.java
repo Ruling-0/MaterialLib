@@ -25,9 +25,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// shape, which supplies the fluid fill and is tinted with [StandardProperties#TINT]. The container looks the
 /// same for every material, so the empty texture is a property of the shape rather than of a texture set: it
 /// defaults to `<modid>:materials/<name>_empty` in the shape's own domain, or the path
-/// [FluidInContainerShapeBuilder#emptyIcon] sets. A path naming a texture file that does not exist registers the
-/// [ShapeIcons#EMPTY_ICON] placeholder instead, logged once, so a missing base texture degrades gracefully rather
-/// than rendering missingno; see [#registerIcons].
+/// [FluidInContainerShapeBuilder#emptyIcon] sets. A path naming no existing texture file registers the
+/// [ShapeIcons#EMPTY_ICON] placeholder instead, logged once; see [#registerIcons].
 public class ShapeFluidInContainer extends ShapeItem {
 
     private final Shape fluidShape;
@@ -79,9 +78,8 @@ public class ShapeFluidInContainer extends ShapeItem {
         return resolveEmptyIconPath(getModId(), getName(), emptyIconPath);
     }
 
-    /// The icon path to register for a container's untinted base texture: `override` -- the path
-    /// [FluidInContainerShapeBuilder#emptyIcon] set -- when non-null, or `<modid>:materials/<name>_empty` in the
-    /// container's own domain by default.
+    /// The icon path to register for a container's untinted base texture: `override` when non-null, or
+    /// `<modid>:materials/<name>_empty` in the container's own domain.
     static String resolveEmptyIconPath(String modid, String name, String override) {
         return override != null ? override : modid + ":materials/" + name + "_empty";
     }
@@ -135,16 +133,15 @@ public class ShapeFluidInContainer extends ShapeItem {
         return true;
     }
 
-    /// The untinted container base for pass 0, and the material's fill icon -- [ShapeItem]'s pass-0 icon, with its
-    /// placeholder fallback -- for every later pass. The fill pass must not fall through to vanilla
-    /// [net.minecraft.item.Item#getIconFromDamage]'s `itemIcon` field, which no shape item ever assigns.
+    /// The untinted container base for pass 0, and the material's fill icon -- [ShapeItem]'s pass-0 icon -- for
+    /// every later pass.
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamageForRenderPass(int damage, int pass) {
         return pass == 0 ? emptyIcon : super.getIconFromDamageForRenderPass(damage, 0);
     }
 
-    /// The single-icon form simple renderers use, showing the container base; see [ShapeItem#getIconFromDamage].
+    /// The container base, for callers that ask for a single icon; see [ShapeItem#getIconFromDamage].
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamage(int damage) {
@@ -152,8 +149,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     }
 
     /// White for the untinted container base in pass 0, and the material tint -- [ShapeItem]'s pass-0 color -- for
-    /// the fill passes, keeping each pass's tint aligned with the icon [#getIconFromDamageForRenderPass] returns
-    /// for it.
+    /// every later pass.
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {

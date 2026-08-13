@@ -116,10 +116,8 @@ public class ShapeItem extends Item implements BackedShape {
         return renderPass == 0 ? icons.get(damage) : icons.getOverlay(damage);
     }
 
-    /// The material's icon, for callers that ask for a single icon (vanilla [Item#getIconIndex] and third-party
-    /// renderers call this directly). Vanilla's implementation returns its `itemIcon` field, which shape items
-    /// never assign because [#registerIcons] fills the per-material map instead; left unoverridden this would
-    /// return null and crash any renderer that dereferences the icon.
+    /// The material's icon, for callers that ask for a single icon. Vanilla's implementation returns the
+    /// `itemIcon` field, which shape items never assign.
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamage(int damage) {

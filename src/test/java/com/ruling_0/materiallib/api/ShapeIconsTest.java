@@ -14,18 +14,15 @@ import net.minecraft.util.IIcon;
 
 import org.junit.jupiter.api.Test;
 
-/// Headless coverage for [ShapeIcons]' placeholder fallbacks. Only the paths that never consult the resource
-/// manager run here: a material with no texture set performs no resource lookup, so [ShapeIcons#bind] completes
-/// without a Minecraft client. Paths that check whether a texture file exists need a live client and are covered
-/// by the in-game example content instead.
+/// Pins [ShapeIcons]' placeholder fallbacks. Only paths that never consult the resource manager run here; paths
+/// that check whether a texture file exists need a live client and are covered by the in-game example content.
 class ShapeIconsTest {
 
     private final MaterialRegistry registry = new MaterialRegistry();
     private final RecordingRegister register = new RecordingRegister();
 
-    /// A material missing the mandatory [StandardProperties#TEXTURE_SET] (constructed around [MaterialBuilder],
-    /// which forbids that) must bind without crashing, and every icon accessor must fall back to the registered
-    /// empty placeholder rather than return null into a renderer.
+    /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
+    /// to pin that binding it resolves the placeholder from both accessors instead of crashing.
     @Test
     void materialWithoutTextureSetBindsPlaceholderInsteadOfCrashing() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
@@ -42,8 +39,7 @@ class ShapeIconsTest {
         assertSame(placeholder, icons.getOverlay(material.getIndex()));
     }
 
-    /// An index no material bound (an unloaded material's stack, or a stray damage value) resolves to the empty
-    /// placeholder from both accessors.
+    /// An index no material bound resolves to the empty placeholder from both accessors.
     @Test
     void unboundIndexFallsBackToPlaceholder() {
         ShapeIcons icons = new ShapeIcons(false);
@@ -55,12 +51,9 @@ class ShapeIconsTest {
         assertSame(placeholder, icons.getOverlay(7));
     }
 
-    /// A per-material pather that returns null for every material behaves the same as passing no pather at all --
-    /// resolution falls straight through to the texture-set candidate chain, here again falling back to the empty
-    /// placeholder since the material has no texture set. This is the only branch of the pather-aware overload
-    /// testable without a live client: a pather returning a non-null path still needs [ShapeIcons] to check whether
-    /// the named file exists on the resource-pack atlas, which requires a live `Minecraft` client (see the in-game
-    /// example content).
+    /// A pather returning null for every material falls through to the texture-set candidate chain, here the
+    /// placeholder. A pather returning a non-null path needs a live client to check the file exists, so only this
+    /// branch runs headless.
     @Test
     void perMaterialPatherReturningNullFallsThroughToTheCandidateChain() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
@@ -77,8 +70,7 @@ class ShapeIconsTest {
         assertSame(placeholder, icons.get(material.getIndex()));
     }
 
-    /// A null pather passed to the four-argument overload is equivalent to the three-argument overload that omits
-    /// it entirely, so the per-material override is opt-in.
+    /// A null pather passed to the four-argument overload is equivalent to the three-argument overload.
     @Test
     void aNullPatherIsEquivalentToOmittingTheOverload() {
         ShapeIcons icons = new ShapeIcons(false);

@@ -44,8 +44,6 @@ public final class FluidShapeBuilder {
     }
 
     /// Sets the per-material icon path override, in place of the material's texture set; see [FluidIconPather].
-    /// Returning null from `pather` for a given material falls back to that material's texture-set lookup, the
-    /// same as when this is left unset.
     public FluidShapeBuilder iconPath(FluidIconPather pather) {
         this.iconPather = Objects.requireNonNull(pather, "pather must not be null");
         return this;

@@ -59,9 +59,8 @@ public class ShapeFluid implements ServedShape {
         this(modid, name, displayNameFormat, namer, configurer, null);
     }
 
-    /// As the five-argument constructor, additionally setting this shape's [FluidIconPather]. A null pather, or one
-    /// that returns null for a given material, falls back to that material's texture-set lookup; see
-    /// [#registerIcons].
+    /// As the five-argument constructor, additionally setting this shape's [FluidIconPather], or null for none;
+    /// see [#iconPath].
     ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer, FluidConfigurer configurer,
                FluidIconPather iconPather) {
         this.modid = Names.validate("fluid shape modid", modid);
@@ -186,9 +185,7 @@ public class ShapeFluid implements ServedShape {
 
     /// The icon path to register for `material`'s fluid: this shape's [FluidIconPather] when set and it returns a
     /// path for `material`, otherwise `material`'s texture set (see [StandardProperties#TEXTURE_SET]), or the
-    /// empty placeholder if it has none, since a [Fluid] left iconless returns null from [Fluid#getIcon] and
-    /// crashes tank and NEI renderers; [MaterialRegistry#resolve] already warns about that condition when the
-    /// registry resolves.
+    /// [ShapeIcons#EMPTY_ICON] placeholder if it has none. Never null -- [Fluid#getIcon] must return an icon.
     String iconPath(Material material) {
         if (iconPather != null) {
             String path = iconPather.iconPath(this, material);

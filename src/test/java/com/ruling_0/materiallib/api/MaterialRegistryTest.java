@@ -144,10 +144,8 @@ class MaterialRegistryTest {
         assertThrows(IllegalStateException.class, registry::resolve);
     }
 
-    /// A material built through [MaterialBuilder] can never lack [StandardProperties#TEXTURE_SET] (the builder
-    /// requires one and rejects removing it), but the registry must still warn instead of crashing if one ever
-    /// does, since that failure would otherwise only surface as a rendering NullPointerException far from its
-    /// cause. Bypasses the builder with the package-private [Material] constructor to simulate that case.
+    /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
+    /// to pin that the registry resolves such a material instead of crashing.
     @Test
     void shapeServingMaterialWithoutTextureSetResolvesInsteadOfCrashing() {
         Shape gear = new TestShape("testmod", "gear");

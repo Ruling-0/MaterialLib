@@ -16,14 +16,11 @@ public final class StandardProperties {
     public static final Property<String> NAME = Property.of(MaterialLib.MODID, "name");
 
     /// The texture set shapes draw their textures from. Derived from the texture set passed to
-    /// [MaterialLibAPI#newMaterial]; builders and edits reject attempts to set or remove it, so a material built
-    /// through the public API always has one. [ShapeIcons] and [MaterialRegistry#resolve] still guard against a
-    /// null value rather than assume the guarantee always holds.
+    /// [MaterialLibAPI#newMaterial]; builders and edits reject attempts to set or remove it.
     public static final Property<TextureSet> TEXTURE_SET = Property.of(MaterialLib.MODID, "textureSet");
 
-    /// The fallback texture set, for if a texture does not exist within the normal texture set. Optional and null
-    /// by default, unlike [#TINT] which falls back to a concrete default value: most materials never set this, and
-    /// [ShapeIcons] treats a null value as "no fallback available" rather than as an error.
+    /// The fallback texture set, for if a texture does not exist within the normal texture set. Has no default;
+    /// null when unset.
     public static final Property<TextureSet> FALLBACK_TEXTURE_SET = Property.of(MaterialLib.MODID,
         "fallbackTextureSet");
 

@@ -15,18 +15,13 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
-/// The per-material icons of an item or block shape, keyed by material index.
-///
-/// [StandardProperties#TEXTURE_SET] is mandatory: [MaterialBuilder] requires one at construction and rejects any
-/// attempt to unset it, so a material built through the public API is never missing one. [#bindMaterial] still
-/// treats a null value defensively, the same as a texture set whose file does not exist, rather than assume the
-/// guarantee always holds; [MaterialRegistry] separately warns at resolve if it ever finds one broken. A null
-/// [StandardProperties#FALLBACK_TEXTURE_SET] is the routine case (most materials never set it, and unlike
-/// [StandardProperties#TINT] it has no default), so it is treated as "no fallback available", never a warning.
+/// The per-material icons of an item or block shape, keyed by material index. Icon lookups never return null: an
+/// index that bound no icon resolves to the transparent [#EMPTY_ICON] placeholder. A material with a null
+/// [StandardProperties#TEXTURE_SET] is warned about once and treated like one whose texture files do not exist; a
+/// null [StandardProperties#FALLBACK_TEXTURE_SET] is skipped silently.
 final class ShapeIcons {
 
-    /// The transparent placeholder icon path, present on both the item and block atlases; also used by
-    /// [ShapeFluid#registerIcons] for a fluid whose material has no texture set.
+    /// The transparent placeholder icon path, present on both the item and block atlases.
     static final String EMPTY_ICON = MaterialLib.MODID + ":empty";
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
@@ -53,10 +48,9 @@ final class ShapeIcons {
     }
 
     /// As [#bind(IIconRegister, Material[], List)], additionally trying `perMaterialIconPath` for each material
-    /// before the texture-set candidates: a non-null path it returns that names a file which exists on this atlas
-    /// binds that icon directly, skipping the candidate chain; a null return, or a path naming a file that does
-    /// not exist, falls through to the candidate chain unchanged. Pass null for `perMaterialIconPath` to skip the
-    /// override entirely, the same as the two-argument overload.
+    /// before the texture-set candidates. A non-null path naming a file that exists on this atlas binds that icon
+    /// directly; a null return, or a path naming no existing file, falls through to the candidate chain. A null
+    /// `perMaterialIconPath` skips the override entirely.
     void bind(IIconRegister register, Material[] materials, List<String> shapeNameCandidates,
               Function<Material, String> perMaterialIconPath) {
         iconsByIndex.clear();
@@ -73,9 +67,6 @@ final class ShapeIcons {
         emptyIcon = register.registerIcon(EMPTY_ICON);
     }
 
-    /// Logs one line per bind when any served material resolved no icon under any candidate name, naming the
-    /// count and the first few material keys, so a texture missing from every set in a material's chain is
-    /// diagnosable from the log instead of silently rendering the transparent placeholder.
     private void warnUnbound(List<String> unbound, int total, List<String> shapeNameCandidates) {
         if (unbound == null) return;
         int examples = Math.min(unbound.size(), 5);
@@ -90,8 +81,7 @@ final class ShapeIcons {
     }
 
     /// Registers `material`'s icon from `perMaterialIconPath`, if set and it names a file that exists on this
-    /// atlas, returning whether it did. `perMaterialIconPath` itself may be null, the routine case when no
-    /// override is configured for this shape at all.
+    /// atlas, returning whether it did.
     private boolean bindPerMaterialOverride(IIconRegister register, Material material,
                                             Function<Material, String> perMaterialIconPath) {
         if (perMaterialIconPath == null) return false;
@@ -116,9 +106,7 @@ final class ShapeIcons {
     /// Binds `material`'s icon from the highest-priority source that resolves any candidate name: the material's
     /// own texture set, then its fallback texture set, then each unification alternative's texture set and
     /// fallback set. Source-major order keeps a material's own plain-shape texture ahead of a lower source's
-    /// variant texture. A null texture set -- the routine case for the optional fallback, or a broken material for
-    /// the mandatory primary one -- is treated like a texture set whose file does not exist. Returns whether an
-    /// icon was bound.
+    /// variant texture. Returns whether an icon was bound.
     private boolean bindMaterial(IIconRegister register, Material material, List<String> shapeNameCandidates) {
         TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
         if (textureSet == null) {
@@ -177,10 +165,6 @@ final class ShapeIcons {
         else overlaysByIndex.put(material.getIndex(), null);
     }
 
-    /// Logs once per material that it has no [StandardProperties#TEXTURE_SET], so a mod author notices instead of
-    /// the icon silently falling back to the empty placeholder. This should be unreachable for a material built
-    /// through [MaterialBuilder], which requires a texture set and rejects removing it; it only fires for a
-    /// [Material] a mod somehow constructed outside that path.
     private void warnMissingTextureSet(Material material, String shapeName) {
         if (!warnedMissingTextureSet.add(material)) return;
         MaterialLib.LOG.warn(

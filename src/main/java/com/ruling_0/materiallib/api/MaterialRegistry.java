@@ -146,9 +146,7 @@ public final class MaterialRegistry {
         MaterialLib.LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
     }
 
-    /// Warns for a material that generates a shape but has no [StandardProperties#TEXTURE_SET]. [MaterialBuilder]
-    /// requires a texture set and rejects removing it, so this should be unreachable through the public API; it
-    /// exists to turn a broken material into a startup warning instead of a rendering crash far from its cause.
+    /// Warns for a material that generates a shape but has no [StandardProperties#TEXTURE_SET].
     private void warnIfShapeServingMaterialLacksTextureSet(Material material) {
         if (material.getProperty(StandardProperties.TEXTURE_SET) != null) return;
         if (material.getShapes().isEmpty()) return;
