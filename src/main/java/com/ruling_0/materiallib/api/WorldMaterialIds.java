@@ -16,9 +16,9 @@ public final class WorldMaterialIds {
     private WorldMaterialIds() {}
 
     /// Compares the assignment saved in `worldFile` against the registry's resolved assignment, and returns the
-    /// migration to apply to the world's stored stacks, or null when none is needed. A world with no saved
-    /// assignment yet is stamped with the current one; a world that only lacks newly added materials has its saved
-    /// copy refreshed.
+    /// migration to apply to the world's stored stacks and placed blocks, or null when none is needed. A world with
+    /// no saved assignment yet is stamped with the current one; a world that only lacks newly added materials has
+    /// its saved copy refreshed.
     public static MaterialMigration check(MaterialRegistry registry, File worldFile) {
         Map<String, Integer> instance = registry.getAssignedIndices();
         Map<String, Integer> world = MaterialIdStore.read(worldFile);
@@ -32,9 +32,10 @@ public final class WorldMaterialIds {
             return null;
         }
         MaterialLib.LOG.warn(
-            "This world was saved under a different material id assignment; migrating stored items to this " +
-                "instance as they are read from disk. Moved: {}. Deleted: {}. Items in chunks or containers not " +
-                "loaded this session keep the outdated ids.",
+            "This world was saved under a different material id assignment; migrating stored items and placed " +
+                "blocks to this instance as they are read from disk. Moved: {}. Deleted: {} -- placed blocks of " +
+                "these become air. Items and placed blocks in chunks or containers not loaded this session keep " +
+                "the outdated ids.",
             diff.moved(),
             diff.removed());
         MaterialMigration migration = new MaterialMigration(world, instance);

@@ -1,33 +1,57 @@
 package com.ruling_0.materiallib;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Map;
+
+import com.gtnewhorizons.postea.utility.BlockConversionInfo;
 import com.ruling_0.materiallib.api.MaterialMigration;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 class PosteaMigrationTest {
 
-    @Test
-    void unchangedReportsNoUpdate() {
-        assertNull(PosteaMigration.blockUpdateFor(MaterialMigration.UNCHANGED, 42));
+    private static final int BLOCK_ID = 42;
+
+    @AfterEach
+    void clearActiveMigration() {
+        PosteaMigration.setActiveMigration(null);
     }
 
     @Test
-    void deleteReplacesWithAir() {
-        PosteaMigration.BlockUpdate update = PosteaMigration.blockUpdateFor(MaterialMigration.DELETE, 42);
+    void transformBlockAppliesEveryLookupOutcome() {
+        PosteaMigration.setActiveMigration(
+            new MaterialMigration(Map.of("Iron", 0, "Gold", 1, "Gone", 2), Map.of("Iron", 0, "Gold", 5)));
 
-        assertEquals(0, update.metadata());
-        assertEquals(PosteaMigration.blockUpdateFor(MaterialMigration.DELETE, 1)
-            .blockId(), update.blockId());
+        BlockConversionInfo unchanged = placedBlock(0);
+        assertFalse(PosteaMigration.transformBlock(unchanged));
+        assertEquals(BLOCK_ID, unchanged.blockID);
+        assertEquals(0, unchanged.metadata);
+
+        BlockConversionInfo moved = placedBlock(1);
+        assertTrue(PosteaMigration.transformBlock(moved));
+        assertEquals(BLOCK_ID, moved.blockID);
+        assertEquals(5, moved.metadata);
+
+        BlockConversionInfo deleted = placedBlock(2);
+        assertTrue(PosteaMigration.transformBlock(deleted));
+        assertEquals(0, deleted.blockID);
+        assertEquals(0, deleted.metadata);
     }
 
     @Test
-    void remapKeepsTheBlockAndWritesTheNewMetadata() {
-        PosteaMigration.BlockUpdate update = PosteaMigration.blockUpdateFor(5, 42);
+    void transformBlockWithoutAnActiveMigrationChangesNothing() {
+        BlockConversionInfo info = placedBlock(2);
 
-        assertEquals(42, update.blockId());
-        assertEquals(5, update.metadata());
+        assertFalse(PosteaMigration.transformBlock(info));
+        assertEquals(BLOCK_ID, info.blockID);
+        assertEquals(2, info.metadata);
+    }
+
+    private static BlockConversionInfo placedBlock(int metadata) {
+        return new BlockConversionInfo("materiallib:block", BLOCK_ID, metadata, 0, 0, 0, null);
     }
 }

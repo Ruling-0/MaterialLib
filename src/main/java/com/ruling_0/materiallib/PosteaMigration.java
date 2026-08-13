@@ -1,7 +1,5 @@
 package com.ruling_0.materiallib;
 
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.gtnewhorizons.postea.api.BlockReplacementManager;
@@ -17,15 +15,15 @@ import com.ruling_0.materiallib.api.ShapeRegistry;
 /// deletes.
 public final class PosteaMigration {
 
-    private static final int AIR_BLOCK_ID = Block.getIdFromBlock(Blocks.air);
+    // Matches the id Postea's ChunkFixerUtility.AIR_ID skips over when it walks a sub-chunk.
+    private static final int AIR_BLOCK_ID = 0;
 
     private static volatile MaterialMigration active;
 
     private PosteaMigration() {}
 
-    /// Registers a Postea item-stack and placed-block transformer for every item and block shape, including each
-    /// variant backing block of a [com.ruling_0.materiallib.api.BlockShapeBuilder#variants] shape (
-    /// [ShapeRegistry#getBlockShapes] already lists those individually). Call in postInit, once shapes resolve.
+    /// Registers a Postea item-stack transformer for every item and block shape, and a placed-block transformer for
+    /// every block shape. Call in postInit, once shapes resolve.
     public static void registerHandlers() {
         ShapeRegistry registry = ShapeRegistry.instance();
         for (ShapeItem item : registry.getItemShapes()) {
@@ -61,29 +59,23 @@ public final class PosteaMigration {
             tag.removeTag("idExt");
             return true;
         }
+        // Damage is serialized as a short by both vanilla and EndlessIDs, so the result is written back as a short.
         tag.setShort("Damage", (short) result);
         return true;
     }
 
-    private static boolean transformBlock(BlockConversionInfo info) {
+    static boolean transformBlock(BlockConversionInfo info) {
         MaterialMigration migration = active;
         if (migration == null) return false;
-        BlockUpdate update = blockUpdateFor(migration.lookup(info.metadata), info.blockID);
-        if (update == null) return false;
-        info.blockID = update.blockId();
-        info.metadata = update.metadata();
+        int result = migration.lookup(info.metadata);
+        if (result == MaterialMigration.UNCHANGED) return false;
+        if (result == MaterialMigration.DELETE) {
+            info.blockID = AIR_BLOCK_ID;
+            info.metadata = 0;
+        }
+        else {
+            info.metadata = result;
+        }
         return true;
     }
-
-    /// The block id and metadata a placed block should carry given a [MaterialMigration#lookup] result and the
-    /// block's current numeric id, or `null` when the result is [MaterialMigration#UNCHANGED] and the block needs
-    /// no transformation. [MaterialMigration#DELETE] replaces the block with air; any other result keeps the same
-    /// block with the remapped metadata.
-    static BlockUpdate blockUpdateFor(int result, int currentBlockId) {
-        if (result == MaterialMigration.UNCHANGED) return null;
-        if (result == MaterialMigration.DELETE) return new BlockUpdate(AIR_BLOCK_ID, 0);
-        return new BlockUpdate(currentBlockId, result);
-    }
-
-    record BlockUpdate(int blockId, int metadata) {}
 }
