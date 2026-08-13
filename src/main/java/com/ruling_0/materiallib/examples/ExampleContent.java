@@ -23,8 +23,9 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// item shape, ingot and block shapes, test fluid shape, testBucket fluid-in-container shape, and testOre
 /// block shape are generated on the materials directly. testOre demonstrates block shape variants: a stone
 /// and a cobblestone variant, each with its own untinted vanilla base texture under the tinted material
-/// icon. A consumer on testGear adds a shapeless recipe per material crafting its ingot into its gear, and
-/// lang overrides on TestGold show per-pair display names.
+/// icon. testOre and testFluid override their icon paths, and testBucket its untinted base icon. A consumer on
+/// testGear adds a shapeless recipe per material crafting its ingot into its gear, and lang overrides on
+/// TestGold show per-pair display names.
 public final class ExampleContent {
 
     @SubscribeEvent
@@ -60,16 +61,19 @@ public final class ExampleContent {
             .variants("stone", "cobblestone")
             .variantBase("stone", "minecraft:stone")
             .variantBase("cobblestone", "minecraft:cobblestone")
+            .iconPath((shape, material) -> "TestGold".equals(material.getName()) ? "minecraft:gold_block" : null)
             .build();
 
         Shape testFluid = MaterialLibAPI.newFluidShape(MaterialLib.MODID, "test")
             .displayName("Molten %s")
+            .iconPath("minecraft:water_still")
             .build();
 
         Shape testBucket = MaterialLibAPI.newFluidInContainerShape(MaterialLib.MODID, "testBucket")
             .fluid(testFluid)
             .displayName("%s Bucket")
             .emptyContainer(new ItemStack(Items.bucket))
+            .emptyIcon("minecraft:bucket_empty")
             .oreDict("bucket")
             .build();
 

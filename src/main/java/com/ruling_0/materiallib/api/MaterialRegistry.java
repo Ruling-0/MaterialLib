@@ -140,19 +140,7 @@ public final class MaterialRegistry {
         familiesView = Collections.unmodifiableCollection(families.values());
 
         resolved = true;
-        for (Material material : materials.values()) {
-            warnIfShapeServingMaterialLacksTextureSet(material);
-        }
         MaterialLib.LOG.info("Resolved {} materials and {} families", materials.size(), families.size());
-    }
-
-    /// Warns for a material that generates a shape but has no [StandardProperties#TEXTURE_SET].
-    private void warnIfShapeServingMaterialLacksTextureSet(Material material) {
-        if (material.getProperty(StandardProperties.TEXTURE_SET) != null) return;
-        if (material.getShapes().isEmpty()) return;
-        MaterialLib.LOG.warn(
-            "Material {} generates shapes but has no texture set; its icons will fall back to the empty placeholder",
-            material.getKey());
     }
 
     /// Unifies materials that share the same name onto a single canonical one, through an [OwnerElection].

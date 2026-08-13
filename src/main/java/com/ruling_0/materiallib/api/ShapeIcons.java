@@ -1,7 +1,6 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
@@ -13,12 +12,11 @@ import com.ruling_0.materiallib.MaterialLib;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 /// The per-material icons of an item or block shape, keyed by material index. Icon lookups never return null: an
 /// index that bound no icon resolves to the transparent [#EMPTY_ICON] placeholder. A material with a null
-/// [StandardProperties#TEXTURE_SET] is warned about once and treated like one whose texture files do not exist; a
-/// null [StandardProperties#FALLBACK_TEXTURE_SET] is skipped silently.
+/// [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SET] is treated like one whose
+/// texture files do not exist.
 final class ShapeIcons {
 
     /// The transparent placeholder icon path, present on both the item and block atlases.
@@ -26,7 +24,6 @@ final class ShapeIcons {
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<IIcon> overlaysByIndex = new Int2ObjectOpenHashMap<>();
-    private final Set<Material> warnedMissingTextureSet = new ReferenceOpenHashSet<>();
     private final boolean isItem;
     private IIcon emptyIcon;
 
@@ -55,6 +52,7 @@ final class ShapeIcons {
               Function<Material, String> perMaterialIconPath) {
         iconsByIndex.clear();
         overlaysByIndex.clear();
+        emptyIcon = register.registerIcon(EMPTY_ICON);
         List<String> unbound = null;
         for (Material material : materials) {
             if (bindPerMaterialOverride(register, material, perMaterialIconPath)) continue;
@@ -64,7 +62,6 @@ final class ShapeIcons {
             }
         }
         warnUnbound(unbound, materials.length, shapeNameCandidates);
-        emptyIcon = register.registerIcon(EMPTY_ICON);
     }
 
     private void warnUnbound(List<String> unbound, int total, List<String> shapeNameCandidates) {
@@ -100,7 +97,7 @@ final class ShapeIcons {
     /// The overlay icon for a material index
     IIcon getOverlay(int index) {
         IIcon icon = overlaysByIndex.get(index);
-        return icon != null ? overlaysByIndex.get(index) : emptyIcon;
+        return icon != null ? icon : emptyIcon;
     }
 
     /// Binds `material`'s icon from the highest-priority source that resolves any candidate name: the material's
@@ -109,10 +106,7 @@ final class ShapeIcons {
     /// variant texture. Returns whether an icon was bound.
     private boolean bindMaterial(IIconRegister register, Material material, List<String> shapeNameCandidates) {
         TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
-        if (textureSet == null) {
-            warnMissingTextureSet(material, shapeNameCandidates.get(0));
-        }
-        else if (tryBindSet(register, material, textureSet, shapeNameCandidates)) {
+        if (textureSet != null && tryBindSet(register, material, textureSet, shapeNameCandidates)) {
             return true;
         }
         TextureSet fallback = material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET);
@@ -121,10 +115,8 @@ final class ShapeIcons {
         }
         for (Material alternative : material.getAlternatives()) {
             TextureSet alternativeTextureSet = alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET);
-            if (alternativeTextureSet == null) {
-                warnMissingTextureSet(alternative, shapeNameCandidates.get(0));
-            }
-            else if (tryBindSet(register, alternative, alternativeTextureSet, shapeNameCandidates)) {
+            if (alternativeTextureSet != null &&
+                tryBindSet(register, alternative, alternativeTextureSet, shapeNameCandidates)) {
                 return true;
             }
             TextureSet alternativeFallback = alternative
@@ -162,15 +154,6 @@ final class ShapeIcons {
         if (checkResLoc(overlayPath)) {
             overlaysByIndex.put(material.getIndex(), register.registerIcon(overlayPath));
         }
-        else overlaysByIndex.put(material.getIndex(), null);
-    }
-
-    private void warnMissingTextureSet(Material material, String shapeName) {
-        if (!warnedMissingTextureSet.add(material)) return;
-        MaterialLib.LOG.warn(
-            "Material {} has no texture set for shape {}; its icon will fall back to the empty placeholder",
-            material.getKey(),
-            shapeName);
     }
 
     private boolean checkResLoc(String path) {

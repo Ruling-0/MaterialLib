@@ -71,8 +71,8 @@ public final class FluidInContainerShapeBuilder {
         return this;
     }
 
-    /// Sets the untinted base icon path drawn under the fluid fill (e.g. `"gregtech:items/cell_base"`), overriding
-    /// the default of `<modid>:materials/<name>_empty` in this shape's own domain; see [ShapeFluidInContainer].
+    /// Sets the untinted base icon path drawn under the fluid fill (e.g. `"gregtech:items/cell_base"`), in place of
+    /// this shape's default; see [ShapeFluidInContainer].
     public FluidInContainerShapeBuilder emptyIcon(String path) {
         this.emptyIconPath = Objects.requireNonNull(path, "path must not be null");
         return this;

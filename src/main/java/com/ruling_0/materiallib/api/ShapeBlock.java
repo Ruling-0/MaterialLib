@@ -169,8 +169,7 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
-    /// to them; consulted once per served material in [#registerBlockIcons]. The default implementation defers to
-    /// this block's [BlockIconPather], set through [BlockShapeBuilder#iconPath]. A subclass may override this
+    /// to them. The default implementation defers to this block's [BlockIconPather]. A subclass may override this
     /// directly.
     protected String iconPathFor(Material material) {
         return iconPather != null ? iconPather.iconPath(this, material) : null;

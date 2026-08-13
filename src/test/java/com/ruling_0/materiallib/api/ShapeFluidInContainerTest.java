@@ -9,27 +9,25 @@ class ShapeFluidInContainerTest {
 
     @Test
     void aNonFluidShapeIsRejectedAtConstruction() {
-        assertThrows(IllegalArgumentException.class, () -> new TestContainer(new TestShape("testmod", "plate")));
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> new TestContainer(new TestShape("testmod", "plate"), null));
+    }
+
+    @Test
+    void emptyIconPathDerivesFromTheShapeUnlessOverridden() {
+        Shape fluid = new ShapeFluid("testmod", "molten", "Molten %s");
+
+        assertEquals("testmod:materials/cell_empty", new TestContainer(fluid, null).emptyIconPath());
+        assertEquals(
+            "gregtech:items/cell_base",
+            new TestContainer(fluid, "gregtech:items/cell_base").emptyIconPath());
     }
 
     private static final class TestContainer extends ShapeFluidInContainer {
 
-        TestContainer(Shape fluidShape) {
-            super("testmod", "cell", "%s Cell", fluidShape, (EmptyContainer) null, 1000, null, "cell");
+        TestContainer(Shape fluidShape, String emptyIconOverride) {
+            super("testmod", "cell", "%s Cell", fluidShape, (EmptyContainer) null, 1000, emptyIconOverride, "cell");
         }
-    }
-
-    @Test
-    void resolveEmptyIconPathDefaultsToTheDerivedPathWhenNoOverrideIsSet() {
-        assertEquals(
-            "testmod:materials/cell_empty",
-            ShapeFluidInContainer.resolveEmptyIconPath("testmod", "cell", null));
-    }
-
-    @Test
-    void resolveEmptyIconPathUsesTheOverrideWhenSet() {
-        assertEquals(
-            "gregtech:items/cell_base",
-            ShapeFluidInContainer.resolveEmptyIconPath("testmod", "cell", "gregtech:items/cell_base"));
     }
 }

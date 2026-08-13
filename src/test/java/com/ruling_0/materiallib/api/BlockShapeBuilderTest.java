@@ -8,11 +8,9 @@ import org.junit.jupiter.api.Test;
 
 class BlockShapeBuilderTest {
 
-    private final BlockShapeBuilder builder = new BlockShapeBuilder("testmod", "block");
-
     @Test
     void aVariantBaseWithoutVariantsFailsLoudly() {
-        builder.variantBase("stone", "minecraft:stone");
+        BlockShapeBuilder builder = new BlockShapeBuilder("testmod", "ore").variantBase("stone", "minecraft:stone");
 
         assertThrows(IllegalStateException.class, builder::build);
     }
@@ -27,11 +25,6 @@ class BlockShapeBuilderTest {
             "pickaxe",
             blockWith(new BlockBehavior(null, null, null, (m, v) -> 1, null)).getHarvestTool(0));
         assertNull(blockWith(BlockBehavior.NONE).getHarvestTool(0));
-    }
-
-    @Test
-    void iconPathRejectsANullPather() {
-        assertThrows(NullPointerException.class, () -> builder.iconPath(null));
     }
 
     private static ShapeBlock blockWith(BlockBehavior behavior) {

@@ -15,14 +15,16 @@ import net.minecraft.util.IIcon;
 import org.junit.jupiter.api.Test;
 
 /// Pins [ShapeIcons]' placeholder fallbacks. Only paths that never consult the resource manager run here; paths
-/// that check whether a texture file exists need a live client and are covered by the in-game example content.
+/// that check whether a texture file exists need a live client; see the example content.
 class ShapeIconsTest {
 
     private final MaterialRegistry registry = new MaterialRegistry();
     private final RecordingRegister register = new RecordingRegister();
 
     /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
-    /// to pin that binding it resolves the placeholder from both accessors instead of crashing.
+    /// to pin that binding it resolves the placeholder from both accessors instead of crashing. A pather
+    /// returning null falls through to the same candidate chain; a pather returning a path needs a live client to
+    /// check the file exists, so only this branch runs headless.
     @Test
     void materialWithoutTextureSetBindsPlaceholderInsteadOfCrashing() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
@@ -31,7 +33,8 @@ class ShapeIconsTest {
         registry.resolve();
 
         ShapeIcons icons = new ShapeIcons(true);
-        assertDoesNotThrow(() -> icons.bind(register, new Material[] { material }, "gear"));
+        assertDoesNotThrow(
+            () -> icons.bind(register, new Material[] { material }, List.of("gear"), ignored -> null));
 
         IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
         assertNotNull(placeholder);
@@ -49,36 +52,6 @@ class ShapeIconsTest {
         assertNotNull(placeholder);
         assertSame(placeholder, icons.get(7));
         assertSame(placeholder, icons.getOverlay(7));
-    }
-
-    /// A pather returning null for every material falls through to the texture-set candidate chain, here the
-    /// placeholder. A pather returning a non-null path needs a live client to check the file exists, so only this
-    /// branch runs headless.
-    @Test
-    void perMaterialPatherReturningNullFallsThroughToTheCandidateChain() {
-        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
-        Material material = new Material(registry, "testmod", "Broken", properties, Set.of(), List.of());
-        registry.register(material);
-        registry.resolve();
-
-        ShapeIcons icons = new ShapeIcons(false);
-        assertDoesNotThrow(
-            () -> icons.bind(register, new Material[] { material }, List.of("block"), ignored -> null));
-
-        IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
-        assertNotNull(placeholder);
-        assertSame(placeholder, icons.get(material.getIndex()));
-    }
-
-    /// A null pather passed to the four-argument overload is equivalent to the three-argument overload.
-    @Test
-    void aNullPatherIsEquivalentToOmittingTheOverload() {
-        ShapeIcons icons = new ShapeIcons(false);
-        assertDoesNotThrow(() -> icons.bind(register, new Material[0], List.of("block"), null));
-
-        IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
-        assertNotNull(placeholder);
-        assertSame(placeholder, icons.get(7));
     }
 
     private record FakeIcon(String name) implements IIcon {

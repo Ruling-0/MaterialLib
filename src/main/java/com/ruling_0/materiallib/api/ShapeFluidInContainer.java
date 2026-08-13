@@ -25,14 +25,14 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// shape, which supplies the fluid fill and is tinted with [StandardProperties#TINT]. The container looks the
 /// same for every material, so the empty texture is a property of the shape rather than of a texture set: it
 /// defaults to `<modid>:materials/<name>_empty` in the shape's own domain, or the path
-/// [FluidInContainerShapeBuilder#emptyIcon] sets. A path naming no existing texture file registers the
-/// [ShapeIcons#EMPTY_ICON] placeholder instead, logged once; see [#registerIcons].
+/// [FluidInContainerShapeBuilder#emptyIcon] sets. For a path naming no existing texture file, see
+/// [#registerIcons].
 public class ShapeFluidInContainer extends ShapeItem {
 
     private final Shape fluidShape;
     private final EmptyContainer emptyContainer;
     private final int volume;
-    private final String emptyIconPath;
+    private final String emptyIconOverride;
     private IIcon emptyIcon;
     private boolean warnedMissingEmptyIcon;
 
@@ -58,7 +58,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     /// form of [EmptyContainer] and an optional base icon path override (see
     /// [FluidInContainerShapeBuilder#emptyIcon]); null uses [#emptyIconPath]'s default.
     ShapeFluidInContainer(String modid, String name, String displayNameFormat, Shape fluidShape,
-                          EmptyContainer emptyContainer, int volume, String emptyIconPath, String... oreDicts) {
+                          EmptyContainer emptyContainer, int volume, String emptyIconOverride, String... oreDicts) {
         super(modid, name, displayNameFormat, oreDicts);
         Objects.requireNonNull(fluidShape, "fluidShape must not be null");
         if (!(fluidShape instanceof ShapeFluid)) {
@@ -70,18 +70,13 @@ public class ShapeFluidInContainer extends ShapeItem {
             throw new IllegalArgumentException("container volume must be positive, was " + volume);
         }
         this.volume = volume;
-        this.emptyIconPath = emptyIconPath;
+        this.emptyIconOverride = emptyIconOverride;
     }
 
-    /// The icon path to register for this container's untinted base texture; see [#resolveEmptyIconPath].
+    /// The icon path registered for this container's untinted base texture: the
+    /// [FluidInContainerShapeBuilder#emptyIcon] override when set, otherwise `<modid>:materials/<name>_empty`.
     String emptyIconPath() {
-        return resolveEmptyIconPath(getModId(), getName(), emptyIconPath);
-    }
-
-    /// The icon path to register for a container's untinted base texture: `override` when non-null, or
-    /// `<modid>:materials/<name>_empty` in the container's own domain.
-    static String resolveEmptyIconPath(String modid, String name, String override) {
-        return override != null ? override : modid + ":materials/" + name + "_empty";
+        return emptyIconOverride != null ? emptyIconOverride : getModId() + ":materials/" + getName() + "_empty";
     }
 
     /// The fluid shape this container was built with.
@@ -145,7 +140,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamage(int damage) {
-        return emptyIcon != null ? emptyIcon : super.getIconFromDamage(damage);
+        return emptyIcon;
     }
 
     /// White for the untinted container base in pass 0, and the material tint -- [ShapeItem]'s pass-0 color -- for
