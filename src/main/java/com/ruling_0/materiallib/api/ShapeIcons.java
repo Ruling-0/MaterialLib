@@ -113,65 +113,66 @@ final class ShapeIcons {
         return overlaysByIndex.get(index);
     }
 
-    /// Binds `material`'s icon from the highest-priority source that resolves any candidate name: the material's
-    /// own texture set, then each of its fallback texture sets in order, then the same chain on each unification
-    /// alternative. Source-major order keeps a material's own plain-shape texture ahead of a lower source's
-    /// variant texture. Returns whether an icon was bound.
+    /// Binds `material`'s icon and overlay from the texture source [#resolve] picks, returning whether one
+    /// resolved.
     private boolean bindMaterial(IIconRegister register, Material material, List<String> shapeNameCandidates) {
-        if (tryBindFromSets(
-            register,
-            material,
+        ResolvedTexture resolved = resolve(material, shapeNameCandidates, isItem);
+        if (resolved == null) return false;
+        setIcons(register, material, resolved.set(), resolved.shapeName());
+        return true;
+    }
+
+    /// A texture set and the candidate shape name it resolved.
+    record ResolvedTexture(TextureSet set, String shapeName) {}
+
+    /// The highest-priority source in `material`'s resolution chain that carries a name in `shapeNameCandidates`
+    /// whose texture file exists on the item or block atlas, or null when the whole chain misses. The chain runs
+    /// [StandardProperties#TEXTURE_SET], then [StandardProperties#FALLBACK_TEXTURE_SETS] in order, then the same
+    /// two on each unification alternative; within one source, earlier candidate names win. Source-major order
+    /// keeps a material's own plain-shape texture ahead of a lower source's variant texture.
+    static ResolvedTexture resolve(Material material, List<String> shapeNameCandidates, boolean isItem) {
+        ResolvedTexture resolved = resolveFromSets(
             material.getProperty(StandardProperties.TEXTURE_SET),
             material.getProperty(StandardProperties.FALLBACK_TEXTURE_SETS),
-            shapeNameCandidates)) {
-            return true;
-        }
+            shapeNameCandidates,
+            isItem);
+        if (resolved != null) return resolved;
         for (Material alternative : material.getAlternatives()) {
-            if (tryBindFromSets(
-                register,
-                alternative,
+            resolved = resolveFromSets(
                 alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET),
                 alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SETS),
-                shapeNameCandidates)) {
-                return true;
-            }
+                shapeNameCandidates,
+                isItem);
+            if (resolved != null) return resolved;
         }
-        return false;
+        return null;
     }
 
-    /// Registers `material`'s icon from the first of `textureSet` then `fallbacks` that carries a candidate name,
-    /// returning whether one did.
-    private boolean tryBindFromSets(IIconRegister register, Material material, TextureSet textureSet,
-                                    List<TextureSet> fallbacks, List<String> shapeNameCandidates) {
-        if (textureSet != null && tryBindSet(register, material, textureSet, shapeNameCandidates)) {
-            return true;
-        }
-        if (fallbacks == null) return false;
+    /// The first of `textureSet` then `fallbacks` carrying a candidate name whose texture file exists, or null
+    /// when none does.
+    private static ResolvedTexture resolveFromSets(TextureSet textureSet, List<TextureSet> fallbacks,
+                                                   List<String> shapeNameCandidates, boolean isItem) {
+        ResolvedTexture resolved = resolveSet(textureSet, shapeNameCandidates, isItem);
+        if (resolved != null) return resolved;
+        if (fallbacks == null) return null;
         for (TextureSet fallback : fallbacks) {
-            if (fallback != null && tryBindSet(register, material, fallback, shapeNameCandidates)) {
-                return true;
+            resolved = resolveSet(fallback, shapeNameCandidates, isItem);
+            if (resolved != null) return resolved;
+        }
+        return null;
+    }
+
+    /// The first candidate name whose texture file exists in `textureSet`, paired with that set, or null when
+    /// `textureSet` is null or carries none of them.
+    private static ResolvedTexture resolveSet(TextureSet textureSet, List<String> shapeNameCandidates,
+                                              boolean isItem) {
+        if (textureSet == null) return null;
+        for (String shapeName : shapeNameCandidates) {
+            if (exists(textureSet.iconPath(shapeName), isItem)) {
+                return new ResolvedTexture(textureSet, shapeName);
             }
         }
-        return false;
-    }
-
-    /// Registers `material`'s icon (and overlay, if any) from `textureSet` under the first candidate name whose
-    /// texture file exists. Returns whether an icon was bound.
-    private boolean tryBindSet(IIconRegister register, Material material, TextureSet textureSet,
-                               List<String> shapeNameCandidates) {
-        for (String shapeName : shapeNameCandidates) {
-            if (bindIfExists(register, material, textureSet, shapeName)) return true;
-        }
-        return false;
-    }
-
-    /// Registers `material`'s icon and overlay from `textureSet` under `shapeName` when that texture set names a
-    /// file that exists, returning whether it did.
-    private boolean bindIfExists(IIconRegister register, Material material, TextureSet textureSet,
-                                 String shapeName) {
-        if (!checkResLoc(textureSet.iconPath(shapeName))) return false;
-        setIcons(register, material, textureSet, shapeName);
-        return true;
+        return null;
     }
 
     private void setIcons(IIconRegister register, Material material, TextureSet textureSet, String shapeName) {
@@ -187,6 +188,10 @@ final class ShapeIcons {
     }
 
     private boolean checkResLoc(String path) {
+        return exists(path, isItem);
+    }
+
+    private static boolean exists(String path, boolean isItem) {
         if (isItem) return ResourceUtil.resourceExists(ResourceUtil.getCompleteItemTextureResourceLocation(path));
         else return ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(path));
     }

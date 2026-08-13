@@ -73,5 +73,4 @@ class ShapeIconsTest {
         assertSame(placeholder, icons.getOverlay(7));
         assertNull(icons.getOverlayOrNull(7));
     }
-
 }
