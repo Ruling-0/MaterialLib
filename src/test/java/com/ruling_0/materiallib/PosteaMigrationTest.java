@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import java.util.Map;
 
 import com.gtnewhorizons.postea.utility.BlockConversionInfo;
@@ -23,8 +24,7 @@ class PosteaMigrationTest {
 
     @Test
     void transformBlockAppliesEveryLookupOutcome() {
-        PosteaMigration.setActiveMigration(
-            new MaterialMigration(Map.of("Iron", 0, "Gold", 1, "Gone", 2), Map.of("Iron", 0, "Gold", 5)));
+        PosteaMigration.setActiveMigration(new MaterialMigration(Map.of(1, 5), List.of(2)));
 
         BlockConversionInfo unchanged = placedBlock(0);
         assertFalse(PosteaMigration.transformBlock(unchanged));
