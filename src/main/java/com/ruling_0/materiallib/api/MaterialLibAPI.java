@@ -203,10 +203,8 @@ public final class MaterialLibAPI {
     }
 
     /// `stack` unified onto MaterialLib's canonical item, when `stack` is a foreign item registered under an
-    /// oredict name MaterialLib backs; a copy of `stack` otherwise. The caller owns the returned stack.
-    /// MaterialLib never calls this
-    /// itself -- a consumer mod's own recipe-resolution code calls it to decide which stack to use, the way
-    /// GregTech's own unificator resolves its inputs and outputs today. Only available after shapes have
+    /// oredict name MaterialLib backs; a copy of `stack` otherwise. The caller owns the returned stack. See
+    /// [OreDictUnificator] for the boundary against rewriting recipes. Only available after shapes have
     /// resolved.
     public static ItemStack unifyOreDict(ItemStack stack) {
         return OreDictUnificator.instance()
@@ -218,12 +216,5 @@ public final class MaterialLibAPI {
     public static boolean isCanonicalOreDictName(String oreDictName) {
         return OreDictUnificator.instance()
             .isCanonicalName(oreDictName);
-    }
-
-    /// Whether `stack` is itself MaterialLib's canonical stack for some oredict name it backs. Only available
-    /// after shapes have resolved.
-    public static boolean isCanonicalOreDictStack(ItemStack stack) {
-        return OreDictUnificator.instance()
-            .isCanonical(stack);
     }
 }

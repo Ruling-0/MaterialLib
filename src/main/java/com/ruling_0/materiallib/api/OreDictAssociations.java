@@ -16,15 +16,11 @@ import com.ruling_0.materiallib.MaterialLib;
 
 /// Tracks, per oredict name MaterialLib backs, the single MaterialLib stack that is canonical for it, and every
 /// foreign stack another mod registered under that same name -- the data a consumer needs to fold a foreign item
-/// onto MaterialLib's item wherever the two occupy the same oredict slot, the way GregTech's `GTOreDictUnificator`
-/// does for GregTech's own materials.
+/// onto MaterialLib's item wherever the two occupy the same oredict slot.
 ///
 /// This class only builds the association table; see [OreDictUnificator]'s class javadoc for the boundary against
-/// rewriting recipes. It is a plain mutable registry rather than the register-then-resolve two-phase most of
-/// MaterialLib's other registries use: unlike shapes or materials, which are fixed once during preInit, foreign
-/// mods register oredict entries throughout the whole mod loading sequence, so [#registerCanonical] and
-/// [#associate] both stay callable for the life of the game and every query reflects the table as it stands at
-/// call time.
+/// rewriting recipes. Foreign mods register oredict entries throughout mod loading, so the table stays mutable
+/// and every query reflects it as it stands at call time.
 final class OreDictAssociations {
 
     private final boolean enabled;
@@ -43,8 +39,7 @@ final class OreDictAssociations {
     }
 
     /// Declares `stack` the canonical item MaterialLib backs for `oreDictName`. A name already claimed keeps its
-    /// first claim. No-op when unification is disabled or `oreDictName` is excluded, so MaterialLib makes no
-    /// canonical claim on it and whatever else owns the name stays canonical.
+    /// first claim. No-op when unification is disabled or `oreDictName` is excluded.
     void registerCanonical(String oreDictName, ItemStack stack) {
         if (!enabled || excludedNames.contains(oreDictName)) return;
         ItemStack claimed = canonicalByName.putIfAbsent(oreDictName, stack);
@@ -109,13 +104,7 @@ final class OreDictAssociations {
         return enabled && canonicalByName.containsKey(oreDictName);
     }
 
-    /// Whether `stack` is itself MaterialLib's canonical stack for some oredict name it backs.
-    boolean isCanonical(ItemStack stack) {
-        return enabled && stack != null && stack.getItem() != null && canonicalKeys.contains(ItemKey.of(stack));
-    }
-
-    /// Every oredict name currently claimed as canonical, for the catch-up scan to replay pre-existing entries
-    /// against.
+    /// Every oredict name currently claimed as canonical.
     Set<String> canonicalNames() {
         return canonicalByName.keySet();
     }

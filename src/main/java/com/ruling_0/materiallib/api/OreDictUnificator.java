@@ -17,14 +17,11 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 ///
 /// This is registry-and-lookup only -- MaterialLib never rewrites another mod's recipes itself. A consumer mod's
 /// own recipe-resolution code (a crafting-recipe unifier, e.g. GregTech's own unificator) calls [#resolveOreDict]
-/// or [#unify] to decide which stack to use; MaterialLib does not touch recipes.
+/// or [#unify] to decide which stack to use.
 ///
-/// Foreign mods register oredict entries throughout the whole mod loading sequence, with no ordering guarantee
-/// relative to MaterialLib's own preInit: some run before MaterialLib claims its names, some after. Both are
-/// covered: [#finishRegistration], called once after every MaterialLib shape has registered its oredict entries,
-/// replays every entry already in the dictionary under a name MaterialLib now backs (covering mods that ran
-/// earlier), then subscribes this class to [OreDictionary.OreRegisterEvent] to catch every later registration
-/// live.
+/// [#finishRegistration], called once after every MaterialLib shape has registered its oredict entries, replays
+/// every entry already in the dictionary under a name MaterialLib now backs, then subscribes this class to
+/// [OreDictionary.OreRegisterEvent] to record later registrations.
 public final class OreDictUnificator {
 
     private static final OreDictUnificator INSTANCE = new OreDictUnificator();
@@ -99,11 +96,5 @@ public final class OreDictUnificator {
     /// Whether MaterialLib backs `oreDictName` as canonical; see [OreDictAssociations#isCanonicalName].
     boolean isCanonicalName(String oreDictName) {
         return associations.isCanonicalName(oreDictName);
-    }
-
-    /// Whether `stack` is itself MaterialLib's canonical stack for some oredict name it backs; see
-    /// [OreDictAssociations#isCanonical].
-    boolean isCanonical(ItemStack stack) {
-        return associations.isCanonical(stack);
     }
 }
