@@ -57,14 +57,13 @@ public final class MaterialIdStore {
         JsonStore.write(
             file,
             data,
-            "Could not write the material id list to " + file +
-                ". The world would lose track of the assignment its stored data uses; refusing to continue.");
+            "Could not write the material id list to " + file + "; refusing to continue.");
     }
 
     /// The content hash of a stored assignment. A dense positional map hashes the way the registry
     /// fingerprints its own: the names ordered by index. A sparse map cannot be described by its name order
     /// alone, so it hashes its `name:index` pairs instead -- names never contain a colon, so the two forms
-    /// cannot collide and a sparse map never masquerades as a current assignment.
+    /// cannot collide.
     private static String hashOf(Map<String, Integer> materials) {
         List<Map.Entry<String, Integer>> entries = new ArrayList<>(materials.entrySet());
         entries.sort(Map.Entry.comparingByValue());
@@ -103,8 +102,8 @@ public final class MaterialIdStore {
 
     private static String corrupt(File file) {
         return "The material id list at " + file +
-            " is unreadable or malformed. Fix or restore the file; deleting it loses the world's list " +
-            "version, so stored items and blocks could change material.";
+            " is unreadable or malformed. Fix or restore the file; deleting it may change stored items and " +
+            "placed blocks.";
     }
 
     private static final class Data {

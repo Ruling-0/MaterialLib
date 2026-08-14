@@ -13,8 +13,8 @@ import com.ruling_0.materiallib.api.WorldMaterialIds;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 
 /// Stamps player data with the material id list version it was written under, mirroring [ChunkVersionStamp]
-/// for the playerdata side. Registered as extended entity properties so the stamp rides the player's own
-/// saved NBT under [ChunkVersionStamp#KEY].
+/// for the playerdata side. Registered as extended entity properties; the stamp is saved in the player's own
+/// NBT under [ChunkVersionStamp#KEY].
 public final class PlayerVersionStamp implements IExtendedEntityProperties {
 
     private int loadedVersion = 1;

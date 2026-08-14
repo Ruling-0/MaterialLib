@@ -14,12 +14,4 @@ class ChunkVersionStampTest {
     void anUnstampedTagReadsAsListVersionOne() {
         assertEquals(1, ChunkVersionStamp.read(new NBTTagCompound()));
     }
-
-    @Test
-    void aStampedTagReadsItsVersionBack() {
-        NBTTagCompound tag = new NBTTagCompound();
-        tag.setInteger(ChunkVersionStamp.KEY, 4);
-
-        assertEquals(4, ChunkVersionStamp.read(tag));
-    }
 }

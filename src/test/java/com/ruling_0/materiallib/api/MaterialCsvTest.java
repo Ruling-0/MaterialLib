@@ -11,7 +11,7 @@ class MaterialCsvTest {
     private final TextureSet texture = TextureSet.of("testmod", "shiny");
 
     @Test
-    void dumpListsEveryAssignedIndexAscendingWithOwnerLoadedStateShapesAndFamilies() {
+    void dumpListsEveryAssignedIndexAscendingWithOwnerShapesAndFamilies() {
         // Registration order (Iron before Copper) and shape declaration order (plate before gear)
         // deliberately differ from the sorted output, so these assertions fail if either sort is dropped.
         Family family = registry.newFamily("testmod", "Metals")
@@ -26,8 +26,8 @@ class MaterialCsvTest {
         registry.resolve();
 
         assertEquals(
-            "index,name,owner,loaded,shapes,families\n" + "0,Copper,testmod,yes,,\n" +
-                "1,Iron,testmod,yes,amod:gear;amod:plate,testmod:Metals\n",
+            "index,name,owner,shapes,families\n" + "0,Copper,testmod,,\n" +
+                "1,Iron,testmod,amod:gear;amod:plate,testmod:Metals\n",
             registry.dumpCsv());
     }
 
@@ -38,7 +38,7 @@ class MaterialCsvTest {
         registry.resolve();
 
         assertEquals(
-            "index,name,owner,loaded,shapes,families\n" + "0,\"Iron,\"\"Cast\"\"\",testmod,yes,,\n",
+            "index,name,owner,shapes,families\n" + "0,\"Iron,\"\"Cast\"\"\",testmod,,\n",
             registry.dumpCsv());
     }
 

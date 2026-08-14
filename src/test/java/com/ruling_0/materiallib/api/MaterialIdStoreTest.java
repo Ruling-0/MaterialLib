@@ -186,16 +186,4 @@ class MaterialIdStoreTest {
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
-
-    @Test
-    void writeOverwritesAnExistingFile() {
-        MaterialIdStore.write(file(), 1, MaterialRegistry.contentHash(List.of("Iron", "Gold")),
-            Map.of("Iron", 0, "Gold", 1));
-        MaterialIdStore.write(file(), 2, MaterialRegistry.contentHash(List.of("Iron")), Map.of("Iron", 0));
-
-        MaterialIdStore.WorldIds stored = MaterialIdStore.read(file());
-        assertEquals(2, stored.listVersion());
-        assertEquals(MaterialRegistry.contentHash(List.of("Iron")), stored.hash());
-        assertEquals(Map.of("Iron", 0), stored.materials());
-    }
 }

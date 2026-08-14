@@ -30,6 +30,9 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 /// per-material shape sets, and freezes the registry. From then on everything is readable and nothing can be
 /// registered or edited, which guarantees dependent mods a complete registry from their init onwards.
 ///
+/// Indices are assigned deterministically at resolve: the post-unification material names sorted ascending take
+/// indices 0..n-1, so identical registered sets derive identical assignments.
+///
 /// The game uses the single [#instance].
 public final class MaterialRegistry {
 
@@ -183,8 +186,7 @@ public final class MaterialRegistry {
     }
 
     /// The SHA-256 hex fingerprint of the index assignment: the material names joined with `\n` in index
-    /// order, hashed as UTF-8. Since indices are positional, the ordered name list fully determines the map,
-    /// so instances with equal hashes agree on every index.
+    /// order, hashed as UTF-8. Instances with equal hashes agree on every index.
     String getContentHash() {
         requireResolved("read the material list hash", "");
         return contentHash;
@@ -211,10 +213,7 @@ public final class MaterialRegistry {
         return MaterialCsv.dump(this);
     }
 
-    /// Assigns each material its global index deterministically: the post-unification material names sorted
-    /// ascending take indices 0..n-1, so identical registered sets derive identical assignments on every
-    /// instance and launch. [#getContentHash] fingerprints the result. The index becomes the item damage in
-    /// every shape and the worldgen id.
+    /// Assigns each material its global index and fingerprints the result as [#getContentHash].
     private void assignMaterialIndices() {
         Map<String, Material> byName = new Object2ObjectLinkedOpenHashMap<>();
         for (Material material : materials.values()) {
@@ -240,8 +239,7 @@ public final class MaterialRegistry {
         contentHash = contentHash(names);
     }
 
-    /// The SHA-256 hex digest of `namesInIndexOrder` joined with `\n`, encoded as UTF-8; the fingerprint
-    /// [#getContentHash] serves for the registry's own assignment.
+    /// The SHA-256 hex digest of `namesInIndexOrder` joined with `\n`, encoded as UTF-8.
     static String contentHash(List<String> namesInIndexOrder) {
         MessageDigest digest;
         try {

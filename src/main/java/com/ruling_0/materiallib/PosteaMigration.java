@@ -10,8 +10,8 @@ import com.ruling_0.materiallib.api.ShapeBlock;
 import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.ShapeRegistry;
 
-/// Handles migration of items and placed blocks from the assignment stored in the world to that stored on the
-/// instance, as determined by [MaterialMigration]. Ultimately, either translates metadata on itemstacks/blocks or
+/// Handles migration of items and placed blocks from a world's previous material id list version to the current
+/// one, as determined by [MaterialMigration]. Ultimately, either translates metadata on itemstacks/blocks or
 /// deletes.
 public final class PosteaMigration {
 

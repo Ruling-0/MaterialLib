@@ -21,8 +21,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 ///
 /// Each step records how the assignment changed from one list version to the next: `moved` maps an old index
 /// to its new one and `removed` lists indices whose material no longer exists. [#compose] folds any span of
-/// steps into a single remap, which is how data stamped with an older list version catches up no matter how
-/// many versions it slept through.
+/// steps into a single remap.
 public final class MaterialIdTransitions {
 
     static final String DIRECTORY = "transitions";
@@ -68,8 +67,7 @@ public final class MaterialIdTransitions {
                         " is saved; the world's transition chain is incomplete");
             }
             // Folds the step onto the remap built so far. An index the earlier steps never touched maps
-            // identity up to this step, so the step's own entries apply to it directly; assignments are
-            // injective per version, so no other tracked index can occupy that slot.
+            // identity up to this step, so the step's own entries apply to it directly.
             Int2IntMap next = new Int2IntOpenHashMap();
             for (Int2IntMap.Entry entry : current.int2IntEntrySet()) {
                 int at = entry.getIntValue();
@@ -101,8 +99,7 @@ public final class MaterialIdTransitions {
         JsonStore.write(
             file,
             data,
-            "Could not write the material id transition to " + file +
-                ". The world could not migrate data stamped with the outdated list version; refusing to continue.");
+            "Could not write the material id transition to " + file + "; refusing to continue.");
     }
 
     private static Step readStep(File file) {
@@ -134,9 +131,7 @@ public final class MaterialIdTransitions {
     }
 
     private static String corrupt(File file) {
-        return "The material id transition at " + file +
-            " is unreadable or malformed. Fix or restore the file; without it the world cannot migrate data " +
-            "stamped with older list versions.";
+        return "The material id transition at " + file + " is unreadable or malformed. Fix or restore the file.";
     }
 
     private record Step(int from, Int2IntMap moved, IntSet removed) {

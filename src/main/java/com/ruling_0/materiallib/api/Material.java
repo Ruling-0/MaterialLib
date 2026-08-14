@@ -81,10 +81,7 @@ public final class Material {
     }
 
     /// The material's global metadata index: the per-material number used as the item damage in every shape
-    /// and as the worldgen/ore id. Assigned at resolve by sorting the registered material names, so identical
-    /// mod sets derive identical indices on every instance and launch; when the registered set changes between
-    /// launches, the resulting shifts are captured as versioned per-world transitions that remap stored data.
-    /// Only available after the registry has resolved.
+    /// and as the worldgen/ore id. Only available after the registry has resolved.
     public int getIndex() {
         if (canonical != this) return canonical.getIndex();
         registry.requireResolved("query the index of ", key);
