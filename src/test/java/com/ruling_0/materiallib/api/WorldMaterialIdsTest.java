@@ -7,8 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
@@ -154,25 +152,5 @@ class WorldMaterialIdsTest {
             MaterialIdTransitions.load(transitionsDir())
                 .compose(1, 2)
                 .isEmpty());
-    }
-
-    @Test
-    void aLegacyWorldFileIsAdoptedAtListVersionOneAndMigrated() throws Exception {
-        MaterialRegistry resolved = resolvedWith("Iron");
-        Files.createDirectories(dir.toPath());
-        Files.write(
-            storeFile().toPath(),
-            "{\"version\":2,\"materials\":{\"Iron\":7}}".getBytes(StandardCharsets.UTF_8));
-
-        MaterialMigration migration = WorldMaterialIds.check(resolved, dir);
-
-        assertNotNull(migration);
-        assertEquals(0, migration.lookup(7));
-        assertEquals(2, MaterialIdStore.read(storeFile()).listVersion());
-        assertEquals(
-            0,
-            MaterialIdTransitions.load(transitionsDir())
-                .compose(1, 2)
-                .get(7));
     }
 }

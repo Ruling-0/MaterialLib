@@ -17,7 +17,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 public final class MaterialIdStore {
 
     static final String FILE_NAME = "material-ids.json";
-    private static final int FORMAT_VERSION = 3;
+    private static final int FORMAT_VERSION = 1;
 
     private MaterialIdStore() {}
 
@@ -30,15 +30,10 @@ public final class MaterialIdStore {
     public static WorldIds read(File file) {
         if (!file.isFile()) return null;
         Data data = JsonStore.read(file, Data.class, corrupt(file));
-        if (data == null || data.materials == null || data.version > FORMAT_VERSION) {
+        if (data == null || data.materials == null || data.version != FORMAT_VERSION) {
             throw new IllegalStateException(corrupt(file));
         }
         validateIndices(file, data.materials);
-        if (data.version < FORMAT_VERSION) {
-            WorldIds upgraded = new WorldIds(1, hashOf(data.materials), data.materials);
-            write(file, upgraded.listVersion(), upgraded.hash(), upgraded.materials());
-            return upgraded;
-        }
         if (data.listVersion == null || data.listVersion < 1 || data.hash == null ||
             !data.hash.equals(hashOf(data.materials))) {
             throw new IllegalStateException(corrupt(file));
@@ -59,27 +54,20 @@ public final class MaterialIdStore {
             "Could not write the material id list to " + file + "; refusing to continue.");
     }
 
-    /// The content hash of a stored assignment. A dense positional map hashes the way the registry
-    /// fingerprints its own: the names ordered by index. A sparse map cannot be described by its name order
-    /// alone, so it hashes its `name:index` pairs instead -- names never contain a colon, so the two forms
-    /// cannot collide.
+    /// The content hash of a stored assignment: the material names ordered by index, hashed as
+    /// [MaterialRegistry#contentHash].
     private static String hashOf(Map<String, Integer> materials) {
         List<Map.Entry<String, Integer>> entries = new ArrayList<>(materials.entrySet());
         entries.sort(Map.Entry.comparingByValue());
-        boolean dense = true;
-        for (int i = 0; i < entries.size(); i++) {
-            dense &= entries.get(i)
-                .getValue() == i;
-        }
         List<String> lines = new ArrayList<>(entries.size());
         for (Map.Entry<String, Integer> entry : entries) {
-            lines.add(dense ? entry.getKey() : entry.getKey() + ":" + entry.getValue());
+            lines.add(entry.getKey());
         }
         return MaterialRegistry.contentHash(lines);
     }
 
-    /// Rejects an assignment whose keys are not bare material names or whose indices are negative, null, or
-    /// shared by two materials.
+    /// Rejects an assignment whose keys are not bare material names or whose indices are not exactly
+    /// 0..n-1.
     private static void validateIndices(File file, Map<String, Integer> materials) {
         IntSet used = new IntOpenHashSet();
         for (Map.Entry<String, Integer> entry : materials.entrySet()) {
@@ -88,7 +76,7 @@ public final class MaterialIdStore {
                     corrupt(file) + " (" + entry.getKey() + " is not a bare material name)");
             }
             Integer index = entry.getValue();
-            if (index == null || index < 0) {
+            if (index == null || index < 0 || index >= materials.size()) {
                 throw new IllegalStateException(
                     corrupt(file) + " (" + entry.getKey() + " has an invalid index " + index + ")");
             }

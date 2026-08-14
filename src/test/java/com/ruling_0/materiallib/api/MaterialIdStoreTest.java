@@ -1,10 +1,8 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -63,48 +61,6 @@ class MaterialIdStoreTest {
     }
 
     @Test
-    void aLegacyFileIsAdoptedAsListVersionOneAndRewritten() throws Exception {
-        Files.write(
-            file().toPath(),
-            "{\"version\":2,\"materials\":{\"Gold\":0,\"Iron\":1}}".getBytes(StandardCharsets.UTF_8));
-
-        MaterialIdStore.WorldIds stored = MaterialIdStore.read(file());
-
-        assertEquals(1, stored.listVersion());
-        assertEquals(MaterialRegistry.contentHash(List.of("Gold", "Iron")), stored.hash());
-        assertEquals(Map.of("Gold", 0, "Iron", 1), stored.materials());
-        String rewritten = new String(Files.readAllBytes(file().toPath()), StandardCharsets.UTF_8);
-        assertTrue(rewritten.contains("\"version\": 3"));
-        assertEquals(stored, MaterialIdStore.read(file()));
-    }
-
-    @Test
-    void aLegacyFileHashOrdersNamesByIndex() throws Exception {
-        Files.write(
-            file().toPath(),
-            "{\"version\":2,\"materials\":{\"Iron\":1,\"Gold\":0}}".getBytes(StandardCharsets.UTF_8));
-
-        assertEquals(
-            MaterialRegistry.contentHash(List.of("Gold", "Iron")),
-            MaterialIdStore.read(file())
-                .hash());
-    }
-
-    // A sparse legacy map covers the same names as a dense assignment without meaning the same indices; its
-    // hash must differ or the launch flow would skip the migration the world needs.
-    @Test
-    void aSparseLegacyFileNeverHashesLikeADenseAssignment() throws Exception {
-        Files.write(
-            file().toPath(),
-            "{\"version\":2,\"materials\":{\"Iron\":7}}".getBytes(StandardCharsets.UTF_8));
-
-        assertNotEquals(
-            MaterialRegistry.contentHash(List.of("Iron")),
-            MaterialIdStore.read(file())
-                .hash());
-    }
-
-    @Test
     void readingACorruptFileFailsLoudly() throws Exception {
         Files.write(file().toPath(), "{ not valid json".getBytes(StandardCharsets.UTF_8));
 
@@ -114,7 +70,7 @@ class MaterialIdStoreTest {
     @Test
     void readingAFilePresentButMissingMaterialsFailsLoudly() throws Exception {
         Files.write(file().toPath(),
-            "{\"version\":3,\"listVersion\":1,\"hash\":\"x\"}".getBytes(StandardCharsets.UTF_8));
+            "{\"version\":1,\"listVersion\":1,\"hash\":\"x\"}".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
@@ -123,7 +79,7 @@ class MaterialIdStoreTest {
     void readingAFileWithoutAHashFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":3,\"listVersion\":1,\"materials\":{\"A\":0}}".getBytes(StandardCharsets.UTF_8));
+            "{\"version\":1,\"listVersion\":1,\"materials\":{\"A\":0}}".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
@@ -132,7 +88,7 @@ class MaterialIdStoreTest {
     void readingAFileWhoseHashDisagreesWithItsMaterialsFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":3,\"listVersion\":1,\"hash\":\"stale\",\"materials\":{\"A\":0}}"
+            "{\"version\":1,\"listVersion\":1,\"hash\":\"stale\",\"materials\":{\"A\":0}}"
                 .getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
@@ -142,16 +98,16 @@ class MaterialIdStoreTest {
     void readingAFileWithoutAListVersionFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":3,\"hash\":\"x\",\"materials\":{\"A\":0}}".getBytes(StandardCharsets.UTF_8));
+            "{\"version\":1,\"hash\":\"x\",\"materials\":{\"A\":0}}".getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
 
     @Test
-    void readingAFutureFormatFailsLoudly() throws Exception {
+    void readingAnotherFormatVersionFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":4,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":0}}"
+            "{\"version\":2,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":0}}"
                 .getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
@@ -161,8 +117,20 @@ class MaterialIdStoreTest {
     void readingANegativeIndexFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":3,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":-1}}"
+            "{\"version\":1,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":-1}}"
                 .getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
+    }
+
+    // A sparse map would hash by its name order alone and so masquerade as the dense assignment of the same
+    // names; validation rejects it before the hash check can be fooled.
+    @Test
+    void readingASparseAssignmentFailsLoudly() throws Exception {
+        Files.write(
+            file().toPath(),
+            ("{\"version\":1,\"listVersion\":1,\"hash\":\"" + MaterialRegistry.contentHash(List.of("Iron")) +
+                "\",\"materials\":{\"Iron\":7}}").getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
     }
@@ -171,7 +139,7 @@ class MaterialIdStoreTest {
     void readingADuplicateIndexFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":3,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":0,\"B\":0}}"
+            "{\"version\":1,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"A\":0,\"B\":0}}"
                 .getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
@@ -181,7 +149,7 @@ class MaterialIdStoreTest {
     void readingAKeyWithAColonFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
-            "{\"version\":3,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"amod:Iron\":0}}"
+            "{\"version\":1,\"listVersion\":1,\"hash\":\"x\",\"materials\":{\"amod:Iron\":0}}"
                 .getBytes(StandardCharsets.UTF_8));
 
         assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
