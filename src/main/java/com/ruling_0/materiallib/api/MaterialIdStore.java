@@ -25,9 +25,8 @@ public final class MaterialIdStore {
     /// name -> index map itself.
     public record WorldIds(int listVersion, String hash, Map<String, Integer> materials) {}
 
-    /// Reads the store, or returns null when no file exists. A file from before the versioned format is
-    /// adopted as list version 1 with a hash computed from its own map, and rewritten in the current format.
-    /// Throws [IllegalStateException] on a corrupt or malformed file.
+    /// Reads the store, or returns null when no file exists. Throws [IllegalStateException] on a corrupt or
+    /// malformed file.
     public static WorldIds read(File file) {
         if (!file.isFile()) return null;
         Data data = JsonStore.read(file, Data.class, corrupt(file));
