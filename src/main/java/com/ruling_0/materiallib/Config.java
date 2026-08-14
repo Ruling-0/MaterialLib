@@ -29,20 +29,18 @@ public class Config {
             "unifyOreDict",
             CATEGORY_ORE_DICT_UNIFICATION,
             false,
-            "Make MaterialLib's own item the canonical oredict entry for every name a MaterialLib shape backs, " +
-                "for consumer mods to look up through MaterialLibAPI.");
+            "If enabled, MaterialLib will build a table of all items that share an oredict name with a MaterialLib shape." +
+                "Consumer mods can then override other mods' recipes to converty their oredict outputs to the MaterialLib shape.");
         unifyOreDictExcludedNames = readStringSet(
             configuration,
             "excludedOreDictNames",
             CATEGORY_ORE_DICT_UNIFICATION,
-            "Oredict names MaterialLib must not claim as canonical, even though a MaterialLib shape backs them; " +
-                "whatever else is registered under the name stays canonical.");
+            "Oredict names that will be excluded from the oredict unification table.");
         unifyOreDictExcludedModIds = readStringSet(
             configuration,
             "excludedModIds",
             CATEGORY_ORE_DICT_UNIFICATION,
-            "Mod IDs whose items must never be unified onto a MaterialLib item, even under a name MaterialLib " +
-                "otherwise claims as canonical.");
+            "Mod IDs whose items will be excluded from the oredict unification table.");
 
         if (configuration.hasChanged()) {
             configuration.save();

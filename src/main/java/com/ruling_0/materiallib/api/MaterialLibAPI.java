@@ -198,8 +198,7 @@ public final class MaterialLibAPI {
     /// unification is disabled (see the `unifyOreDict` config option), `oreDictName` is excluded, or no
     /// MaterialLib shape backs it. Only available after shapes have resolved.
     public static ItemStack resolveOreDict(String oreDictName) {
-        return OreDictUnificator.instance()
-            .resolveOreDict(oreDictName);
+        return OreDictUnificator.instance().resolveOreDict(oreDictName);
     }
 
     /// `stack` unified onto MaterialLib's canonical item, when `stack` is a foreign item registered under an
@@ -207,14 +206,12 @@ public final class MaterialLibAPI {
     /// [OreDictUnificator] for the boundary against rewriting recipes. Only available after shapes have
     /// resolved.
     public static ItemStack unifyOreDict(ItemStack stack) {
-        return OreDictUnificator.instance()
-            .unify(stack);
+        return OreDictUnificator.instance().unify(stack);
     }
 
     /// Whether MaterialLib backs `oreDictName` as canonical, i.e. [#resolveOreDict] would return a stack for
     /// it. Only available after shapes have resolved.
     public static boolean isCanonicalOreDictName(String oreDictName) {
-        return OreDictUnificator.instance()
-            .isCanonicalName(oreDictName);
+        return OreDictUnificator.instance().isCanonicalName(oreDictName);
     }
 }

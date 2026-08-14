@@ -258,8 +258,7 @@ public final class ShapeRegistry {
         registerFluids();
         registerFluidContainers();
         registerOreDictionary();
-        OreDictUnificator.instance()
-            .finishRegistration();
+        OreDictUnificator.instance().finishRegistration();
         resolved = true;
         MaterialLib.LOG.info("Resolved {} item shapes, {} block shapes, and {} fluid shapes", itemShapes.size(),
             blockShapes.size(), fluidShapes.size());

@@ -29,8 +29,7 @@ public class CommonProxy {
 
     public void preInit(FMLPreInitializationEvent event) {
         Config.synchronizeConfiguration(event.getSuggestedConfigurationFile());
-        OreDictUnificator.instance()
-            .configure();
+        OreDictUnificator.instance().configure();
 
         MaterialLib.LOG.info("MaterialLib version " + Tags.VERSION);
 

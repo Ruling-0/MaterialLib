@@ -91,8 +91,7 @@ final class OreDictAssociations {
         if (canonical == null) return stack.copy();
         ItemStack result = withAmount(canonical, stack.stackSize);
         if (stack.hasTagCompound()) {
-            result.setTagCompound((NBTTagCompound) stack.getTagCompound()
-                .copy());
+            result.setTagCompound((NBTTagCompound) stack.getTagCompound().copy());
         }
         return result;
     }
