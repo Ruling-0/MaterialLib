@@ -40,7 +40,8 @@ public final class MaterialIdStore {
             write(file, upgraded.listVersion(), upgraded.hash(), upgraded.materials());
             return upgraded;
         }
-        if (data.listVersion == null || data.listVersion < 1 || data.hash == null) {
+        if (data.listVersion == null || data.listVersion < 1 || data.hash == null ||
+            !data.hash.equals(hashOf(data.materials))) {
             throw new IllegalStateException(corrupt(file));
         }
         return new WorldIds(data.listVersion, data.hash, data.materials);

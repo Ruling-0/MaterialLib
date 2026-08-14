@@ -37,11 +37,11 @@ class MaterialIdStoreTest {
         indices.put("Iron", 0);
         indices.put("Gold", 1);
 
-        MaterialIdStore.write(file(), 4, "somehash", indices);
+        MaterialIdStore.write(file(), 4, MaterialRegistry.contentHash(List.of("Iron", "Gold")), indices);
 
         MaterialIdStore.WorldIds stored = MaterialIdStore.read(file());
         assertEquals(4, stored.listVersion());
-        assertEquals("somehash", stored.hash());
+        assertEquals(MaterialRegistry.contentHash(List.of("Iron", "Gold")), stored.hash());
         assertEquals(indices, stored.materials());
     }
 
@@ -52,7 +52,7 @@ class MaterialIdStoreTest {
         indices.put("First", 0);
         indices.put("Middle", 1);
 
-        MaterialIdStore.write(file(), 1, "somehash", indices);
+        MaterialIdStore.write(file(), 1, MaterialRegistry.contentHash(List.of("First", "Middle", "Last")), indices);
 
         assertEquals(
             List.of("First", "Middle", "Last"),
@@ -129,6 +129,16 @@ class MaterialIdStoreTest {
     }
 
     @Test
+    void readingAFileWhoseHashDisagreesWithItsMaterialsFailsLoudly() throws Exception {
+        Files.write(
+            file().toPath(),
+            "{\"version\":3,\"listVersion\":1,\"hash\":\"stale\",\"materials\":{\"A\":0}}"
+                .getBytes(StandardCharsets.UTF_8));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
+    }
+
+    @Test
     void readingAFileWithoutAListVersionFailsLoudly() throws Exception {
         Files.write(
             file().toPath(),
@@ -179,12 +189,13 @@ class MaterialIdStoreTest {
 
     @Test
     void writeOverwritesAnExistingFile() {
-        MaterialIdStore.write(file(), 1, "first", Map.of("Iron", 0, "Gold", 1));
-        MaterialIdStore.write(file(), 2, "second", Map.of("Iron", 0));
+        MaterialIdStore.write(file(), 1, MaterialRegistry.contentHash(List.of("Iron", "Gold")),
+            Map.of("Iron", 0, "Gold", 1));
+        MaterialIdStore.write(file(), 2, MaterialRegistry.contentHash(List.of("Iron")), Map.of("Iron", 0));
 
         MaterialIdStore.WorldIds stored = MaterialIdStore.read(file());
         assertEquals(2, stored.listVersion());
-        assertEquals("second", stored.hash());
+        assertEquals(MaterialRegistry.contentHash(List.of("Iron")), stored.hash());
         assertEquals(Map.of("Iron", 0), stored.materials());
     }
 }

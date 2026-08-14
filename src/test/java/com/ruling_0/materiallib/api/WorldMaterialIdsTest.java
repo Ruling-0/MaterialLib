@@ -101,13 +101,14 @@ class WorldMaterialIdsTest {
     @Test
     void checkWritesATransitionAndAdvancesTheStoreOnMismatch() {
         MaterialRegistry resolved = resolvedWith("Iron");
-        MaterialIdStore.write(storeFile(), 1, "outdatedhash", Map.of("Iron", 7, "Gone", 3));
+        MaterialIdStore
+            .write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Gone", "Iron")), Map.of("Gone", 0, "Iron", 1));
 
         MaterialMigration migration = WorldMaterialIds.check(resolved, dir);
 
         assertNotNull(migration);
-        assertEquals(0, migration.lookup(7));
-        assertEquals(MaterialMigration.DELETE, migration.lookup(3));
+        assertEquals(0, migration.lookup(1));
+        assertEquals(MaterialMigration.DELETE, migration.lookup(0));
         MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile());
         assertEquals(2, stored.listVersion());
         assertEquals(resolved.getContentHash(), stored.hash());
@@ -117,18 +118,19 @@ class WorldMaterialIdsTest {
             0,
             MaterialIdTransitions.load(transitionsDir())
                 .compose(1, 2)
-                .get(7));
+                .get(1));
         assertEquals(
             MaterialMigration.DELETE,
             MaterialIdTransitions.load(transitionsDir())
                 .compose(1, 2)
-                .get(3));
+                .get(0));
     }
 
     @Test
     void checkKeepsTheTransitionChainContiguousAcrossRepeatedMismatches() {
         MaterialRegistry resolved = resolvedWith("Iron");
-        MaterialIdStore.write(storeFile(), 4, "outdatedhash", Map.of("Iron", 7));
+        MaterialIdStore
+            .write(storeFile(), 4, MaterialRegistry.contentHash(List.of("Gone", "Iron")), Map.of("Gone", 0, "Iron", 1));
 
         WorldMaterialIds.check(resolved, dir);
 
@@ -137,18 +139,16 @@ class WorldMaterialIdsTest {
             0,
             MaterialIdTransitions.load(transitionsDir())
                 .compose(4, 5)
-                .get(7));
+                .get(1));
     }
 
     @Test
-    void aPureAdditionStillAdvancesTheVersionWithAnEmptyTransition() {
+    void aPureAdditionAdvancesTheVersionWithoutAMigration() {
         MaterialRegistry resolved = resolvedWith("Iron", "Zinc");
         MaterialIdStore.write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Iron")), Map.of("Iron", 0));
 
-        MaterialMigration migration = WorldMaterialIds.check(resolved, dir);
+        assertNull(WorldMaterialIds.check(resolved, dir));
 
-        assertNotNull(migration);
-        assertTrue(migration.isEmpty());
         assertEquals(2, MaterialIdStore.read(storeFile()).listVersion());
         assertTrue(
             MaterialIdTransitions.load(transitionsDir())

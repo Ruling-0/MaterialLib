@@ -1,6 +1,8 @@
 package com.ruling_0.materiallib.api;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,8 +93,10 @@ public final class MaterialIdTransitions {
         Data data = new Data();
         data.from = from;
         data.to = to;
-        data.moved = new LinkedHashMap<>(moved);
-        data.removed = removed;
+        data.moved = JsonStore.sorted(moved, Map.Entry.comparingByKey());
+        List<Integer> sortedRemoved = new ArrayList<>(removed);
+        Collections.sort(sortedRemoved);
+        data.removed = sortedRemoved;
         File file = new File(dir, "v" + from + "-to-v" + to + ".json");
         JsonStore.write(
             file,

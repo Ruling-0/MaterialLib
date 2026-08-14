@@ -27,8 +27,8 @@ public final class WorldMaterialIds {
     /// registry's assignment, and returns the migration to apply to the world's stored stacks and placed
     /// blocks, or null when none is needed. A world with no store adopts the current assignment at list version
     /// 1. A matching hash leaves everything untouched. A mismatch saves the transition from the stored version,
-    /// advances the store, and returns the single-step migration; the saved chain lets data stamped with any
-    /// older version catch up later.
+    /// advances the store, and returns the migration for that step; a mismatch that moves or removes no index
+    /// advances the store and returns null.
     public static MaterialMigration check(MaterialRegistry registry, File dir) {
         Map<String, Integer> current = registry.getAssignedIndices();
         String hash = registry.getContentHash();
@@ -50,6 +50,13 @@ public final class WorldMaterialIds {
                 diff.removedIndices());
         MaterialIdStore.write(storeFile, to, hash, current);
         currentListVersion = to;
+        if (!diff.isMismatch()) {
+            MaterialLib.LOG.info(
+                "Materials were added since this world last ran; advancing its material id list to version {} " +
+                    "with no index changes.",
+                to);
+            return null;
+        }
         MaterialLib.LOG.warn(
             "This world was saved under a different material id assignment; advancing it to list version {} " +
                 "and migrating stored items and placed blocks to the current assignment as they are read from " +
