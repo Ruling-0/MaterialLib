@@ -33,7 +33,8 @@ public interface Shape {
     default List<String> getVariants() { return List.of(); }
 
     /// Resolves a property for this shape: its own value, else the property's default. A shape that lost
-    /// unification reads the owner's values, so the reference a mod kept from declaring it stays correct.
+    /// unification reads the owner's values. Values are settled once shapes resolve; an earlier read sees only
+    /// this declaration's own values.
     ///
     /// Unlike [Material#getProperty] there is no inheritance tier: shapes have no grouping analogous to [Family].
     /// Values are declared through the shape builders and altered through [MaterialLibAPI#editShape].

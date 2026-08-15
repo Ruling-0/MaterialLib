@@ -42,8 +42,7 @@ final class ShapeProperties {
         return propertiesView != null ? propertiesView : Collections.unmodifiableMap(properties);
     }
 
-    /// Rejects a null property or value, the way [StandardProperties#requireSettable] does for materials. No shape
-    /// property is derived from a builder argument, so there is nothing further to reject.
+    /// Rejects a null property or value.
     static void requireSettable(Property<?> property, Object value) {
         Objects.requireNonNull(property, "property must not be null");
         Objects.requireNonNull(value, "value must not be null");
@@ -74,8 +73,8 @@ final class ShapeProperties {
     }
 
     /// Copies every value the losing declaration sets and this one does not, keeping this shape's own value where
-    /// both set the property and logging the discarded one. Mirrors [Material#mergeFrom]. `owner` and `loserModid`
-    /// name the shapes in that warning.
+    /// both set the property and logging a discarded value that differs. Mirrors [Material#mergeFrom]. `owner` and
+    /// `loserModid` name the shapes in that warning.
     void mergeFrom(Object owner, String loserModid, ShapeProperties loser) {
         for (Map.Entry<Property<?>, Object> entry : loser.properties.entrySet()) {
             Object existing = properties.putIfAbsent(entry.getKey(), entry.getValue());

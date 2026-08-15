@@ -29,7 +29,7 @@ public final class MaterialEdit {
     }
 
     /// Sets [StandardProperties#FLUID_TINT], the ARGB tint applied to a fluid shape's fill icon in place of
-    /// [#setTint].
+    /// [StandardProperties#TINT].
     public MaterialEdit setFluidTint(int fluidTint) {
         return setProperty(StandardProperties.FLUID_TINT, fluidTint);
     }

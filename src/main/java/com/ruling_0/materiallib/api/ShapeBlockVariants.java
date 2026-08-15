@@ -31,8 +31,7 @@ final class ShapeBlockVariants implements BackedShape {
         this.oreDicts = oreDicts;
         this.blocks = blocks;
         for (ShapeBlock block : blocks.values()) {
-            block.properties()
-                .redirectTo(props);
+            block.properties().redirectTo(props);
         }
     }
 

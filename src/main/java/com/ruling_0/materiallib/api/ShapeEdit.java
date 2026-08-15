@@ -31,8 +31,7 @@ public final class ShapeEdit {
             modid,
             name,
             "set " + property + " on shape",
-            shape -> shape.properties()
-                .set(shape, property, value));
+            shape -> shape.properties().set(shape, property, value));
         return this;
     }
 
@@ -43,8 +42,7 @@ public final class ShapeEdit {
             modid,
             name,
             "remove " + property + " from shape",
-            shape -> shape.properties()
-                .remove(shape, property));
+            shape -> shape.properties().remove(shape, property));
         return this;
     }
 }

@@ -223,7 +223,7 @@ public class ShapeFluid implements ServedShape {
 
     /// A material's fluid, naming itself from the shape's display format and coloring itself with the material's
     /// fill tint (see [#tintOf]) so renderers that read [Fluid#getColor] tint the fluid per material. 1.7.10 fluids
-    /// expose no color setter, only an overridable [Fluid#getColor], which is why this is a subclass.
+    /// expose no color setter, only an overridable [Fluid#getColor].
     private final class MaterialFluid extends Fluid {
 
         private final Material material;

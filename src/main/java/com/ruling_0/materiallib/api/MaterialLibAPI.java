@@ -155,9 +155,7 @@ public final class MaterialLibAPI {
     }
 
     /// The Forge fluid MaterialLib registered for `material` in `shape`, or null when the material does not
-    /// generate that fluid shape -- the nullable, stack-free counterpart of [#getFluidStack], for a caller
-    /// gating on presence or building its own stacks. `shape` must still be a fluid shape. Only available
-    /// after shapes have resolved.
+    /// generate that fluid shape. `shape` must still be a fluid shape. Only available after shapes have resolved.
     public static Fluid getFluid(Material material, Shape shape) {
         return ShapeRegistry.instance().getFluid(material, shape);
     }
@@ -180,7 +178,7 @@ public final class MaterialLibAPI {
     }
 
     /// Queues changes to a shape registered by any mod; see [ShapeEdit]. `modid` identifies the editor, not the
-    /// target: a shape name is unified across mods onto one owner, so the name alone addresses it.
+    /// target.
     public static ShapeEdit editShape(String modid, String name) {
         return ShapeRegistry.instance().editShape(modid, name);
     }

@@ -57,9 +57,7 @@ public final class ItemShapeBuilder {
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         ShapeItem shape = new ShapeItem(modid, name, format, prefixes);
-        shape.properties()
-            .setAll(shape, properties);
-        return ShapeRegistry.instance()
-            .register(shape);
+        shape.properties().setAll(shape, properties);
+        return ShapeRegistry.instance().register(shape);
     }
 }

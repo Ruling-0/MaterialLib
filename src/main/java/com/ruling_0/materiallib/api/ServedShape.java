@@ -25,9 +25,8 @@ interface ServedShape extends Shape {
         return false;
     }
 
-    /// This shape's property values. The holder is composed into each implementation rather than inherited,
-    /// since they extend unrelated Minecraft types; the [Shape] property accessors are answered from it here so
-    /// each implementation only supplies the holder.
+    /// This shape's property holder; the [Shape] property accessors are answered from it. See
+    /// [ShapeProperties] for why the holder is composed into each implementation.
     ShapeProperties properties();
 
     @Override

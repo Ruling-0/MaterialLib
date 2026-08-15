@@ -75,9 +75,7 @@ public final class FluidShapeBuilder {
         built = true;
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         ShapeFluid shape = new ShapeFluid(modid, name, format, namer, configurer, iconPather);
-        shape.properties()
-            .setAll(shape, properties);
-        return ShapeRegistry.instance()
-            .register(shape);
+        shape.properties().setAll(shape, properties);
+        return ShapeRegistry.instance().register(shape);
     }
 }

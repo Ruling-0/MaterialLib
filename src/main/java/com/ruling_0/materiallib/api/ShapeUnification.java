@@ -71,8 +71,7 @@ final class ShapeUnification {
         return owners;
     }
 
-    /// The shape owning `name`, or null when nothing registered it. Available once [#resolve] has run, which is
-    /// why [ShapeRegistry] defers an edit's lookup to that point.
+    /// The shape owning `name`, or null when nothing registered it. Only available after [#resolve].
     ServedShape ownerOf(String name) {
         return canonicalByName.get(name);
     }

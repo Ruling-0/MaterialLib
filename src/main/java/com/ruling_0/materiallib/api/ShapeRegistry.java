@@ -76,8 +76,7 @@ public final class ShapeRegistry {
     }
 
     /// Queues a change to the shape owning `name`, applied when shapes resolve. The lookup is deferred to that
-    /// point, so the shape need not be registered yet; a name nothing registered is skipped with a warning, which
-    /// keeps edits directed at optional mods harmless.
+    /// point, so the shape need not be registered yet; see [ShapeEdit] for the skip on a name nothing registered.
     void enqueueShapeOp(String modid, String name, String description, Consumer<ServedShape> op) {
         String edit = description + " " + name + " (from " + modid + ")";
         requireRegistration(edit);
@@ -108,8 +107,7 @@ public final class ShapeRegistry {
     /// reference cannot mutate what a consumer has already read.
     private void freezeProperties() {
         for (ServedShape shape : unification.allCandidates()) {
-            shape.properties()
-                .freeze();
+            shape.properties().freeze();
         }
     }
 
@@ -271,7 +269,7 @@ public final class ShapeRegistry {
     }
 
     /// The fluid registered for `material` in `shape`, or null when the material does not generate it.
-    /// `shape` must still be a fluid shape -- passing anything else is a caller error, not a miss.
+    /// `shape` must still be a fluid shape.
     Fluid getFluid(Material material, Shape shape) {
         requireResolved("look up a fluid");
         material = material.canonical();
@@ -348,10 +346,7 @@ public final class ShapeRegistry {
     /// preInit handler (FML restriction). Fluid shapes register their Forge fluids, and fluid containers their
     /// container mappings, later -- once served materials are known.
     private void collectCanonicalShapes() {
-        for (Shape shape : unification.canonicalShapes()) {
-            if (!(shape instanceof ServedShape served)) {
-                throw new IllegalStateException(shape + " is not a registerable shape type");
-            }
+        for (ServedShape served : unification.canonicalShapes()) {
             servedShapes.add(served);
             servedByName.put(served.getName(), served);
             if (served instanceof ShapeFluid fluid) {

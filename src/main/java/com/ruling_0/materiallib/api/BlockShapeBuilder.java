@@ -146,16 +146,12 @@ public final class BlockShapeBuilder {
         BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn, harvestTool);
         if (variants == null) {
             ShapeBlock shape = new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior, iconPather);
-            shape.properties()
-                .setAll(shape, properties);
-            return ShapeRegistry.instance()
-                .register(shape);
+            shape.properties().setAll(shape, properties);
+            return ShapeRegistry.instance().register(shape);
         }
         ShapeBlockVariants group = ShapeBlockVariants
             .create(modid, name, format, prefixes, List.of(variants), variantBases, behavior, iconPather);
-        group.properties()
-            .setAll(group, properties);
-        return ShapeRegistry.instance()
-            .register(group);
+        group.properties().setAll(group, properties);
+        return ShapeRegistry.instance().register(group);
     }
 }

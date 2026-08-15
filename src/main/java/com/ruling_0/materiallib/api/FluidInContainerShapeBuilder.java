@@ -106,9 +106,7 @@ public final class FluidInContainerShapeBuilder {
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         ShapeFluidInContainer shape = new ShapeFluidInContainer(modid, name, format, fluidShape, emptyContainer,
             volume, emptyIconPath, prefixes);
-        shape.properties()
-            .setAll(shape, properties);
-        return ShapeRegistry.instance()
-            .register(shape);
+        shape.properties().setAll(shape, properties);
+        return ShapeRegistry.instance().register(shape);
     }
 }
