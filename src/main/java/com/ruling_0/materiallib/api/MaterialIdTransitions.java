@@ -81,8 +81,7 @@ public final class MaterialIdTransitions {
             }
             current = next;
         }
-        current.int2IntEntrySet()
-            .removeIf(entry -> entry.getIntKey() == entry.getIntValue());
+        current.int2IntEntrySet().removeIf(entry -> entry.getIntKey() == entry.getIntValue());
         return current;
     }
 
@@ -96,9 +95,7 @@ public final class MaterialIdTransitions {
         Collections.sort(sortedRemoved);
         data.removed = sortedRemoved;
         File file = new File(dir, "v" + from + "-to-v" + to + ".json");
-        JsonStore.write(
-            file,
-            data,
+        JsonStore.write(file, data,
             "Could not write the material id transition to " + file + "; refusing to continue.");
     }
 
