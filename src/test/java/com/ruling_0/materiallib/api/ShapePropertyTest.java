@@ -77,6 +77,22 @@ class ShapePropertyTest {
         assertEquals(16, amod.getProperty(STACK_SIZE));
     }
 
+    /// With several merged-away declarations of one name, losers fold in in modid order, so the resolved value
+    /// does not depend on hash iteration.
+    @Test
+    void losersMergeInModidOrder() {
+        TestShape owner = register("amod", "gear");
+        TestShape cmod = register("cmod", "gear");
+        TestShape bmod = register("bmod", "gear");
+        cmod.properties().set(cmod, MATERIAL_AMOUNT, 2L);
+        bmod.properties().set(bmod, MATERIAL_AMOUNT, 1L);
+
+        unification.resolve(noOwners());
+        unification.mergeProperties();
+
+        assertEquals(1L, owner.getProperty(MATERIAL_AMOUNT));
+    }
+
     /// The reference a mod kept from declaring the losing shape still reads the owner's values, which is what the
     /// holder's redirect buys: materials get this from their own `canonical` field, shapes cannot.
     @Test

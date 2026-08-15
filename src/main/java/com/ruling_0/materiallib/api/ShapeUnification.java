@@ -2,6 +2,7 @@ package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ final class ShapeUnification {
 
     private final Object2ObjectLinkedOpenHashMap<String, List<ServedShape>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();
     private final Object2ObjectLinkedOpenHashMap<String, ServedShape> canonicalByName = new Object2ObjectLinkedOpenHashMap<>();
-    private final Reference2ObjectOpenHashMap<Shape, Shape> aliasToCanonical = new Reference2ObjectOpenHashMap<>();
+    private final Reference2ObjectOpenHashMap<ServedShape, ServedShape> aliasToCanonical = new Reference2ObjectOpenHashMap<>();
     private boolean resolved;
 
     /// Records a shape as a candidate to own its name and returns it. The owner is not chosen until [#resolve].
@@ -87,20 +88,24 @@ final class ShapeUnification {
         return all;
     }
 
-    /// Folds each merged-away declaration's property values into the shape owning the name, keeping the owner's
-    /// value where both set a property, then points the loser's holder at the owner's so a stale reference reads
-    /// the same values. Mirrors [Material#mergeFrom]; a conflict is logged rather than fatal, matching the
-    /// oredict-divergence policy rather than the variant one, since a property cannot make a material generate
-    /// against a backing object that does not match.
+    /// Folds each merged-away declaration's property values into the shape owning its name, keeping the owner's
+    /// value where both set a property, then points the loser's holder at the owner's. Losers merge per name in
+    /// modid order, keeping the result independent of registration order.
     void mergeProperties() {
         requireResolved("merge shape properties");
-        for (Map.Entry<Shape, Shape> entry : aliasToCanonical.entrySet()) {
-            ServedShape loser = (ServedShape) entry.getKey();
-            ServedShape winner = (ServedShape) entry.getValue();
-            winner.properties()
-                .mergeFrom(winner, loser.getModId(), loser.properties());
-            loser.properties()
-                .redirectTo(winner.properties());
+        for (Map.Entry<String, List<ServedShape>> entry : candidatesByName.entrySet()) {
+            List<ServedShape> candidates = entry.getValue();
+            if (candidates.size() == 1) continue;
+            ServedShape winner = canonicalByName.get(entry.getKey());
+            List<ServedShape> losers = new ObjectArrayList<>();
+            for (ServedShape candidate : candidates) {
+                if (candidate != winner) losers.add(candidate);
+            }
+            losers.sort(Comparator.comparing(Shape::getModId));
+            for (ServedShape loser : losers) {
+                winner.properties().mergeFrom(winner, loser.getModId(), loser.properties());
+                loser.properties().redirectTo(winner.properties());
+            }
         }
     }
 
