@@ -48,8 +48,8 @@ public interface Shape {
     /// (see [MaterialLibAPI#registerItemShape]), which never passes through a builder. Changing a shape
     /// **another** mod declared goes through [MaterialLibAPI#editShape] instead: that addresses the owner by
     /// name and applies after unification, so it overrides the owner's declaration, whereas this states one --
-    /// two declarations of the same value conflict, and the owner's wins.
-    default Shape setProperty(Property<?> property, Object value) {
+    /// two declarations of the same property conflict, and the owner's wins.
+    default <T> Shape setProperty(Property<T> property, T value) {
         throw new UnsupportedOperationException(this + " does not hold properties");
     }
 

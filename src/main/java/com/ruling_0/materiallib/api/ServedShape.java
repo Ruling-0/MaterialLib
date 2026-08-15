@@ -36,7 +36,7 @@ interface ServedShape extends Shape {
     }
 
     @Override
-    default Shape setProperty(Property<?> property, Object value) {
+    default <T> Shape setProperty(Property<T> property, T value) {
         ShapeProperties.requireSettable(property, value);
         properties().set(this, property, value);
         return this;

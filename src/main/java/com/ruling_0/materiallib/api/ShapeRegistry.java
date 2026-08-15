@@ -79,12 +79,13 @@ public final class ShapeRegistry {
     /// point, so the shape need not be registered yet; a name nothing registered is skipped with a warning, which
     /// keeps edits directed at optional mods harmless.
     void enqueueShapeOp(String modid, String name, String description, Consumer<ServedShape> op) {
-        String key = Names.key(modid, name);
-        requireRegistration(description + " " + key);
-        pendingOps.add(new PendingOp(description + " " + key, () -> {
+        String edit = description + " " + name + " (from " + modid + ")";
+        requireRegistration(edit);
+        pendingOps.add(new PendingOp(edit, () -> {
             ServedShape target = unification.ownerOf(name);
             if (target == null) {
-                MaterialLib.LOG.warn("Skipping edit \"{} {}\": no such shape is registered", description, key);
+                MaterialLib.LOG.warn("Skipping edit \"{}\" from {}: no shape named {} is registered", description,
+                    modid, name);
                 return;
             }
             op.accept(target);
