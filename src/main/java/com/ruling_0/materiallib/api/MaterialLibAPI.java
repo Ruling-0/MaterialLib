@@ -2,6 +2,7 @@ package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
 
+import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 
 import net.minecraftforge.fluids.FluidStack;
@@ -124,6 +125,32 @@ public final class MaterialLibAPI {
     /// MaterialLib's preInit.
     public static ItemStack getStack(Material material, Shape shape, int amount) {
         return ShapeRegistry.instance().getStack(material, shape, amount);
+    }
+
+    /// The itemstack of `material` in the given variant of `shape`, with the given stack size. The shape must be
+    /// a block shape declared with [BlockShapeBuilder#variants] that the material generates. Only available after
+    /// shapes have resolved.
+    public static ItemStack getStack(Material material, Shape shape, String variant, int amount) {
+        return ShapeRegistry.instance().getStack(material, shape, variant, amount);
+    }
+
+    /// The backing block of a variant-less block shape, for a consumer (e.g. worldgen) to place directly at a
+    /// material's index (see [Material#getIndex]) as the block metadata. The shape must be a block shape declared
+    /// with no variants. Only available after shapes have resolved.
+    public static Block getBlock(Shape shape) {
+        return ShapeRegistry.instance().getBlock(shape);
+    }
+
+    /// As [#getBlock(Shape)], but for one variant of a block shape declared with [BlockShapeBuilder#variants].
+    /// Fails when `variant` was not declared. Only available after shapes have resolved.
+    public static Block getBlock(Shape shape, String variant) {
+        return ShapeRegistry.instance().getBlock(shape, variant);
+    }
+
+    /// The shape, variant, and material a MaterialLib block encodes at the given metadata, or null when `block`
+    /// was not registered by MaterialLib. Only available after shapes have resolved.
+    public static BlockMaterialInfo lookupBlock(Block block, int metadata) {
+        return ShapeRegistry.instance().lookupBlock(block, metadata);
     }
 
     /// The fluid stack of `material` in `shape`, with the given volume in millibuckets. The shape must be a fluid

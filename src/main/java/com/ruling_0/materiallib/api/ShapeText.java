@@ -29,11 +29,17 @@ final class ShapeText {
         return displayName(shape, displayNameFormat, material);
     }
 
-    /// The display name for a shape-and-material pair: a lang override for the exact pair if present, else the
-    /// shape's format applied to the material name.
+    /// The display name for a shape-and-material pair: a lang override for the exact pair if present -- for a
+    /// variant's backing block, the per-variant key (`shape.<modid>.<shapeName>_<variant>...`) then the declared
+    /// shape name's key -- else the shape's format applied to the material name.
     static String displayName(Shape shape, String displayNameFormat, Material material) {
         String overrideKey = ShapeNaming.overrideKey(shape, material);
         if (StatCollector.canTranslate(overrideKey)) return StatCollector.translateToLocal(overrideKey);
+        String groupName = shape instanceof ShapeBlock block ? block.getGroupName() : null;
+        if (groupName != null) {
+            String groupKey = ShapeNaming.overrideKey(shape.getModId(), groupName, material);
+            if (StatCollector.canTranslate(groupKey)) return StatCollector.translateToLocal(groupKey);
+        }
         return ShapeNaming.format(displayNameFormat, localizedMaterialName(material));
     }
 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
@@ -21,6 +22,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 /// Holds the item, block, or fluid backing every [Shape] and finishes their setup once the material registry has
 /// resolved.
@@ -40,8 +42,11 @@ public final class ShapeRegistry {
     private final List<ShapeFluid> fluidShapesView = Collections.unmodifiableList(fluidShapes);
     private final List<ShapeFluidInContainer> containerShapes = new ObjectArrayList<>();
     private final Object2ObjectOpenHashMap<String, ShapeType> typeByName = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<String, String> blockNameClaims = new Object2ObjectOpenHashMap<>();
     private final ShapeConsumers consumers = new ShapeConsumers();
     private final Object2ObjectOpenHashMap<String, ServedShape> servedByName = new Object2ObjectOpenHashMap<>();
+    private final Map<Block, Shape> shapeByBlock = new Reference2ObjectOpenHashMap<>();
+    private final Map<Block, String> variantByBlock = new Reference2ObjectOpenHashMap<>();
     private Map<String, String> persistedOwners = new LinkedHashMap<>();
     private Map<String, String> assignedOwners = new LinkedHashMap<>();
     private boolean resolved;
@@ -68,7 +73,31 @@ public final class ShapeRegistry {
     Shape register(ServedShape shape) {
         requireRegistration("register shape " + Names.key(shape.getModId(), shape.getName()));
         recordType(shape.getName(), typeOf(shape));
+        claimBlockNames(shape);
         return unification.register(shape);
+    }
+
+    /// Reserves the FML registry names a block shape's backing blocks will register under: the shape name for a
+    /// variant-less block shape, or each derived `<shapeName>_<variant>` name (see
+    /// [ShapeNaming#variantBlockName]). Shapes sharing a declared name unify onto one backing block, so a name is
+    /// only rejected when a different declared name claims the same registry name.
+    private void claimBlockNames(Shape shape) {
+        if (typeOf(shape) != ShapeType.BLOCK) return;
+        if (shape.getVariants().isEmpty()) {
+            claimBlockName(shape.getName(), shape.getName());
+            return;
+        }
+        for (String variant : shape.getVariants()) {
+            claimBlockName(ShapeNaming.variantBlockName(shape.getName(), variant), shape.getName());
+        }
+    }
+
+    private void claimBlockName(String registryName, String shapeName) {
+        String existing = blockNameClaims.putIfAbsent(registryName, shapeName);
+        if (existing != null && !existing.equals(shapeName)) {
+            throw new IllegalStateException(
+                "Shapes " + existing + " and " + shapeName + " both register a block named " + registryName);
+        }
     }
 
     /// Records a mod's claim on an empty container name and returns its handle. The owner is chosen and the item
@@ -95,6 +124,7 @@ public final class ShapeRegistry {
     private static ShapeType typeOf(Shape shape) {
         if (shape instanceof ShapeFluid) return ShapeType.FLUID;
         if (shape instanceof ShapeBlock) return ShapeType.BLOCK;
+        if (shape instanceof ShapeBlockVariants) return ShapeType.BLOCK;
         if (shape instanceof ShapeFluidInContainer) return ShapeType.CONTAINER;
         if (shape instanceof ShapeItem) return ShapeType.ITEM;
         throw new IllegalArgumentException(shape + " is not a registerable shape type");
@@ -146,6 +176,51 @@ public final class ShapeRegistry {
         }
         requireServes(backed, material);
         return backed.getStack(material, amount);
+    }
+
+    /// The itemstack of `material` in the given variant of `shape`, with the given stack size. The shape must be
+    /// a block shape declared with [BlockShapeBuilder#variants] that `material` generates.
+    ItemStack getStack(Material material, Shape shape, String variant, int amount) {
+        requireResolved("build an itemstack");
+        material = material.canonical();
+        Shape canonical = unification.canonical(shape);
+        if (!(canonical instanceof ShapeBlockVariants variants)) {
+            throw new IllegalArgumentException(canonical + " is not a variant block shape");
+        }
+        requireServes(variants, material);
+        return variants.getStack(material, variant, amount);
+    }
+
+    /// The backing block of a variant-less block shape. The shape must be a block shape declared with no
+    /// variants.
+    Block getBlock(Shape shape) {
+        requireResolved("look up a block");
+        Shape canonical = unification.canonical(shape);
+        if (!(canonical instanceof ShapeBlock block)) {
+            throw new IllegalArgumentException(canonical + " is not a variant-less block shape");
+        }
+        return block;
+    }
+
+    /// The backing block of one variant of a block shape declared with [BlockShapeBuilder#variants]. Fails when
+    /// `variant` was not declared.
+    Block getBlock(Shape shape, String variant) {
+        requireResolved("look up a block");
+        Shape canonical = unification.canonical(shape);
+        if (!(canonical instanceof ShapeBlockVariants variants)) {
+            throw new IllegalArgumentException(canonical + " is not a variant block shape");
+        }
+        return variants.blockFor(variant);
+    }
+
+    /// The shape, variant, and material a MaterialLib block encodes at the given metadata, or null when `block`
+    /// was not registered by MaterialLib; see [BlockMaterialInfo] for the result's null fields.
+    BlockMaterialInfo lookupBlock(Block block, int metadata) {
+        requireResolved("look up a block");
+        Shape shape = shapeByBlock.get(block);
+        if (shape == null) return null;
+        Material material = MaterialRegistry.instance().getMaterialByIndex(metadata);
+        return new BlockMaterialInfo(shape, variantByBlock.get(block), material);
     }
 
     /// The fluid stack of `material` in `shape`, with the given volume in millibuckets, routed to the shape's
@@ -227,6 +302,15 @@ public final class ShapeRegistry {
                 }
                 else if (backed instanceof ShapeBlock block) {
                     blockShapes.add(block);
+                    shapeByBlock.put(block, block);
+                }
+                else if (backed instanceof ShapeBlockVariants variants) {
+                    for (String variant : variants.getVariants()) {
+                        ShapeBlock block = variants.blockFor(variant);
+                        blockShapes.add(block);
+                        shapeByBlock.put(block, variants);
+                        variantByBlock.put(block, variant);
+                    }
                 }
                 else {
                     throw new IllegalStateException(

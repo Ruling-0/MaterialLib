@@ -23,8 +23,13 @@ final class ShapeNaming {
     /// The translation key overriding the display name of one shape-and-material pair, e.g.
     /// `shape.examplemod.gear.examplemod.TestIron`. Present only where a lang file overrides that pair.
     static String overrideKey(Shape shape, Material material) {
-        return "shape." + shape.getModId() + "." + shape.getName() + "." + material.getModId() + "." +
-            material.getName();
+        return overrideKey(shape.getModId(), shape.getName(), material);
+    }
+
+    /// As [#overrideKey(Shape, Material)], for a shape name that differs from the backing object's own, e.g. a
+    /// variant block looked up under its declared group name.
+    static String overrideKey(String shapeModid, String shapeName, Material material) {
+        return "shape." + shapeModid + "." + shapeName + "." + material.getModId() + "." + material.getName();
     }
 
     /// Applies a shape's display format to a material name, e.g. `("%s Gear", "Iron")` to `Iron Gear`.
@@ -50,6 +55,12 @@ final class ShapeNaming {
     /// shape name (e.g. `gear` to `"%s Gear"`) when none was set.
     static String formatOrDefault(String shapeName, String displayNameFormat) {
         return displayNameFormat != null ? displayNameFormat : "%s " + capitalize(shapeName);
+    }
+
+    /// The registry name of one variant's backing block: the shape name, an underscore, and the variant name,
+    /// e.g. `("ore", "stone")` -> `"ore_stone"`. Also the block's default texture file name; see [ShapeIcons].
+    static String variantBlockName(String shapeName, String variant) {
+        return shapeName + "_" + variant;
     }
 
     private static String capitalize(String value) {

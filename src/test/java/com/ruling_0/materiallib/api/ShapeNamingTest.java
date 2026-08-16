@@ -31,6 +31,15 @@ class ShapeNamingTest {
     }
 
     @Test
+    void overrideKeyByNameMatchesTheShapeForm() {
+        Material iron = material("examplemod", "TestIron");
+
+        assertEquals(
+            "shape.examplemod.testOre.examplemod.TestIron",
+            ShapeNaming.overrideKey("examplemod", "testOre", iron));
+    }
+
+    @Test
     void requireValidFormatRejectsAFormatThatCannotTakeAStringArgument() {
         assertThrows(IllegalArgumentException.class, () -> ShapeNaming.requireValidFormat("%d"));
     }
@@ -38,5 +47,10 @@ class ShapeNamingTest {
     @Test
     void requireValidFormatAcceptsALiteralFormatWithoutAPlaceholder() {
         assertEquals("Bucket of Lava", ShapeNaming.requireValidFormat("Bucket of Lava"));
+    }
+
+    @Test
+    void variantBlockNameCombinesShapeAndVariant() {
+        assertEquals("ore_stone", ShapeNaming.variantBlockName("ore", "stone"));
     }
 }

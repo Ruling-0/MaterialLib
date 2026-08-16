@@ -11,9 +11,14 @@ import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.MathHelper;
+import net.minecraft.util.MovingObjectPosition;
+import net.minecraft.util.Vec3;
 
+import com.ruling_0.materiallib.api.BlockMaterialInfo;
 import com.ruling_0.materiallib.api.Family;
 import com.ruling_0.materiallib.api.Material;
+import com.ruling_0.materiallib.api.MaterialLibAPI;
 import com.ruling_0.materiallib.api.MaterialRegistry;
 import com.ruling_0.materiallib.api.Property;
 import com.ruling_0.materiallib.api.Shape;
@@ -22,8 +27,9 @@ import com.ruling_0.materiallib.api.ShapeFluidInContainer;
 import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.StandardProperties;
 
-/// The /matinfo debug command: prints the shape and material encoded by the held item, plus the
-/// material's family membership and property values, when it is a MaterialLib shape stack.
+/// The /matinfo debug command: prints the shape, variant, and material encoded by the held item, or otherwise the
+/// block the player is looking at, plus the material's family membership and property values, when it is a
+/// MaterialLib shape.
 public class CommandMatInfo extends CommandBase {
 
     @Override
@@ -42,20 +48,59 @@ public class CommandMatInfo extends CommandBase {
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
         EntityPlayerMP player = getCommandSenderAsPlayer(sender);
-        ItemStack stack = player.getCurrentEquippedItem();
-        if (stack == null) {
-            send(sender, "Hold a MaterialLib shape item to inspect it");
+        if (reportHeldItem(sender, player.getCurrentEquippedItem())) return;
+        BlockMaterialInfo info = lookAtBlock(player);
+        if (info != null) {
+            report(sender, info.shape(), info.variant(), info.material());
             return;
         }
-        Shape shape = shapeOf(stack);
-        if (shape == null) {
-            send(sender, stack.getDisplayName() + " is not a MaterialLib shape");
-            return;
+        send(sender, "Hold a MaterialLib shape item, or look at a MaterialLib shape block, to inspect it");
+    }
+
+    /// Reports the held stack when it is a MaterialLib shape item or shape block item, returning whether it was.
+    /// A held block item resolves through [MaterialLibAPI#lookupBlock], so a variant's backing block reports the
+    /// declared shape and variant rather than the derived block name.
+    private static boolean reportHeldItem(ICommandSender sender, ItemStack stack) {
+        if (stack == null) return false;
+        if (stack.getItem() instanceof ShapeItem item) {
+            report(sender, item, null, MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage()));
+            return true;
         }
-        send(sender, "Shape: " + shape.getModId() + ":" + shape.getName() + " (" + type(shape) + ")");
-        Material material = MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage());
+        BlockMaterialInfo info = MaterialLibAPI
+            .lookupBlock(Block.getBlockFromItem(stack.getItem()), stack.getItemDamage());
+        if (info == null) return false;
+        report(sender, info.shape(), info.variant(), info.material());
+        return true;
+    }
+
+    /// The shape, variant, and material of the block `player` is looking at, or null when it is out of range or
+    /// not a block MaterialLib registered.
+    private static BlockMaterialInfo lookAtBlock(EntityPlayerMP player) {
+        // EntityLivingBase#rayTrace is client-only in 1.7.10; this is the server-side look-vector math from
+        // Item#getMovingObjectPositionFromPlayer.
+        Vec3 eyes = Vec3.createVectorHelper(player.posX, player.posY + player.getEyeHeight(), player.posZ);
+        float pitch = -player.rotationPitch * (float) Math.PI / 180.0F;
+        float yaw = -player.rotationYaw * (float) Math.PI / 180.0F - (float) Math.PI;
+        float cosPitch = -MathHelper.cos(pitch);
+        Vec3 look = Vec3
+            .createVectorHelper(MathHelper.sin(yaw) * cosPitch, MathHelper.sin(pitch), MathHelper.cos(yaw) * cosPitch);
+        Vec3 reach = eyes.addVector(look.xCoord * 32.0D, look.yCoord * 32.0D, look.zCoord * 32.0D);
+        MovingObjectPosition target = player.worldObj.rayTraceBlocks(eyes, reach);
+        if (target == null || target.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) {
+            return null;
+        }
+        Block block = player.worldObj.getBlock(target.blockX, target.blockY, target.blockZ);
+        int metadata = player.worldObj.getBlockMetadata(target.blockX, target.blockY, target.blockZ);
+        return MaterialLibAPI.lookupBlock(block, metadata);
+    }
+
+    private static void report(ICommandSender sender, Shape shape, String variant, Material material) {
+        String variantSuffix = variant != null ? " variant " + variant : "";
+        send(
+            sender,
+            "Shape: " + shape.getModId() + ":" + shape.getName() + variantSuffix + " (" + type(shape) + ")");
         if (material == null) {
-            send(sender, "Material: none loaded at index " + stack.getItemDamage() + " (reserved or unknown)");
+            send(sender, "Material: none loaded at this index (reserved or unknown)");
             return;
         }
         send(sender, "Material: " + material.getKey() + " (index " + material.getIndex() + ")");
@@ -75,15 +120,10 @@ public class CommandMatInfo extends CommandBase {
         return String.valueOf(value);
     }
 
-    private static Shape shapeOf(ItemStack stack) {
-        if (stack.getItem() instanceof ShapeItem item) return item;
-        if (Block.getBlockFromItem(stack.getItem()) instanceof ShapeBlock block) return block;
-        return null;
-    }
-
     private static String type(Shape shape) {
         if (shape instanceof ShapeFluidInContainer) return "fluid container";
         if (shape instanceof ShapeBlock) return "block";
+        if (!shape.getVariants().isEmpty()) return "block";
         return "item";
     }
 
