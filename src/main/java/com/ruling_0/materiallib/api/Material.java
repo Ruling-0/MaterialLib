@@ -147,8 +147,7 @@ public final class Material {
         registry.requireResolved("query properties of ", key);
         if (properties.containsKey(property)) return true;
         for (Family family : sortedFamilies) {
-            if (family.getOwnPropertiesInternal()
-                .containsKey(property)) return true;
+            if (family.getOwnPropertiesInternal().containsKey(property)) return true;
         }
         return false;
     }

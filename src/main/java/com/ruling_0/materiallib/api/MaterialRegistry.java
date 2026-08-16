@@ -251,8 +251,7 @@ public final class MaterialRegistry {
         byte[] bytes = digest.digest(String.join("\n", namesInIndexOrder).getBytes(StandardCharsets.UTF_8));
         StringBuilder hex = new StringBuilder(bytes.length * 2);
         for (byte b : bytes) {
-            hex.append(Character.forDigit((b >> 4) & 0xF, 16))
-                .append(Character.forDigit(b & 0xF, 16));
+            hex.append(Character.forDigit((b >> 4) & 0xF, 16)).append(Character.forDigit(b & 0xF, 16));
         }
         return hex.toString();
     }

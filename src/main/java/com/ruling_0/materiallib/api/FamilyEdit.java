@@ -115,11 +115,7 @@ public final class FamilyEdit {
 
     /// Removes the family's tooltip lines.
     public FamilyEdit removeTooltip() {
-        registry.enqueueFamilyOp(
-            modid,
-            name,
-            "remove tooltip from family",
-            Family::clearTooltip);
+        registry.enqueueFamilyOp(modid, name, "remove tooltip from family", Family::clearTooltip);
         return this;
     }
 }

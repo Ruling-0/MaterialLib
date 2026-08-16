@@ -111,8 +111,7 @@ class ShapeUnificationTest {
         unification.resolve(noOwners());
 
         assertSame(amod, unification.canonical(bmod));
-        assertEquals(List.of("gear"), unification.canonical(bmod)
-            .getOreDicts());
+        assertEquals(List.of("gear"), unification.canonical(bmod).getOreDicts());
     }
 
     @Test

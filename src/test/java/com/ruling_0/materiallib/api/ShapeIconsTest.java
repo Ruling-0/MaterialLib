@@ -40,8 +40,7 @@ class ShapeIconsTest {
         registry.resolve();
 
         ShapeIcons icons = new ShapeIcons(true, path -> false);
-        assertDoesNotThrow(
-            () -> icons.bind(register, new Material[] { material }, List.of("gear"), ignored -> null));
+        assertDoesNotThrow(() -> icons.bind(register, new Material[] { material }, List.of("gear"), ignored -> null));
 
         IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
         assertNotNull(placeholder);

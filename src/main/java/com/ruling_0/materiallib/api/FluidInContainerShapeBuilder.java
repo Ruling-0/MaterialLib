@@ -94,8 +94,7 @@ public final class FluidInContainerShapeBuilder {
     /// or if no fluid was set.
     public Shape build() {
         if (built) {
-            throw new IllegalStateException(
-                "Fluid container shape " + Names.key(modid, name) + " was already built");
+            throw new IllegalStateException("Fluid container shape " + Names.key(modid, name) + " was already built");
         }
         if (fluidShape == null) {
             throw new IllegalStateException(

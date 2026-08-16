@@ -335,8 +335,7 @@ public final class ShapeRegistry {
     /// Rejects a material that does not generate a shape.
     private static void requireServes(ServedShape shape, Material material) {
         if (!shape.serves(material)) {
-            throw new IllegalArgumentException(
-                "Material " + material.getKey() + " does not generate shape " + shape);
+            throw new IllegalArgumentException("Material " + material.getKey() + " does not generate shape " + shape);
         }
     }
 

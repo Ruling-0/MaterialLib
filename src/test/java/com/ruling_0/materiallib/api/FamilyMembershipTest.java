@@ -16,14 +16,9 @@ class FamilyMembershipTest {
 
     @Test
     void builderAddsFamiliesByObjectAndByKey() {
-        Family family = registry.newFamily("testmod", "Alloys")
-            .build();
-        Material byObject = registry.newMaterial("testmod", "ByObject", texture)
-            .addToFamily(family)
-            .build();
-        Material byKey = registry.newMaterial("testmod", "ByKey", texture)
-            .addToFamily("testmod", "Alloys")
-            .build();
+        Family family = registry.newFamily("testmod", "Alloys").build();
+        Material byObject = registry.newMaterial("testmod", "ByObject", texture).addToFamily(family).build();
+        Material byKey = registry.newMaterial("testmod", "ByKey", texture).addToFamily("testmod", "Alloys").build();
         registry.resolve();
 
         assertEquals(Set.of(family), byObject.getFamilies());
@@ -33,11 +28,8 @@ class FamilyMembershipTest {
 
     @Test
     void familyBuilderClaimsMaterialsRegisteredLater() {
-        registry.newFamily("testmod", "Alloys")
-            .addMaterial("testmod", "Later")
-            .build();
-        Material material = registry.newMaterial("testmod", "Later", texture)
-            .build();
+        registry.newFamily("testmod", "Alloys").addMaterial("testmod", "Later").build();
+        Material material = registry.newMaterial("testmod", "Later", texture).build();
         registry.resolve();
 
         assertEquals(Set.of(registry.getFamily("testmod", "Alloys")), material.getFamilies());
@@ -45,9 +37,7 @@ class FamilyMembershipTest {
 
     @Test
     void familyBuilderIgnoresUnregisteredMaterial() {
-        registry.newFamily("testmod", "Alloys")
-            .addMaterial("testmod", "Never")
-            .build();
+        registry.newFamily("testmod", "Alloys").addMaterial("testmod", "Never").build();
         registry.resolve();
 
         assertTrue(registry.getFamily("testmod", "Alloys").getMaterials().isEmpty());
@@ -55,10 +45,8 @@ class FamilyMembershipTest {
 
     @Test
     void builderAccumulatesMultipleFamilies() {
-        Family alloys = registry.newFamily("testmod", "Alloys")
-            .build();
-        Family gems = registry.newFamily("testmod", "Gems")
-            .build();
+        Family alloys = registry.newFamily("testmod", "Alloys").build();
+        Family gems = registry.newFamily("testmod", "Gems").build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily(alloys)
             .addToFamily(gems)
@@ -72,12 +60,9 @@ class FamilyMembershipTest {
 
     @Test
     void getFamiliesIteratesInKeyOrder() {
-        Family zmodAaa = registry.newFamily("zmod", "Aaa")
-            .build();
-        Family amodZzz = registry.newFamily("amod", "Zzz")
-            .build();
-        Family amodAaa = registry.newFamily("amod", "Aaa")
-            .build();
+        Family zmodAaa = registry.newFamily("zmod", "Aaa").build();
+        Family amodZzz = registry.newFamily("amod", "Zzz").build();
+        Family amodAaa = registry.newFamily("amod", "Aaa").build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily(zmodAaa)
             .addToFamily(amodZzz)
@@ -90,15 +75,10 @@ class FamilyMembershipTest {
 
     @Test
     void membershipsAccumulateAcrossMods() {
-        Family first = registry.newFamily("testmod", "First")
-            .build();
-        Family second = registry.newFamily("othermod", "Second")
-            .build();
-        Material material = registry.newMaterial("testmod", "Shared", texture)
-            .addToFamily(first)
-            .build();
-        registry.editMaterial("testmod", "Shared")
-            .addToFamily("othermod", "Second");
+        Family first = registry.newFamily("testmod", "First").build();
+        Family second = registry.newFamily("othermod", "Second").build();
+        Material material = registry.newMaterial("testmod", "Shared", texture).addToFamily(first).build();
+        registry.editMaterial("testmod", "Shared").addToFamily("othermod", "Second");
         registry.resolve();
 
         assertEquals(Set.of(first, second), material.getFamilies());
@@ -108,15 +88,10 @@ class FamilyMembershipTest {
 
     @Test
     void familyEditAddMaterialAddsMembership() {
-        Family alloys = registry.newFamily("testmod", "Alloys")
-            .build();
-        Family gems = registry.newFamily("testmod", "Gems")
-            .build();
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily(gems)
-            .build();
-        registry.editFamily("testmod", "Alloys")
-            .addMaterial("testmod", "TestIron");
+        Family alloys = registry.newFamily("testmod", "Alloys").build();
+        Family gems = registry.newFamily("testmod", "Gems").build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).addToFamily(gems).build();
+        registry.editFamily("testmod", "Alloys").addMaterial("testmod", "TestIron");
         registry.resolve();
 
         assertEquals(Set.of(alloys, gems), material.getFamilies());
@@ -126,16 +101,13 @@ class FamilyMembershipTest {
 
     @Test
     void removeFromFamilyDetachesOnlyThatFamily() {
-        Family alloys = registry.newFamily("testmod", "Alloys")
-            .build();
-        Family gems = registry.newFamily("testmod", "Gems")
-            .build();
+        Family alloys = registry.newFamily("testmod", "Alloys").build();
+        Family gems = registry.newFamily("testmod", "Gems").build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily(alloys)
             .addToFamily(gems)
             .build();
-        registry.editMaterial("testmod", "TestIron")
-            .removeFromFamily("testmod", "Alloys");
+        registry.editMaterial("testmod", "TestIron").removeFromFamily("testmod", "Alloys");
         registry.resolve();
 
         assertEquals(Set.of(gems), material.getFamilies());
@@ -145,15 +117,10 @@ class FamilyMembershipTest {
 
     @Test
     void familyEditRemoveMaterialOnlyAffectsItsOwnMembers() {
-        Family alloys = registry.newFamily("testmod", "Alloys")
-            .build();
-        Family gems = registry.newFamily("testmod", "Gems")
-            .build();
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily(alloys)
-            .build();
-        registry.editFamily("testmod", "Gems")
-            .removeMaterial("testmod", "TestIron");
+        Family alloys = registry.newFamily("testmod", "Alloys").build();
+        Family gems = registry.newFamily("testmod", "Gems").build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).addToFamily(alloys).build();
+        registry.editFamily("testmod", "Gems").removeMaterial("testmod", "TestIron");
         registry.resolve();
 
         assertEquals(Set.of(alloys), material.getFamilies());
@@ -163,29 +130,19 @@ class FamilyMembershipTest {
 
     @Test
     void familyEditRemoveMaterialDetachesMember() {
-        Family alloys = registry.newFamily("testmod", "Alloys")
-            .build();
-        registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily(alloys)
-            .build();
-        registry.editFamily("testmod", "Alloys")
-            .removeMaterial("testmod", "TestIron");
+        Family alloys = registry.newFamily("testmod", "Alloys").build();
+        registry.newMaterial("testmod", "TestIron", texture).addToFamily(alloys).build();
+        registry.editFamily("testmod", "Alloys").removeMaterial("testmod", "TestIron");
         registry.resolve();
 
-        assertTrue(
-            registry.getMaterial("testmod", "TestIron")
-                .getFamilies()
-                .isEmpty());
+        assertTrue(registry.getMaterial("testmod", "TestIron").getFamilies().isEmpty());
         assertTrue(alloys.getMaterials().isEmpty());
     }
 
     @Test
     void removeThenReAddKeepsMembership() {
-        Family alloys = registry.newFamily("testmod", "Alloys")
-            .build();
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily(alloys)
-            .build();
+        Family alloys = registry.newFamily("testmod", "Alloys").build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).addToFamily(alloys).build();
         registry.editMaterial("testmod", "TestIron")
             .removeFromFamily("testmod", "Alloys")
             .addToFamily("testmod", "Alloys");
@@ -197,13 +154,9 @@ class FamilyMembershipTest {
 
     @Test
     void removeFromUnregisteredFamilyIsSkipped() {
-        Family alloys = registry.newFamily("testmod", "Alloys")
-            .build();
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily(alloys)
-            .build();
-        registry.editMaterial("testmod", "TestIron")
-            .removeFromFamily("absentmod", "Missing");
+        Family alloys = registry.newFamily("testmod", "Alloys").build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).addToFamily(alloys).build();
+        registry.editMaterial("testmod", "TestIron").removeFromFamily("absentmod", "Missing");
         registry.resolve();
 
         assertEquals(Set.of(alloys), material.getFamilies());
@@ -211,14 +164,10 @@ class FamilyMembershipTest {
 
     @Test
     void materialAndFamilyEditsShareOneQueue() {
-        Family family = registry.newFamily("testmod", "Alloys")
-            .build();
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
-        registry.editMaterial("testmod", "TestIron")
-            .addToFamily("testmod", "Alloys");
-        registry.editFamily("testmod", "Alloys")
-            .removeMaterial("testmod", "TestIron");
+        Family family = registry.newFamily("testmod", "Alloys").build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).build();
+        registry.editMaterial("testmod", "TestIron").addToFamily("testmod", "Alloys");
+        registry.editFamily("testmod", "Alloys").removeMaterial("testmod", "TestIron");
         registry.resolve();
 
         assertTrue(material.getFamilies().isEmpty());
@@ -227,15 +176,10 @@ class FamilyMembershipTest {
 
     @Test
     void duplicateClaimsCollapseToSingleMembership() {
-        Family family = registry.newFamily("testmod", "Alloys")
-            .build();
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily(family)
-            .build();
-        registry.editFamily("testmod", "Alloys")
-            .addMaterial("testmod", "TestIron");
-        registry.editMaterial("testmod", "TestIron")
-            .removeFromFamily("testmod", "Alloys");
+        Family family = registry.newFamily("testmod", "Alloys").build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).addToFamily(family).build();
+        registry.editFamily("testmod", "Alloys").addMaterial("testmod", "TestIron");
+        registry.editMaterial("testmod", "TestIron").removeFromFamily("testmod", "Alloys");
         registry.resolve();
 
         assertTrue(material.getFamilies().isEmpty());

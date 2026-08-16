@@ -101,8 +101,7 @@ public final class MaterialIdTransitions {
 
     private static Step readStep(File file) {
         Data data = JsonStore.read(file, Data.class, corrupt(file));
-        if (data == null || data.moved == null || data.removed == null || data.to != data.from + 1 ||
-            data.from < 1) {
+        if (data == null || data.moved == null || data.removed == null || data.to != data.from + 1 || data.from < 1) {
             throw new IllegalStateException(corrupt(file));
         }
         Matcher name = FILE_NAME.matcher(file.getName());

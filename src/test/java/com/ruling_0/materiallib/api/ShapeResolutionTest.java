@@ -19,15 +19,12 @@ class ShapeResolutionTest {
 
     @Test
     void shapesCombineOwnAndFamilyMinusRemoved() {
-        registry.newFamily("testmod", "Metals")
-            .generateShapes(ingot, frame)
-            .build();
+        registry.newFamily("testmod", "Metals").generateShapes(ingot, frame).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .generateShape(gear)
             .addToFamily("testmod", "Metals")
             .build();
-        registry.editMaterial("testmod", "TestIron")
-            .removeShape(frame);
+        registry.editMaterial("testmod", "TestIron").removeShape(frame);
         registry.resolve();
 
         assertEquals(Set.of(gear, ingot), material.getShapes());
@@ -37,9 +34,7 @@ class ShapeResolutionTest {
 
     @Test
     void builderRemovalMasksFamilyShape() {
-        registry.newFamily("testmod", "Metals")
-            .generateShapes(ingot, frame)
-            .build();
+        registry.newFamily("testmod", "Metals").generateShapes(ingot, frame).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily("testmod", "Metals")
             .removeShape(frame)
@@ -51,15 +46,12 @@ class ShapeResolutionTest {
 
     @Test
     void builderRemovalIsLiftedByALaterEdit() {
-        registry.newFamily("testmod", "Metals")
-            .generateShape(ingot)
-            .build();
+        registry.newFamily("testmod", "Metals").generateShape(ingot).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily("testmod", "Metals")
             .removeShape(ingot)
             .build();
-        registry.editMaterial("testmod", "TestIron")
-            .generateShape(ingot);
+        registry.editMaterial("testmod", "TestIron").generateShape(ingot);
         registry.resolve();
 
         assertTrue(material.hasShape(ingot));
@@ -78,9 +70,7 @@ class ShapeResolutionTest {
 
     @Test
     void builderGenerateAfterRemovalKeepsShape() {
-        registry.newFamily("testmod", "Metals")
-            .generateShape(ingot)
-            .build();
+        registry.newFamily("testmod", "Metals").generateShape(ingot).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily("testmod", "Metals")
             .removeShape(ingot)
@@ -93,15 +83,11 @@ class ShapeResolutionTest {
 
     @Test
     void removeThenReAddKeepsShape() {
-        registry.newFamily("testmod", "Metals")
-            .generateShape(ingot)
-            .build();
+        registry.newFamily("testmod", "Metals").generateShape(ingot).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily("testmod", "Metals")
             .build();
-        registry.editMaterial("testmod", "TestIron")
-            .removeShape(ingot)
-            .generateShape(ingot);
+        registry.editMaterial("testmod", "TestIron").removeShape(ingot).generateShape(ingot);
         registry.resolve();
 
         assertTrue(material.hasShape(ingot));
@@ -109,11 +95,8 @@ class ShapeResolutionTest {
 
     @Test
     void addThenRemoveDropsShape() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .generateShape(gear)
-            .build();
-        registry.editMaterial("testmod", "TestIron")
-            .removeShape(gear);
+        Material material = registry.newMaterial("testmod", "TestIron", texture).generateShape(gear).build();
+        registry.editMaterial("testmod", "TestIron").removeShape(gear);
         registry.resolve();
 
         assertFalse(material.hasShape(gear));
@@ -122,18 +105,11 @@ class ShapeResolutionTest {
 
     @Test
     void familyEditsApplyToAllMembers() {
-        registry.newFamily("testmod", "Metals")
-            .build();
-        Material iron = registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily("testmod", "Metals")
-            .build();
-        Material gold = registry.newMaterial("testmod", "TestGold", texture)
-            .addToFamily("testmod", "Metals")
-            .build();
-        registry.editFamily("testmod", "Metals")
-            .generateShapes(ingot, gear);
-        registry.editFamily("testmod", "Metals")
-            .removeShape(gear);
+        registry.newFamily("testmod", "Metals").build();
+        Material iron = registry.newMaterial("testmod", "TestIron", texture).addToFamily("testmod", "Metals").build();
+        Material gold = registry.newMaterial("testmod", "TestGold", texture).addToFamily("testmod", "Metals").build();
+        registry.editFamily("testmod", "Metals").generateShapes(ingot, gear);
+        registry.editFamily("testmod", "Metals").removeShape(gear);
         registry.resolve();
 
         assertEquals(Set.of(ingot), iron.getShapes());
@@ -142,15 +118,12 @@ class ShapeResolutionTest {
 
     @Test
     void familyShapeRemovalDoesNotAffectOwnShapes() {
-        registry.newFamily("testmod", "Metals")
-            .generateShape(gear)
-            .build();
+        registry.newFamily("testmod", "Metals").generateShape(gear).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .generateShape(gear)
             .addToFamily("testmod", "Metals")
             .build();
-        registry.editFamily("testmod", "Metals")
-            .removeShape(gear);
+        registry.editFamily("testmod", "Metals").removeShape(gear);
         registry.resolve();
 
         assertTrue(material.hasShape(gear));
@@ -158,43 +131,28 @@ class ShapeResolutionTest {
 
     @Test
     void materialShapeRemovalMasksLaterFamilyAddition() {
-        registry.newFamily("testmod", "Metals")
-            .build();
-        Material iron = registry.newMaterial("testmod", "TestIron", texture)
-            .addToFamily("testmod", "Metals")
-            .build();
-        Material gold = registry.newMaterial("testmod", "TestGold", texture)
-            .addToFamily("testmod", "Metals")
-            .build();
-        registry.editMaterial("testmod", "TestIron")
-            .removeShape(frame);
-        registry.editFamily("testmod", "Metals")
-            .generateShape(frame);
+        registry.newFamily("testmod", "Metals").build();
+        Material iron = registry.newMaterial("testmod", "TestIron", texture).addToFamily("testmod", "Metals").build();
+        Material gold = registry.newMaterial("testmod", "TestGold", texture).addToFamily("testmod", "Metals").build();
+        registry.editMaterial("testmod", "TestIron").removeShape(frame);
+        registry.editFamily("testmod", "Metals").generateShape(frame);
         registry.resolve();
 
         assertFalse(iron.hasShape(frame));
         assertTrue(gold.hasShape(frame));
-        assertTrue(
-            registry.getFamily("testmod", "Metals")
-                .getShapes()
-                .contains(frame));
+        assertTrue(registry.getFamily("testmod", "Metals").getShapes().contains(frame));
     }
 
     @Test
     void shapesUnionAcrossFamilies() {
-        registry.newFamily("testmod", "Metals")
-            .generateShape(ingot)
-            .build();
-        registry.newFamily("othermod", "Framed")
-            .generateShape(frame)
-            .build();
+        registry.newFamily("testmod", "Metals").generateShape(ingot).build();
+        registry.newFamily("othermod", "Framed").generateShape(frame).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .generateShape(gear)
             .addToFamily("testmod", "Metals")
             .addToFamily("othermod", "Framed")
             .build();
-        registry.editMaterial("testmod", "TestIron")
-            .removeShape(ingot);
+        registry.editMaterial("testmod", "TestIron").removeShape(ingot);
         registry.resolve();
 
         assertEquals(Set.of(gear, frame), material.getShapes());
@@ -213,9 +171,7 @@ class ShapeResolutionTest {
 
     @Test
     void familyShapesVisibleOnFamily() {
-        Family family = registry.newFamily("testmod", "Metals")
-            .generateShapes(ingot, frame)
-            .build();
+        Family family = registry.newFamily("testmod", "Metals").generateShapes(ingot, frame).build();
         registry.resolve();
 
         assertEquals(Set.of(ingot, frame), family.getShapes());

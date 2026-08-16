@@ -14,15 +14,13 @@ class MaterialIndexTest {
     private final TextureSet texture = TextureSet.of("testmod", "shiny");
 
     private Material material(String modid, String name) {
-        return registry.newMaterial(modid, name, texture)
-            .build();
+        return registry.newMaterial(modid, name, texture).build();
     }
 
     private MaterialRegistry resolvedWith(List<String> namesInRegistrationOrder) {
         MaterialRegistry fresh = new MaterialRegistry();
         for (String name : namesInRegistrationOrder) {
-            fresh.newMaterial("testmod", name, texture)
-                .build();
+            fresh.newMaterial("testmod", name, texture).build();
         }
         fresh.resolve();
         return fresh;

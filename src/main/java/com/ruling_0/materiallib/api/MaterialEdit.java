@@ -61,8 +61,7 @@ public final class MaterialEdit {
 
     public MaterialEdit generateShape(Shape shape) {
         Names.validate(shape);
-        registry
-            .enqueueMaterialOp(modid, name, "generate shape " + shape + " on material", m -> m.addShape(shape));
+        registry.enqueueMaterialOp(modid, name, "generate shape " + shape + " on material", m -> m.addShape(shape));
         return this;
     }
 
@@ -78,8 +77,7 @@ public final class MaterialEdit {
     /// material lifts the mask.
     public MaterialEdit removeShape(Shape shape) {
         Names.validate(shape);
-        registry
-            .enqueueMaterialOp(modid, name, "remove shape " + shape + " from material", m -> m.removeShape(shape));
+        registry.enqueueMaterialOp(modid, name, "remove shape " + shape + " from material", m -> m.removeShape(shape));
         return this;
     }
 
@@ -103,11 +101,7 @@ public final class MaterialEdit {
 
     /// Removes the material's tooltip lines.
     public MaterialEdit removeTooltip() {
-        registry.enqueueMaterialOp(
-            modid,
-            name,
-            "remove tooltip from material",
-            Material::clearTooltip);
+        registry.enqueueMaterialOp(modid, name, "remove tooltip from material", Material::clearTooltip);
         return this;
     }
 

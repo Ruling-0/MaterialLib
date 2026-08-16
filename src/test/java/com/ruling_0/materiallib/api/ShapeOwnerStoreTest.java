@@ -24,8 +24,7 @@ class ShapeOwnerStoreTest {
 
     @Test
     void readingAnAbsentFileGivesAnEmptyMap() {
-        assertTrue(ShapeOwnerStore.read(file())
-            .isEmpty());
+        assertTrue(ShapeOwnerStore.read(file()).isEmpty());
     }
 
     @Test
@@ -67,8 +66,7 @@ class ShapeOwnerStoreTest {
     void readingAFileWithEmptyOwnersGivesAnEmptyMap() throws Exception {
         Files.write(file().toPath(), "{\"version\":1,\"owners\":{}}".getBytes(StandardCharsets.UTF_8));
 
-        assertTrue(ShapeOwnerStore.read(file())
-            .isEmpty());
+        assertTrue(ShapeOwnerStore.read(file()).isEmpty());
     }
 
     @Test

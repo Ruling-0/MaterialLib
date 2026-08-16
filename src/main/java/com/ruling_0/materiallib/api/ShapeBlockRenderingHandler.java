@@ -63,10 +63,7 @@ public final class ShapeBlockRenderingHandler implements ISimpleBlockRenderingHa
 
     private static void drawInventoryLayer(RenderBlocks renderer, Tessellator tessellator, ShapeBlock shape,
                                            IIcon icon, int color) {
-        tessellator.setColorOpaque_F(
-            (color >> 16 & 255) / 255.0F,
-            (color >> 8 & 255) / 255.0F,
-            (color & 255) / 255.0F);
+        tessellator.setColorOpaque_F((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F);
         drawInventoryFace(renderer, tessellator, shape, 0, icon, 0.0F, -1.0F, 0.0F);
         drawInventoryFace(renderer, tessellator, shape, 1, icon, 0.0F, 1.0F, 0.0F);
         drawInventoryFace(renderer, tessellator, shape, 2, icon, 0.0F, 0.0F, -1.0F);

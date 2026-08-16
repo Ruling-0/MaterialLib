@@ -96,9 +96,7 @@ public class CommandMatInfo extends CommandBase {
 
     private static void report(ICommandSender sender, Shape shape, String variant, Material material) {
         String variantSuffix = variant != null ? " variant " + variant : "";
-        send(
-            sender,
-            "Shape: " + shape.getModId() + ":" + shape.getName() + variantSuffix + " (" + type(shape) + ")");
+        send(sender, "Shape: " + shape.getModId() + ":" + shape.getName() + variantSuffix + " (" + type(shape) + ")");
         if (material == null) {
             send(sender, "Material: none loaded at this index");
             return;

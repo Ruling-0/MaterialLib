@@ -17,13 +17,9 @@ class BlockShapeBuilderTest {
 
     @Test
     void harvestToolDefaultsToPickaxeOnlyWithAHarvestLevelHook() {
-        assertEquals(
-            "wrench",
-            blockWith(new BlockBehavior(null, null, null, (m, v) -> 1, "wrench")).getHarvestTool(0));
+        assertEquals("wrench", blockWith(new BlockBehavior(null, null, null, (m, v) -> 1, "wrench")).getHarvestTool(0));
         assertEquals("wrench", blockWith(new BlockBehavior(null, null, null, null, "wrench")).getHarvestTool(0));
-        assertEquals(
-            "pickaxe",
-            blockWith(new BlockBehavior(null, null, null, (m, v) -> 1, null)).getHarvestTool(0));
+        assertEquals("pickaxe", blockWith(new BlockBehavior(null, null, null, (m, v) -> 1, null)).getHarvestTool(0));
         assertNull(blockWith(BlockBehavior.NONE).getHarvestTool(0));
     }
 

@@ -17,8 +17,7 @@ class ShapeConsumersTest {
     private final TextureSet texture = TextureSet.of("testmod", "shiny");
 
     private Material material(String name) {
-        return registry.newMaterial("testmod", name, texture)
-            .build();
+        return registry.newMaterial("testmod", name, texture).build();
     }
 
     private static TestServedShape shape(String name, Material... materials) {

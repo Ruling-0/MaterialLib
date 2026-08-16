@@ -307,8 +307,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     public float getBlockHardness(World world, int x, int y, int z) {
         Material material = behavior.hardness() != null ? materialAt(world, x, y, z) : null;
-        return material != null ? behavior.hardness().apply(material, variant) :
-            super.getBlockHardness(world, x, y, z);
+        return material != null ? behavior.hardness().apply(material, variant) : super.getBlockHardness(world, x, y, z);
     }
 
     @Override
