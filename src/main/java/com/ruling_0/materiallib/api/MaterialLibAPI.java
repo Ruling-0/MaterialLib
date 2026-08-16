@@ -82,16 +82,11 @@ public final class MaterialLibAPI {
     /// Registers a standalone empty container item owned by `modid`, e.g. the empty cell a filled cell drains to.
     /// The item carries no material; the name backs exactly one item, registered with FML under MaterialLib's
     /// domain (`materiallib:<name>`) when shapes resolve. Mods registering the same name unify onto the
-    /// alphabetically first modid, which supplies the item's icon (`<ownerModid>:materials/<name>`) and its lang
-    /// key (`item.<ownerModid>.<name>.name`). The returned handle names the drained item of a container shape (see
+    /// alphabetically first modid, which supplies the item's lang key (`item.<ownerModid>.<name>.name`).
+    /// `iconPath` names the item's texture (e.g. `gregtech:materials/cell_base`); null takes the owner's default,
+    /// `<ownerModid>:materials/<name>`. The returned handle names the drained item of a container shape (see
     /// [FluidInContainerShapeBuilder#emptyContainer(EmptyContainerHandle)]) and builds stacks once shapes have
     /// resolved.
-    public static EmptyContainerHandle registerEmptyContainer(String modid, String name) {
-        return ShapeRegistry.instance().registerEmptyContainer(modid, name, null);
-    }
-
-    /// As [#registerEmptyContainer(String, String)], with `iconPath` naming the item's texture (e.g.
-    /// `gregtech:materials/cell_base`) instead of taking the owner's default.
     public static EmptyContainerHandle registerEmptyContainer(String modid, String name, String iconPath) {
         return ShapeRegistry.instance().registerEmptyContainer(modid, name, iconPath);
     }

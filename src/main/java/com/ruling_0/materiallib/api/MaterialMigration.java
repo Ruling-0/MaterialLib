@@ -37,7 +37,4 @@ public final class MaterialMigration {
     public int lookup(int oldIndex) {
         return remap.getOrDefault(oldIndex, UNCHANGED);
     }
-
-    /// True if no stored stack or placed block needs migrating.
-    public boolean isEmpty() { return remap.isEmpty(); }
 }

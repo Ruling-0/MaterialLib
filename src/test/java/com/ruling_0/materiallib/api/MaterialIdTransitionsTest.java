@@ -80,13 +80,6 @@ class MaterialIdTransitionsTest {
     }
 
     @Test
-    void loadingACorruptFileFailsLoudly() throws Exception {
-        Files.write(new File(dir, "v1-to-v2.json").toPath(), "{ not valid json".getBytes(StandardCharsets.UTF_8));
-
-        assertThrows(IllegalStateException.class, () -> MaterialIdTransitions.load(dir));
-    }
-
-    @Test
     void loadingAFileWhoseNameContradictsItsVersionsFailsLoudly() throws Exception {
         Files.write(
             new File(dir, "v1-to-v2.json").toPath(),

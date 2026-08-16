@@ -25,8 +25,6 @@ public final class EmptyContainerHandle {
     /// The modid that registered this handle, which is not necessarily the one owning the item.
     public String getModId() { return modid; }
 
-    public String getName() { return name; }
-
     /// A stack of the registered item, with the given stack size. Only available once shapes have resolved, at the
     /// end of MaterialLib's preInit.
     public ItemStack getStack(int amount) {

@@ -5,8 +5,6 @@ import java.util.Objects;
 
 import net.minecraftforge.client.IItemRenderer;
 
-import com.ruling_0.materiallib.MaterialLib;
-
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -43,17 +41,6 @@ public final class MaterialLibClient {
         Objects.requireNonNull(material, "material must not be null");
         Objects.requireNonNull(renderer, "renderer must not be null");
         itemRenderers.put(material, renderer);
-    }
-
-    /// Renders every item shape of the material with the given key through `renderer`. Warns and does nothing if
-    /// no such material is registered.
-    public static void setItemRenderer(String modid, String name, IItemRenderer renderer) {
-        Material material = MaterialRegistry.instance().getMaterial(modid, name);
-        if (material == null) {
-            MaterialLib.LOG.warn("Cannot set an item renderer for {}:{}: no such material is registered", modid, name);
-            return;
-        }
-        setItemRenderer(material, renderer);
     }
 
     static IItemRenderer getItemRenderer(Material material) {

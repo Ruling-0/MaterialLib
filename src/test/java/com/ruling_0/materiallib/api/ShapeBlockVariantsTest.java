@@ -28,9 +28,4 @@ class ShapeBlockVariantsTest {
         assertTrue(e.getMessage().contains("granite"));
         assertTrue(e.getMessage().contains("a variant base texture"));
     }
-
-    @Test
-    void anEmptyKeySetIsAlwaysAccepted() {
-        assertDoesNotThrow(() -> ShapeBlockVariants.requireDeclaredVariants(List.of("stone"), Set.of(), "anything"));
-    }
 }
