@@ -25,8 +25,8 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
 /// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve, configures
 /// newly registered fluids through this shape's [FluidConfigurer], and, on the client, binds each fluid's still and
-/// flowing icons from this shape's [IconPather] when it names an existing file (see
-/// [FluidShapeBuilder#iconPath]), and otherwise from the material's texture sets -- the same chain [ShapeIcons]
+/// flowing icons from a resource-pack override, then from this shape's [IconPather] when it names an existing file
+/// (see [FluidShapeBuilder#iconPath]), and otherwise from the material's texture sets -- the same chain [ShapeIcons]
 /// walks for an item or block icon.
 ///
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see

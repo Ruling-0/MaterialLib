@@ -17,7 +17,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 /// The per-material icons of an item or block shape, keyed by material index. Once [#bind] has run, [#get] and
 /// [#getOverlay] never return null: an index that bound no icon resolves to the transparent [#EMPTY_ICON]
 /// placeholder. A material with a null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS]
-/// -- or a null entry inside the list -- is treated like one whose texture files do not exist.
+/// -- or a null entry inside the list -- is treated like one whose texture files do not exist. A resource-pack file
+/// at [#overridePath] reskins a single material and outranks every other source; see [#resolvePath].
 final class ShapeIcons {
 
     /// The transparent placeholder icon path, present on both the item and block atlases.
@@ -25,6 +26,9 @@ final class ShapeIcons {
 
     /// The suffix marking a shape texture's companion overlay layer, appended to the base icon path.
     static final String OVERLAY_SUFFIX = "_OVERLAY";
+
+    /// The resource-pack override root; see [#resolvePath].
+    static final String OVERRIDE_ROOT = MaterialLib.MODID + ":mloverrides/";
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<IIcon> overlaysByIndex = new Int2ObjectOpenHashMap<>();
@@ -107,14 +111,23 @@ final class ShapeIcons {
         return overlaysByIndex.get(index);
     }
 
+    /// The resource-pack override icon path for `material`'s art filed under `shapeName`.
+    static String overridePath(Material material, String shapeName) {
+        return OVERRIDE_ROOT + material.getName() + "/" + shapeName;
+    }
+
     /// The icon path of the highest-priority source that carries a name in `shapeNameCandidates` whose texture
-    /// file `exists` accepts, or null when every source misses. Sources run in order: `perMaterialIconPath` when
-    /// non-null, [StandardProperties#TEXTURE_SET], [StandardProperties#FALLBACK_TEXTURE_SETS] in list order, then
-    /// the texture set and fallbacks of each unification alternative. Within one source, earlier candidate names
-    /// win. Source-major order keeps a material's own plain-shape texture ahead of a lower source's variant
-    /// texture.
+    /// file `exists` accepts, or null when every source misses. Sources run in order: the resource-pack override
+    /// ([#overridePath]), `perMaterialIconPath` when non-null, [StandardProperties#TEXTURE_SET],
+    /// [StandardProperties#FALLBACK_TEXTURE_SETS] in list order, then the texture set and fallbacks of each
+    /// unification alternative. Within one source, earlier candidate names win. Source-major order keeps a
+    /// material's own plain-shape texture ahead of a lower source's variant texture.
     static String resolvePath(Material material, List<String> shapeNameCandidates,
                               Function<Material, String> perMaterialIconPath, Predicate<String> exists) {
+        for (String shapeName : shapeNameCandidates) {
+            String override = overridePath(material, shapeName);
+            if (exists.test(override)) return override;
+        }
         if (perMaterialIconPath != null) {
             String perMaterial = perMaterialIconPath.apply(material);
             if (perMaterial != null && exists.test(perMaterial)) return perMaterial;

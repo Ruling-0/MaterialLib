@@ -9,9 +9,9 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 /// A named per-material icon binding on one texture atlas, with no backing item or block: the icon resolution of a
-/// shape (texture-set chain, fallbacks, unification alternatives, `_OVERLAY` convention) for art a mod composites
-/// in its own renderers, e.g. tool parts drawn by the material read from a stack's NBT, or an extra face icon of a
-/// block the mod already owns.
+/// shape (resource-pack overrides, texture-set chain, fallbacks, unification alternatives, `_OVERLAY` convention) for
+/// art a mod composites in its own renderers, e.g. tool parts drawn by the material read from a stack's NBT, or an
+/// extra face icon of a block the mod already owns.
 ///
 /// Created through [MaterialLibClient#newIconSet] before the first texture stitch. Icons bind for every registered
 /// material -- an icon set has no served set, since no material generates one -- when the chosen atlas stitches, and

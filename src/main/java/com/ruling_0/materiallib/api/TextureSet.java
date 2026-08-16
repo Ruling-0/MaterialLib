@@ -4,6 +4,11 @@ package com.ruling_0.materiallib.api;
 ///
 /// The `name` of this corresponds to the folder name holding the textures, either `textures/items/materials/<name>/`
 /// for items or `textures/blocks/materials/<name>/` for blocks and fluids.
+///
+/// A resource pack reskins one material alone, outranking every texture set, with a file at
+/// `assets/materiallib/textures/<items|blocks>/mloverrides/<materialName>/<shape>[_OVERLAY].png`. `<materialName>` is
+/// the material's registry name in its exact case, and `<shape>` is the name the art is filed under inside a texture
+/// set. The winning file supplies its own `_OVERLAY` layer or none.
 public final class TextureSet {
 
     private final String modid;
