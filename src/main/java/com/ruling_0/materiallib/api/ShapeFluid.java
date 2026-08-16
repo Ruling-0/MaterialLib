@@ -204,12 +204,10 @@ public class ShapeFluid implements ServedShape {
     String resolveIconPath(Material material) {
         if (iconPather != null) {
             String path = iconPather.iconPath(this, material);
-            if (path != null &&
-                ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(path))) {
-                return path;
-            }
+            if (path != null && blockTextureExists(path)) return path;
         }
-        ShapeIcons.ResolvedTexture resolved = ShapeIcons.resolve(material, List.of(name), false);
+        ShapeIcons.ResolvedTexture resolved = ShapeIcons.resolve(material, List.of(name),
+            ShapeFluid::blockTextureExists);
         if (resolved != null) return resolved.set().iconPath(resolved.shapeName());
         if (warnedMissingIcon.add(material)) {
             MaterialLib.LOG.warn(
@@ -218,6 +216,10 @@ public class ShapeFluid implements ServedShape {
                 material.getKey());
         }
         return ShapeIcons.EMPTY_ICON;
+    }
+
+    private static boolean blockTextureExists(String path) {
+        return ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(path));
     }
 
     /// A material's fluid, naming itself from the shape's display format and coloring itself with the material's

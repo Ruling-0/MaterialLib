@@ -2,6 +2,7 @@ package com.ruling_0.materiallib.api;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.util.IIcon;
@@ -116,7 +117,7 @@ final class ShapeIcons {
     /// Binds `material`'s icon and overlay from the texture source [#resolve] picks, returning whether one
     /// resolved.
     private boolean bindMaterial(IIconRegister register, Material material, List<String> shapeNameCandidates) {
-        ResolvedTexture resolved = resolve(material, shapeNameCandidates, isItem);
+        ResolvedTexture resolved = resolve(material, shapeNameCandidates, this::checkResLoc);
         if (resolved == null) return false;
         setIcons(register, material, resolved.set(), resolved.shapeName());
         return true;
@@ -126,23 +127,23 @@ final class ShapeIcons {
     record ResolvedTexture(TextureSet set, String shapeName) {}
 
     /// The highest-priority source in `material`'s resolution chain that carries a name in `shapeNameCandidates`
-    /// whose texture file exists on the item or block atlas, or null when the whole chain misses. The chain runs
-    /// [StandardProperties#TEXTURE_SET], then [StandardProperties#FALLBACK_TEXTURE_SETS] in order, then the same
-    /// two on each unification alternative; within one source, earlier candidate names win. Source-major order
-    /// keeps a material's own plain-shape texture ahead of a lower source's variant texture.
-    static ResolvedTexture resolve(Material material, List<String> shapeNameCandidates, boolean isItem) {
+    /// whose texture file `exists` accepts, or null when the whole chain misses. The chain runs
+    /// [StandardProperties#TEXTURE_SET], then [StandardProperties#FALLBACK_TEXTURE_SETS] in order, then the same two
+    /// on each unification alternative; within one source, earlier candidate names win. Source-major order keeps a
+    /// material's own plain-shape texture ahead of a lower source's variant texture.
+    static ResolvedTexture resolve(Material material, List<String> shapeNameCandidates, Predicate<String> exists) {
         ResolvedTexture resolved = resolveFromSets(
             material.getProperty(StandardProperties.TEXTURE_SET),
             material.getProperty(StandardProperties.FALLBACK_TEXTURE_SETS),
             shapeNameCandidates,
-            isItem);
+            exists);
         if (resolved != null) return resolved;
         for (Material alternative : material.getAlternatives()) {
             resolved = resolveFromSets(
                 alternative.getPropertyIgnoreCanonical(StandardProperties.TEXTURE_SET),
                 alternative.getPropertyIgnoreCanonical(StandardProperties.FALLBACK_TEXTURE_SETS),
                 shapeNameCandidates,
-                isItem);
+                exists);
             if (resolved != null) return resolved;
         }
         return null;
@@ -151,12 +152,12 @@ final class ShapeIcons {
     /// The first of `textureSet` then `fallbacks` carrying a candidate name whose texture file exists, or null
     /// when none does.
     private static ResolvedTexture resolveFromSets(TextureSet textureSet, List<TextureSet> fallbacks,
-                                                   List<String> shapeNameCandidates, boolean isItem) {
-        ResolvedTexture resolved = resolveSet(textureSet, shapeNameCandidates, isItem);
+                                                   List<String> shapeNameCandidates, Predicate<String> exists) {
+        ResolvedTexture resolved = resolveSet(textureSet, shapeNameCandidates, exists);
         if (resolved != null) return resolved;
         if (fallbacks == null) return null;
         for (TextureSet fallback : fallbacks) {
-            resolved = resolveSet(fallback, shapeNameCandidates, isItem);
+            resolved = resolveSet(fallback, shapeNameCandidates, exists);
             if (resolved != null) return resolved;
         }
         return null;
@@ -165,10 +166,10 @@ final class ShapeIcons {
     /// The first candidate name whose texture file exists in `textureSet`, paired with that set, or null when
     /// `textureSet` is null or carries none of them.
     private static ResolvedTexture resolveSet(TextureSet textureSet, List<String> shapeNameCandidates,
-                                              boolean isItem) {
+                                              Predicate<String> exists) {
         if (textureSet == null) return null;
         for (String shapeName : shapeNameCandidates) {
-            if (exists(textureSet.iconPath(shapeName), isItem)) {
+            if (exists.test(textureSet.iconPath(shapeName))) {
                 return new ResolvedTexture(textureSet, shapeName);
             }
         }
