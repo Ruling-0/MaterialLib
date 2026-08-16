@@ -7,11 +7,10 @@ import java.util.TreeMap;
 
 /// Renders a resolved [MaterialRegistry]'s full index assignment as a CSV table.
 ///
-/// One row per assigned index in ascending order, including indices reserved for materials not loaded
-/// this session -- the data needed when debugging persistence issues. Columns are the index, the bare
-/// material name, the owning modid, whether the material is loaded, and (for loaded materials) the
-/// generated shapes and family memberships as ';'-joined keys. Fields containing a comma, quote, or
-/// line break are quoted with doubled inner quotes (RFC 4180); rows end with '\n'.
+/// One row per assigned index in ascending order -- the data needed when debugging id issues. Columns are
+/// the index, the bare material name, the owning modid, and the generated shapes and family memberships as
+/// ';'-joined keys. Fields containing a comma, quote, or line break are quoted with doubled inner quotes
+/// (RFC 4180); rows end with '\n'.
 final class MaterialCsv {
 
     private MaterialCsv() {}
@@ -22,7 +21,7 @@ final class MaterialCsv {
             namesByIndex.put(entry.getValue(), entry.getKey());
         }
         Map<String, String> owners = registry.getAssignedOwners();
-        StringBuilder csv = new StringBuilder("index,name,owner,loaded,shapes,families\n");
+        StringBuilder csv = new StringBuilder("index,name,owner,shapes,families\n");
         for (Map.Entry<Integer, String> entry : namesByIndex.entrySet()) {
             int index = entry.getKey();
             String name = entry.getValue();
@@ -33,11 +32,9 @@ final class MaterialCsv {
                 .append(',')
                 .append(escape(owners.getOrDefault(name, "")))
                 .append(',')
-                .append(material != null ? "yes" : "no")
+                .append(escape(shapeKeys(material)))
                 .append(',')
-                .append(escape(material != null ? shapeKeys(material) : ""))
-                .append(',')
-                .append(escape(material != null ? familyKeys(material) : ""))
+                .append(escape(familyKeys(material)))
                 .append('\n');
         }
         return csv.toString();

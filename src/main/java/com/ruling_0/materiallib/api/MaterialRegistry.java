@@ -1,5 +1,8 @@
 package com.ruling_0.materiallib.api;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -27,6 +30,9 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 /// per-material shape sets, and freezes the registry. From then on everything is readable and nothing can be
 /// registered or edited, which guarantees dependent mods a complete registry from their init onwards.
 ///
+/// Indices are assigned deterministically at resolve: the post-unification material names sorted ascending take
+/// indices 0..n-1, so identical registered sets derive identical assignments.
+///
 /// The game uses the single [#instance].
 public final class MaterialRegistry {
 
@@ -39,8 +45,8 @@ public final class MaterialRegistry {
     private Collection<Material> materialsView;
     private Collection<Family> familiesView;
     private Material[] materialsByIndex;
-    private Map<String, Integer> persistedIndices = new LinkedHashMap<>();
     private Map<String, Integer> assignedIndices = new LinkedHashMap<>();
+    private String contentHash;
     private final Map<String, Material> aliasKeys = new Object2ObjectLinkedOpenHashMap<>();
     private Map<String, String> persistedOwners = new LinkedHashMap<>();
     private Map<String, String> assignedOwners = new LinkedHashMap<>();
@@ -172,18 +178,18 @@ public final class MaterialRegistry {
         }
     }
 
-    /// Sets the persisted index assignment to honor at resolve, loaded from the instance-global store. Must be
-    /// set before resolve.
-    void setPersistedIndices(Map<String, Integer> indices) {
-        requireRegistration("set persisted material indices");
-        this.persistedIndices = new LinkedHashMap<>(indices);
-    }
-
-    /// The full index assignment after resolve: every persisted entry (including indices reserved for materials
-    /// not registered this session) plus the indices newly assigned this session. Written back to the store.
+    /// The index assignment after resolve: every registered material name mapped to its index, dense over
+    /// 0..n-1 in ascending name order.
     Map<String, Integer> getAssignedIndices() {
         requireResolved("read assigned material indices", "");
         return Collections.unmodifiableMap(assignedIndices);
+    }
+
+    /// The SHA-256 hex fingerprint of the index assignment: the material names joined with `\n` in index
+    /// order, hashed as UTF-8. Instances with equal hashes agree on every index.
+    String getContentHash() {
+        requireResolved("read the material list hash", "");
+        return contentHash;
     }
 
     /// Sets the persisted material owners to honor at resolve, loaded from the instance-global store. Must be
@@ -200,49 +206,55 @@ public final class MaterialRegistry {
         return Collections.unmodifiableMap(assignedOwners);
     }
 
-    /// The full index assignment rendered as a CSV table for debugging: one row per assigned index,
-    /// including indices reserved for materials not loaded this session, with the assigned owner and,
-    /// for loaded materials, shapes and families. Only available after the registry has resolved.
+    /// The full index assignment rendered as a CSV table for debugging: one row per assigned index in
+    /// ascending order, with the assigned owner, shapes, and families. Only available after the registry has
+    /// resolved.
     public String dumpCsv() {
         return MaterialCsv.dump(this);
     }
 
-    /// Assigns each material its global index, append-only against the persisted assignment: a material already in
-    /// the store keeps its index, new materials take the next free indices in ascending name order, and
-    /// indices of materials no longer present stay reserved (never reused) so existing item stacks do not change
-    /// material. The index becomes the item damage in every shape and the worldgen id.
+    /// Assigns each material its global index and fingerprints the result as [#getContentHash].
     private void assignMaterialIndices() {
         Map<String, Material> byName = new Object2ObjectLinkedOpenHashMap<>();
         for (Material material : materials.values()) {
             byName.put(material.getName(), material);
         }
-        assignedIndices = new LinkedHashMap<>(persistedIndices);
-        int next = 0;
-        for (int index : assignedIndices.values()) {
-            next = Math.max(next, index + 1);
-        }
-        List<String> newNames = new ObjectArrayList<>();
-        for (String name : byName.keySet()) {
-            if (!assignedIndices.containsKey(name)) newNames.add(name);
-        }
-        Collections.sort(newNames);
-        for (String name : newNames) {
-            assignedIndices.put(name, next++);
-        }
-        if (next - 1 > Short.MAX_VALUE) {
+        List<String> names = new ObjectArrayList<>(byName.keySet());
+        Collections.sort(names);
+        if (names.size() - 1 > Short.MAX_VALUE) {
             throw new IllegalStateException(
-                "Material index " + (next - 1) + " exceeds the item damage limit of " + Short.MAX_VALUE +
-                    "; too many materials have been registered across this instance's history.");
+                "Material index " + (names.size() - 1) + " exceeds the item damage limit of " + Short.MAX_VALUE +
+                    "; too many materials are registered.");
         }
 
-        materialsByIndex = new Material[next];
-        for (Map.Entry<String, Integer> entry : assignedIndices.entrySet()) {
-            Material material = byName.get(entry.getKey());
-            if (material != null) {
-                material.resolveIndex(entry.getValue());
-                materialsByIndex[entry.getValue()] = material;
-            }
+        assignedIndices = new LinkedHashMap<>();
+        materialsByIndex = new Material[names.size()];
+        for (int index = 0; index < names.size(); index++) {
+            String name = names.get(index);
+            assignedIndices.put(name, index);
+            Material material = byName.get(name);
+            material.resolveIndex(index);
+            materialsByIndex[index] = material;
         }
+        contentHash = contentHash(names);
+    }
+
+    /// The SHA-256 hex digest of `namesInIndexOrder` joined with `\n`, encoded as UTF-8.
+    static String contentHash(List<String> namesInIndexOrder) {
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        }
+        catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 is unavailable", e);
+        }
+        byte[] bytes = digest.digest(String.join("\n", namesInIndexOrder).getBytes(StandardCharsets.UTF_8));
+        StringBuilder hex = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) {
+            hex.append(Character.forDigit((b >> 4) & 0xF, 16))
+                .append(Character.forDigit(b & 0xF, 16));
+        }
+        return hex.toString();
     }
 
     /// Logs each property whose resolved value is ambiguous for a material: the material does not set it, and

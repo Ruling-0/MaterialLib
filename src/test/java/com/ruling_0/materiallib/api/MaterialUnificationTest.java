@@ -199,15 +199,13 @@ class MaterialUnificationTest {
     }
 
     @Test
-    void aNameKeepsItsIndexAndOwnerWhenAnotherModJoinsIt() {
+    void aNameKeepsItsOwnerWhenAnotherModJoinsIt() {
         registry.newMaterial("bmod", "testiron", otherTexture)
             .build();
         registry.resolve();
-        Map<String, Integer> indices = new LinkedHashMap<>(registry.getAssignedIndices());
         Map<String, String> owners = new LinkedHashMap<>(registry.getAssignedOwners());
 
         MaterialRegistry relaunch = new MaterialRegistry();
-        relaunch.setPersistedIndices(indices);
         relaunch.setPersistedOwners(owners);
         relaunch.newMaterial("amod", "testiron", ownerTexture)
             .build();
@@ -215,7 +213,7 @@ class MaterialUnificationTest {
             .build();
         relaunch.resolve();
 
-        assertEquals(indices, relaunch.getAssignedIndices());
+        assertEquals(registry.getAssignedIndices(), relaunch.getAssignedIndices());
         Material merged = relaunch.getMaterial("amod", "testiron");
         assertEquals("bmod", merged.getModId());
         assertEquals(0, merged.getIndex());

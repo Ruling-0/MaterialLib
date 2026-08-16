@@ -18,8 +18,8 @@ import com.google.gson.JsonParseException;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-/// The file machinery shared by MaterialLib's instance-global JSON stores: Gson parsing with a wrapped
-/// corrupt-file error, and an atomic write through a temp file so a crash mid-write never truncates the store.
+/// The file machinery shared by MaterialLib's JSON stores: Gson parsing with a wrapped corrupt-file error,
+/// and an atomic write through a temp file so a crash mid-write never truncates the store.
 final class JsonStore {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();

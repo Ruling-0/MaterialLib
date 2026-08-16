@@ -4,8 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +16,16 @@ class MaterialIndexTest {
     private Material material(String modid, String name) {
         return registry.newMaterial(modid, name, texture)
             .build();
+    }
+
+    private MaterialRegistry resolvedWith(List<String> namesInRegistrationOrder) {
+        MaterialRegistry fresh = new MaterialRegistry();
+        for (String name : namesInRegistrationOrder) {
+            fresh.newMaterial("testmod", name, texture)
+                .build();
+        }
+        fresh.resolve();
+        return fresh;
     }
 
     @Test
@@ -68,96 +77,31 @@ class MaterialIndexTest {
     }
 
     @Test
-    void persistedMaterialsKeepTheirIndex() {
-        Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("Zinc", 5);
-        persisted.put("Iron", 2);
-        registry.setPersistedIndices(persisted);
-        Material zinc = material("amod", "Zinc");
-        Material iron = material("amod", "Iron");
-        registry.resolve();
+    void registrationOrderDoesNotAffectTheAssignmentOrHash() {
+        MaterialRegistry first = resolvedWith(List.of("Iron", "Gold", "Zinc", "Copper", "Aluminium"));
+        MaterialRegistry second = resolvedWith(List.of("Aluminium", "Copper", "Zinc", "Gold", "Iron"));
+        MaterialRegistry third = resolvedWith(List.of("Zinc", "Aluminium", "Iron", "Copper", "Gold"));
 
-        assertEquals(5, zinc.getIndex());
-        assertEquals(2, iron.getIndex());
+        assertEquals(first.getAssignedIndices(), second.getAssignedIndices());
+        assertEquals(first.getAssignedIndices(), third.getAssignedIndices());
+        assertEquals(first.getContentHash(), second.getContentHash());
+        assertEquals(first.getContentHash(), third.getContentHash());
     }
 
     @Test
-    void newMaterialsAppendAfterTheHighestPersistedIndex() {
-        Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("Iron", 3);
-        registry.setPersistedIndices(persisted);
-        Material iron = material("amod", "Iron");
-        Material copper = material("amod", "Copper");
-        Material tin = material("amod", "Tin");
-        registry.resolve();
+    void assignedIndicesAreDenseInAscendingNameOrder() {
+        MaterialRegistry resolved = resolvedWith(List.of("Tin", "Bronze", "Steel"));
 
-        assertEquals(3, iron.getIndex());
-        assertEquals(4, copper.getIndex());
-        assertEquals(5, tin.getIndex());
+        assertEquals(List.of("Bronze", "Steel", "Tin"), List.copyOf(resolved.getAssignedIndices().keySet()));
+        assertEquals(List.of(0, 1, 2), List.copyOf(resolved.getAssignedIndices().values()));
     }
 
+    // Pins the on-disk hash contract: SHA-256 over the UTF-8 names joined with \n in index order. A failure
+    // here means every stored world hash mismatches and triggers a spurious transition.
     @Test
-    void removedMaterialsKeepTheirIndexReserved() {
-        Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("Ghost", 0);
-        persisted.put("Real", 1);
-        registry.setPersistedIndices(persisted);
-        Material real = material("amod", "Real");
-        registry.resolve();
+    void contentHashIsStableAcrossReleases() {
+        MaterialRegistry resolved = resolvedWith(List.of("Iron", "Gold"));
 
-        assertEquals(1, real.getIndex());
-        assertNull(registry.getMaterialByIndex(0));
-        assertEquals(real, registry.getMaterialByIndex(1));
-        assertEquals(0, registry.getAssignedIndices()
-            .get("Ghost")
-            .intValue());
-    }
-
-    @Test
-    void assignedIndicesCombinePersistedAndNew() {
-        Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("Old", 0);
-        registry.setPersistedIndices(persisted);
-        material("amod", "Old");
-        material("amod", "New");
-        registry.resolve();
-
-        Map<String, Integer> assigned = registry.getAssignedIndices();
-        assertEquals(0, assigned.get("Old")
-            .intValue());
-        assertEquals(1, assigned.get("New")
-            .intValue());
-    }
-
-    @Test
-    void newMaterialAppendsAboveAReservedHighestIndex() {
-        Map<String, Integer> persisted = new LinkedHashMap<>();
-        persisted.put("A", 0);
-        persisted.put("Z", 10);
-        registry.setPersistedIndices(persisted);
-        material("amod", "A");
-        Material added = material("amod", "M");
-        registry.resolve();
-
-        assertEquals(11, added.getIndex());
-        assertNull(registry.getMaterialByIndex(10));
-    }
-
-    @Test
-    void reResolvingWithTheAssignedMapReproducesTheSameIndices() {
-        material("bmod", "Iron");
-        material("amod", "Zinc");
-        registry.resolve();
-        Map<String, Integer> firstAssignment = new LinkedHashMap<>(registry.getAssignedIndices());
-
-        MaterialRegistry relaunch = new MaterialRegistry();
-        relaunch.setPersistedIndices(firstAssignment);
-        relaunch.newMaterial("bmod", "Iron", texture)
-            .build();
-        relaunch.newMaterial("amod", "Zinc", texture)
-            .build();
-        relaunch.resolve();
-
-        assertEquals(firstAssignment, relaunch.getAssignedIndices());
+        assertEquals("eea95fcbb74c54d701d4d6fcc14df4f36b975c75e1c6d5acb02a37b475be3e35", resolved.getContentHash());
     }
 }

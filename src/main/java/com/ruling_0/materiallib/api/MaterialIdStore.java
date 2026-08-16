@@ -1,57 +1,73 @@
 package com.ruling_0.materiallib.api;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
-/// The instance-global store of the material name -> index assignment, a JSON file under `config/materiallib`.
+/// The per-world store of the material id list: the name -> index assignment the world last ran with, its
+/// content hash, and the list version counting how many assignments the world has seen.
 ///
-/// The assignment is append-only and shared by every world on the instance: [#loadInto] feeds the saved indices
-/// to the registry before it resolves so existing materials keep their index, and [#saveFrom] writes the resolved
-/// assignment (including indices reserved for removed materials) back.
+/// Lives at `<worldDir>/materiallib/material-ids.json`. [WorldMaterialIds] compares the stored hash against
+/// the registry's at server start and advances the list version through a saved transition when they differ.
 public final class MaterialIdStore {
 
-    private static final String FILE_NAME = "material-ids.json";
-    private static final int FORMAT_VERSION = 2;
+    static final String FILE_NAME = "material-ids.json";
+    private static final int FORMAT_VERSION = 1;
 
     private MaterialIdStore() {}
 
-    /// Loads the saved assignment from `<dir>/material-ids.json` and passes it to the registry at resolve.
-    public static void loadInto(MaterialRegistry registry, File dir) {
-        registry.setPersistedIndices(read(new File(dir, FILE_NAME)));
-    }
+    /// The stored id list: the list version the world is on, the content hash of its assignment, and the
+    /// name -> index map itself.
+    public record WorldIds(int listVersion, String hash, Map<String, Integer> materials) {}
 
-    /// Writes the registry's resolved assignment back to `<dir>/material-ids.json`.
-    public static void saveFrom(MaterialRegistry registry, File dir) {
-        write(new File(dir, FILE_NAME), registry.getAssignedIndices());
-    }
-
-    static Map<String, Integer> read(File file) {
-        if (!file.isFile()) return new LinkedHashMap<>();
+    /// Reads the store, or returns null when no file exists. Throws [IllegalStateException] on a corrupt or
+    /// malformed file.
+    public static WorldIds read(File file) {
+        if (!file.isFile()) return null;
         Data data = JsonStore.read(file, Data.class, corrupt(file));
-        if (data == null || data.materials == null) {
+        if (data == null || data.materials == null || data.version != FORMAT_VERSION) {
             throw new IllegalStateException(corrupt(file));
         }
         validateIndices(file, data.materials);
-        return data.materials;
+        if (data.listVersion == null || data.listVersion < 1 || data.hash == null ||
+            !data.hash.equals(hashOf(data.materials))) {
+            throw new IllegalStateException(corrupt(file));
+        }
+        return new WorldIds(data.listVersion, data.hash, data.materials);
     }
 
-    static void write(File file, Map<String, Integer> indices) {
+    /// Writes the store atomically, or throws [IllegalStateException] on IO failure.
+    public static void write(File file, int listVersion, String hash, Map<String, Integer> materials) {
         Data data = new Data();
         data.version = FORMAT_VERSION;
-        data.materials = JsonStore.sorted(indices, Map.Entry.comparingByValue());
+        data.listVersion = listVersion;
+        data.hash = hash;
+        data.materials = JsonStore.sorted(materials, Map.Entry.comparingByValue());
         JsonStore.write(
             file,
             data,
-            "Could not write the material id assignment to " + file +
-                ". Stored item stacks would change material on the next launch; refusing to continue.");
+            "Could not write the material id list to " + file + "; refusing to continue.");
     }
 
-    /// Rejects an assignment whose keys are not bare material names or whose indices are negative, null, or
-    /// shared by two materials.
+    /// The content hash of a stored assignment: the material names ordered by index, hashed as
+    /// [MaterialRegistry#contentHash].
+    private static String hashOf(Map<String, Integer> materials) {
+        List<Map.Entry<String, Integer>> entries = new ArrayList<>(materials.entrySet());
+        entries.sort(Map.Entry.comparingByValue());
+        List<String> lines = new ArrayList<>(entries.size());
+        for (Map.Entry<String, Integer> entry : entries) {
+            lines.add(entry.getKey());
+        }
+        return MaterialRegistry.contentHash(lines);
+    }
+
+    /// Rejects an assignment whose keys are not bare material names or whose indices are not exactly
+    /// 0..n-1.
     private static void validateIndices(File file, Map<String, Integer> materials) {
         IntSet used = new IntOpenHashSet();
         for (Map.Entry<String, Integer> entry : materials.entrySet()) {
@@ -60,7 +76,7 @@ public final class MaterialIdStore {
                     corrupt(file) + " (" + entry.getKey() + " is not a bare material name)");
             }
             Integer index = entry.getValue();
-            if (index == null || index < 0) {
+            if (index == null || index < 0 || index >= materials.size()) {
                 throw new IllegalStateException(
                     corrupt(file) + " (" + entry.getKey() + " has an invalid index " + index + ")");
             }
@@ -72,14 +88,16 @@ public final class MaterialIdStore {
     }
 
     private static String corrupt(File file) {
-        return "The material id assignment at " + file +
-            " is unreadable or malformed. Fix or remove the file; deleting it reassigns ids and may change " +
-            "stored items.";
+        return "The material id list at " + file +
+            " is unreadable or malformed. Fix or restore the file; deleting it may change stored items and " +
+            "placed blocks.";
     }
 
     private static final class Data {
 
         int version;
+        Integer listVersion;
+        String hash;
         LinkedHashMap<String, Integer> materials;
     }
 }

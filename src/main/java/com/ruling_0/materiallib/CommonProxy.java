@@ -7,7 +7,6 @@ import net.minecraft.world.storage.ISaveHandler;
 
 import net.minecraftforge.common.MinecraftForge;
 
-import com.ruling_0.materiallib.api.MaterialIdStore;
 import com.ruling_0.materiallib.api.MaterialOwnerStore;
 import com.ruling_0.materiallib.api.MaterialRegistrationEvent;
 import com.ruling_0.materiallib.api.MaterialRegistry;
@@ -40,10 +39,8 @@ public class CommonProxy {
         lateHandlerCheck = LateHandlerCheck.snapshot(registration);
 
         File dir = new File(event.getModConfigurationDirectory(), MaterialLib.MODID);
-        MaterialIdStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialOwnerStore.loadInto(MaterialRegistry.instance(), dir);
         MaterialRegistry.instance().resolve();
-        MaterialIdStore.saveFrom(MaterialRegistry.instance(), dir);
         MaterialOwnerStore.saveFrom(MaterialRegistry.instance(), dir);
 
         ShapeOwnerStore.loadInto(ShapeRegistry.instance(), dir);
@@ -53,6 +50,8 @@ public class CommonProxy {
 
     public void init(FMLInitializationEvent event) {
         ShapeRegistry.instance().runInitConsumers();
+        MinecraftForge.EVENT_BUS.register(new ChunkVersionStamp());
+        MinecraftForge.EVENT_BUS.register(new PlayerVersionStamp.Handler());
     }
 
     public void postInit(FMLPostInitializationEvent event) {
@@ -63,12 +62,12 @@ public class CommonProxy {
         }
     }
 
-    // Before the worlds load, so the per-world id copy is reconciled against the instance before any item loads.
+    // Before the worlds load, so the world's id list is reconciled against the registry before any item loads.
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {
         MinecraftServer server = event.getServer();
         ISaveHandler save = server.getActiveAnvilConverter().getSaveLoader(server.getFolderName(), false);
-        File worldFile = new File(new File(save.getWorldDirectory(), MaterialLib.MODID), "material-ids.json");
-        PosteaMigration.setActiveMigration(WorldMaterialIds.check(MaterialRegistry.instance(), worldFile));
+        File dir = new File(save.getWorldDirectory(), MaterialLib.MODID);
+        PosteaMigration.setActiveMigration(WorldMaterialIds.check(MaterialRegistry.instance(), dir));
     }
 
     public void serverStarting(FMLServerStartingEvent event) {

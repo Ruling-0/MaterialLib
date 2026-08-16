@@ -2,67 +2,128 @@ package com.ruling_0.materiallib.api;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import com.ruling_0.materiallib.MaterialLib;
 
-/// Reconciles differences between the instance's [MaterialIdStore] and that stored on the world.
-///
-/// Mainly necessary for cases where the instance store is regenerated or a world is migrated across instances. On
-/// detecting a difference, creates a [MaterialMigration] to handle the migration via postea.
+/// Maintains the per-world material id list: the [MaterialIdStore] file and the [MaterialIdTransitions] chain
+/// beside it, advanced whenever the registry's deterministic assignment differs from the one the world last
+/// ran with.
 public final class WorldMaterialIds {
+
+    private static volatile int currentListVersion = 1;
 
     private WorldMaterialIds() {}
 
-    /// Compares the assignment saved in `worldFile` against the registry's resolved assignment, and returns the
-    /// migration to apply to the world's stored stacks and placed blocks, or null when none is needed. A world with
-    /// no saved assignment yet is stamped with the current one; a world that only lacks newly added materials has
-    /// its saved copy refreshed.
-    public static MaterialMigration check(MaterialRegistry registry, File worldFile) {
-        Map<String, Integer> instance = registry.getAssignedIndices();
-        Map<String, Integer> world = MaterialIdStore.read(worldFile);
-        if (world.isEmpty()) {
-            MaterialIdStore.write(worldFile, instance);
+    /// The list version the running world is on, established by [#check] at server start. Chunk and player
+    /// data saved during the session is stamped with it.
+    public static int currentListVersion() {
+        return currentListVersion;
+    }
+
+    /// Reconciles the world's stored id list under `dir` (the world's `materiallib` directory) with the
+    /// registry's assignment, and returns the migration to apply to the world's stored stacks and placed
+    /// blocks, or null when none is needed. A world with no store adopts the current assignment at list version
+    /// 1. A matching hash leaves everything untouched. A mismatch saves the transition from the stored version,
+    /// advances the store, and returns the migration for that step; a mismatch that moves or removes no index
+    /// advances the store and returns null.
+    public static MaterialMigration check(MaterialRegistry registry, File dir) {
+        Map<String, Integer> current = registry.getAssignedIndices();
+        String hash = registry.getContentHash();
+        File storeFile = new File(dir, MaterialIdStore.FILE_NAME);
+        MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile);
+        if (stored == null) {
+            MaterialIdStore.write(storeFile, 1, hash, current);
+            currentListVersion = 1;
             return null;
         }
-        Diff diff = diff(world, instance);
+        if (hash.equals(stored.hash())) {
+            currentListVersion = stored.listVersion();
+            return null;
+        }
+        Diff diff = diff(stored.materials(), current);
+        int to = stored.listVersion() + 1;
+        MaterialIdTransitions
+            .write(new File(dir, MaterialIdTransitions.DIRECTORY), stored.listVersion(), to, diff.movedIndices(),
+                diff.removedIndices());
+        MaterialIdStore.write(storeFile, to, hash, current);
+        currentListVersion = to;
         if (!diff.isMismatch()) {
-            if (!world.equals(instance)) MaterialIdStore.write(worldFile, instance);
+            MaterialLib.LOG.info(
+                "Materials were added since this world last ran; advancing its material id list to version {} " +
+                    "with no index changes.",
+                to);
             return null;
         }
         MaterialLib.LOG.warn(
-            "This world was saved under a different material id assignment; migrating stored items and placed " +
-                "blocks to this instance as they are read from disk. Moved: {}. Deleted: {} -- placed blocks of " +
-                "these become air. Items and placed blocks in chunks or containers not loaded this session keep " +
-                "the outdated ids.",
-            diff.moved(),
-            diff.removed());
-        MaterialMigration migration = new MaterialMigration(world, instance);
-        MaterialIdStore.write(worldFile, instance);
-        return migration;
+            "This world was saved under a different material id assignment; advancing it to list version {} " +
+                "and migrating stored items and placed blocks to the current assignment as they are read from " +
+                "disk. Moved: {}. Deleted: {} -- placed blocks of these become air. Items and placed blocks in " +
+                "chunks or containers not loaded this session keep the outdated ids.",
+            to,
+            diff.describeMoved(),
+            diff.describeRemoved());
+        return new MaterialMigration(diff.movedIndices(), diff.removedIndices());
     }
 
-    /// Compares a world assignment against the instance assignment by material name: a name the instance maps to a
-    /// different index is `moved`, a name the instance no longer has is `removed`. New materials the world never saw
-    /// are not reported -- no stored stack references them.
-    static Diff diff(Map<String, Integer> world, Map<String, Integer> instance) {
-        List<String> moved = new ArrayList<>();
-        List<String> removed = new ArrayList<>();
-        for (Map.Entry<String, Integer> entry : world.entrySet()) {
-            Integer now = instance.get(entry.getKey());
+    /// Compares the stored assignment against the current one by material name: a name now at a different
+    /// index is moved, a name that no longer exists is removed. New names need no entry -- no stored data
+    /// references them.
+    static Diff diff(Map<String, Integer> stored, Map<String, Integer> current) {
+        List<Move> moved = new ArrayList<>();
+        List<Removal> removed = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : stored.entrySet()) {
+            Integer now = current.get(entry.getKey());
             if (now == null) {
-                removed.add(entry.getKey() + " (index " + entry.getValue() + ")");
+                removed.add(new Removal(entry.getKey(), entry.getValue()));
             }
             else if (!now.equals(entry.getValue())) {
-                moved.add(entry.getKey() + " (" + entry.getValue() + " -> " + now + ")");
+                moved.add(new Move(entry.getKey(), entry.getValue(), now));
             }
         }
         return new Diff(moved, removed);
     }
 
-    record Diff(List<String> moved, List<String> removed) {
+    record Move(String name, int oldIndex, int newIndex) {}
+
+    record Removal(String name, int index) {}
+
+    record Diff(List<Move> moved, List<Removal> removed) {
 
         boolean isMismatch() { return !moved.isEmpty() || !removed.isEmpty(); }
+
+        Map<Integer, Integer> movedIndices() {
+            Map<Integer, Integer> indices = new LinkedHashMap<>();
+            for (Move move : moved) {
+                indices.put(move.oldIndex(), move.newIndex());
+            }
+            return indices;
+        }
+
+        List<Integer> removedIndices() {
+            List<Integer> indices = new ArrayList<>();
+            for (Removal removal : removed) {
+                indices.add(removal.index());
+            }
+            return indices;
+        }
+
+        List<String> describeMoved() {
+            List<String> notes = new ArrayList<>();
+            for (Move move : moved) {
+                notes.add(move.name() + " (" + move.oldIndex() + " -> " + move.newIndex() + ")");
+            }
+            return notes;
+        }
+
+        List<String> describeRemoved() {
+            List<String> notes = new ArrayList<>();
+            for (Removal removal : removed) {
+                notes.add(removal.name() + " (index " + removal.index() + ")");
+            }
+            return notes;
+        }
     }
 }
