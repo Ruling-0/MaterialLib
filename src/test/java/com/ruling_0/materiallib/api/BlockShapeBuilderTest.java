@@ -28,6 +28,15 @@ class BlockShapeBuilderTest {
     }
 
     private static ShapeBlock blockWith(BlockBehavior behavior) {
-        return new ShapeBlock("testmod", "frame", "%s Frame", new String[] { "frame" }, null, null, null, behavior);
+        return new ShapeBlock(
+            "testmod",
+            "frame",
+            "%s Frame",
+            new String[] { "frame" },
+            null,
+            null,
+            null,
+            behavior,
+            null);
     }
 }

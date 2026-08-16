@@ -9,6 +9,7 @@ import net.minecraft.util.IIcon;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
+import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
 import com.ruling_0.materiallib.MaterialLib;
 
 import cpw.mods.fml.relauncher.Side;
@@ -23,13 +24,17 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// Renders in two passes: an untinted empty-container texture underneath the texture set's texture for this
 /// shape, which supplies the fluid fill and is tinted with [StandardProperties#TINT]. The container looks the
 /// same for every material, so the empty texture is a property of the shape rather than of a texture set: it
-/// lives in the shape's own domain at `textures/items/materials/<name>_empty.png`.
+/// defaults to `<modid>:materials/<name>_empty` in the shape's own domain, or the path
+/// [FluidInContainerShapeBuilder#emptyIcon] sets. For a path naming no existing texture file, see
+/// [#registerIcons].
 public class ShapeFluidInContainer extends ShapeItem {
 
     private final Shape fluidShape;
     private final EmptyContainer emptyContainer;
     private final int volume;
+    private final String emptyIconOverride;
     private IIcon emptyIcon;
+    private boolean warnedMissingEmptyIcon;
 
     /// Creates a fluid-in-container shape holding `fluidShape`, `volume` millibuckets per item. `emptyContainer` is
     /// the item returned when the fluid is drained (e.g. an empty bucket), or null for a container consumed on
@@ -37,7 +42,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     public ShapeFluidInContainer(String modid, String name, String displayNameFormat, ShapeFluid fluidShape,
                                  ItemStack emptyContainer, int volume, String... oreDicts) {
         this(modid, name, displayNameFormat, fluidShape,
-            emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, oreDicts);
+            emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, null, oreDicts);
     }
 
     /// As [#ShapeFluidInContainer(String, String, String, ShapeFluid, ItemStack, int, String...)], but draining to
@@ -46,13 +51,14 @@ public class ShapeFluidInContainer extends ShapeItem {
                                     EmptyContainerHandle emptyContainer, int volume, String... oreDicts) {
         this(modid, name, displayNameFormat, fluidShape,
             new EmptyContainer.Registered(Objects.requireNonNull(emptyContainer, "emptyContainer must not be null")),
-            volume, oreDicts);
+            volume, null, oreDicts);
     }
 
     /// As [#ShapeFluidInContainer(String, String, String, ShapeFluid, ItemStack, int, String...)], accepting any
-    /// form of [EmptyContainer].
+    /// form of [EmptyContainer] and an optional base icon path override (see
+    /// [FluidInContainerShapeBuilder#emptyIcon]); null uses [#emptyIconPath]'s default.
     ShapeFluidInContainer(String modid, String name, String displayNameFormat, Shape fluidShape,
-                          EmptyContainer emptyContainer, int volume, String... oreDicts) {
+                          EmptyContainer emptyContainer, int volume, String emptyIconOverride, String... oreDicts) {
         super(modid, name, displayNameFormat, oreDicts);
         Objects.requireNonNull(fluidShape, "fluidShape must not be null");
         if (!(fluidShape instanceof ShapeFluid)) {
@@ -64,6 +70,13 @@ public class ShapeFluidInContainer extends ShapeItem {
             throw new IllegalArgumentException("container volume must be positive, was " + volume);
         }
         this.volume = volume;
+        this.emptyIconOverride = emptyIconOverride;
+    }
+
+    /// The icon path registered for this container's untinted base texture: the
+    /// [FluidInContainerShapeBuilder#emptyIcon] override when set, otherwise `<modid>:materials/<name>_empty`.
+    String emptyIconPath() {
+        return emptyIconOverride != null ? emptyIconOverride : getModId() + ":materials/" + getName() + "_empty";
     }
 
     /// The fluid shape this container was built with.
@@ -88,11 +101,25 @@ public class ShapeFluidInContainer extends ShapeItem {
         }
     }
 
+    /// Registers this container's fill icons, then its base icon at [#emptyIconPath], or the
+    /// [ShapeIcons#EMPTY_ICON] placeholder -- logged once -- if that path names no existing texture file.
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister register) {
         super.registerIcons(register);
-        emptyIcon = register.registerIcon(getModId() + ":materials/" + getName() + "_empty");
+        String path = emptyIconPath();
+        if (ResourceUtil.resourceExists(ResourceUtil.getCompleteItemTextureResourceLocation(path))) {
+            emptyIcon = register.registerIcon(path);
+            return;
+        }
+        if (!warnedMissingEmptyIcon) {
+            warnedMissingEmptyIcon = true;
+            MaterialLib.LOG.warn(
+                "Fluid container {} has no base icon at {}; it will render the empty placeholder instead",
+                this,
+                path);
+        }
+        emptyIcon = register.registerIcon(ShapeIcons.EMPTY_ICON);
     }
 
     @Override
@@ -101,15 +128,26 @@ public class ShapeFluidInContainer extends ShapeItem {
         return true;
     }
 
+    /// The untinted container base for pass 0, and the material's fill icon -- [ShapeItem]'s pass-0 icon -- for
+    /// every later pass.
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamageForRenderPass(int damage, int pass) {
-        return pass == 0 ? emptyIcon : getIconFromDamage(damage);
+        return pass == 0 ? emptyIcon : super.getIconFromDamageForRenderPass(damage, 0);
     }
 
+    /// The container base, for callers that ask for a single icon; see [ShapeItem#getIconFromDamage].
+    @Override
+    @SideOnly(Side.CLIENT)
+    public IIcon getIconFromDamage(int damage) {
+        return emptyIcon;
+    }
+
+    /// White for the untinted container base in pass 0, and the material tint -- [ShapeItem]'s pass-0 color -- for
+    /// every later pass.
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
-        return renderPass == 0 ? 0xFFFFFFFF : super.getColorFromItemStack(stack, renderPass);
+        return renderPass == 0 ? 0xFFFFFFFF : super.getColorFromItemStack(stack, 0);
     }
 }

@@ -34,6 +34,30 @@ class ShapeFluidTest {
     }
 
     @Test
+    void iconPathFallsBackToTheTextureSetWithoutAPatherOrWhenItReturnsNull() {
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
+            .build();
+        registry.resolve();
+        ShapeFluid noPather = new ShapeFluid("examplemod", "molten", "Molten %s");
+        ShapeFluid nullPather = new ShapeFluid("examplemod", "molten", "Molten %s", null, null,
+            (shape, material) -> null);
+
+        assertEquals(texture.iconPath("molten"), noPather.iconPath(iron));
+        assertEquals(texture.iconPath("molten"), nullPather.iconPath(iron));
+    }
+
+    @Test
+    void iconPathUsesThePatherWhenItReturnsAPath() {
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
+            .build();
+        registry.resolve();
+        FluidIconPather pather = (shape, material) -> "gregtech:fluids/fluid.molten";
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", null, null, pather);
+
+        assertEquals("gregtech:fluids/fluid.molten", molten.iconPath(iron));
+    }
+
+    @Test
     void namerDivergenceIsDetectedPerServedMaterial() {
         Material iron = registry.newMaterial("examplemod", "TestIron", texture)
             .build();

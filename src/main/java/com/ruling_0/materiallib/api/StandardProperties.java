@@ -19,7 +19,7 @@ public final class StandardProperties {
     /// [MaterialLibAPI#newMaterial]; builders and edits reject attempts to set or remove it.
     public static final Property<TextureSet> TEXTURE_SET = Property.of(MaterialLib.MODID, "textureSet");
 
-    /// The fallback texture set, for if a texture does not exist within the normal texture set.
+    /// The fallback texture set, for if a texture does not exist within the normal texture set. Null when unset.
     public static final Property<TextureSet> FALLBACK_TEXTURE_SET = Property.of(MaterialLib.MODID,
         "fallbackTextureSet");
 

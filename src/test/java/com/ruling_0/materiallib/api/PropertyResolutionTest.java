@@ -52,6 +52,15 @@ class PropertyResolutionTest {
     }
 
     @Test
+    void fallbackTextureSetHasNoDefault() {
+        Material material = registry.newMaterial("testmod", "TestIron", texture)
+            .build();
+        registry.resolve();
+
+        assertNull(material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET));
+    }
+
+    @Test
     void isSetIgnoresDefaults() {
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .setProperty(MELTING_POINT, 1500)

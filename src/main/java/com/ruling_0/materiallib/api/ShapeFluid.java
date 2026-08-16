@@ -22,7 +22,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 /// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
 /// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve, configures
 /// newly registered fluids through this shape's [FluidConfigurer], and, on the client, binds each fluid's still and
-/// flowing icons from the material's [TextureSet].
+/// flowing icons from [#iconPath] -- the material's [TextureSet] by default, or this shape's [FluidIconPather] when
+/// set (see [FluidShapeBuilder#iconPath]).
 ///
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see
 /// [ShapeFluidInContainer]). Each fluid takes its display name from the shape's format and its color from the
@@ -38,6 +39,7 @@ public class ShapeFluid implements ServedShape {
     private final String displayNameFormat;
     private final FluidNamer namer;
     private final FluidConfigurer configurer;
+    private final FluidIconPather iconPather;
 
     private final ServedMaterials served = new ServedMaterials();
 
@@ -54,11 +56,19 @@ public class ShapeFluid implements ServedShape {
     /// configuration.
     public ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer,
                       FluidConfigurer configurer) {
+        this(modid, name, displayNameFormat, namer, configurer, null);
+    }
+
+    /// As [#ShapeFluid(String, String, String, FluidNamer, FluidConfigurer)], additionally setting this shape's
+    /// [FluidIconPather], or null for none; see [#iconPath].
+    ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer, FluidConfigurer configurer,
+               FluidIconPather iconPather) {
         this.modid = Names.validate("fluid shape modid", modid);
         this.name = Names.validate("fluid shape name", name);
         this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
         this.namer = namer != null ? namer : FluidNamer.DEFAULT;
         this.configurer = configurer != null ? configurer : NO_OP_CONFIGURER;
+        this.iconPather = iconPather;
     }
 
     @Override
@@ -162,16 +172,27 @@ public class ShapeFluid implements ServedShape {
         return new FluidStack(fluid, amount);
     }
 
-    /// Binds each material's still and flowing fluid icon from its texture set. Fluid textures live on the block
+    /// Binds each material's still and flowing fluid icon from [#iconPath]. Fluid textures live on the block
     /// atlas, so this runs from a blocks texture-stitch on the client (see [ShapeFluidIcons]).
     @SideOnly(Side.CLIENT)
     void registerIcons(IIconRegister register) {
         for (Material material : served.get()) {
             Fluid fluid = fluidsByIndex.get(material.getIndex());
             if (!(fluid instanceof MaterialFluid)) continue;
-            TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
-            fluid.setIcons(register.registerIcon(textureSet.iconPath(name)));
+            fluid.setIcons(register.registerIcon(iconPath(material)));
         }
+    }
+
+    /// The icon path to register for `material`'s fluid: this shape's [FluidIconPather] when set and it returns a
+    /// path for `material`, otherwise `material`'s texture set (see [StandardProperties#TEXTURE_SET]), or the
+    /// [ShapeIcons#EMPTY_ICON] placeholder if it has none. Never null.
+    String iconPath(Material material) {
+        if (iconPather != null) {
+            String path = iconPather.iconPath(this, material);
+            if (path != null) return path;
+        }
+        TextureSet textureSet = material.getProperty(StandardProperties.TEXTURE_SET);
+        return textureSet != null ? textureSet.iconPath(name) : ShapeIcons.EMPTY_ICON;
     }
 
     /// A material's fluid, naming itself from the shape's display format and coloring itself with the material's
