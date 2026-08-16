@@ -32,6 +32,7 @@ public class ShapeItem extends Item implements BackedShape {
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeProperties props = new ShapeProperties();
     private final ShapeIcons icons = new ShapeIcons(true);
+    private String iconNameOverride;
 
     /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
     /// appended (e.g. `gear` -> `gearIron`); `displayNameFormat` is applied to the material name to build the
@@ -104,10 +105,19 @@ public class ShapeItem extends Item implements BackedShape {
         }
     }
 
+    /// The name this shape's textures are filed under inside each texture set, defaulting to the shape name. A
+    /// subclass registered through [MaterialLibAPI#registerItemShape] may override this to share another shape's
+    /// art; shapes built through [ItemShapeBuilder] use [ItemShapeBuilder#iconName] instead.
+    protected String iconName() {
+        return iconNameOverride != null ? iconNameOverride : name;
+    }
+
+    void setIconName(String iconName) { this.iconNameOverride = Names.validate("item shape icon name", iconName); }
+
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister register) {
-        icons.bind(register, served.get(), name);
+        icons.bind(register, served.get(), iconName());
     }
 
     @Override
@@ -128,6 +138,21 @@ public class ShapeItem extends Item implements BackedShape {
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamage(int damage) {
         return icons.get(damage);
+    }
+
+    /// The icon bound for `material` on this shape, or the transparent placeholder when none resolved. Valid only
+    /// after the item atlas has stitched. Icons re-bind on every resource reload, so a caller compositing this icon
+    /// itself must hold the shape and read the icon per use, never caching the returned [IIcon].
+    @SideOnly(Side.CLIENT)
+    public IIcon getMaterialIcon(Material material) {
+        return icons.get(material.getIndex());
+    }
+
+    /// The `_OVERLAY` icon bound for `material` on this shape, or null when its resolved texture set has none;
+    /// see [#getMaterialIcon] for the caching contract.
+    @SideOnly(Side.CLIENT)
+    public IIcon getMaterialOverlayIcon(Material material) {
+        return icons.getOverlayOrNull(material.getIndex());
     }
 
     @Override

@@ -52,12 +52,12 @@ class PropertyResolutionTest {
     }
 
     @Test
-    void fallbackTextureSetHasNoDefault() {
+    void fallbackTextureSetsHaveNoDefault() {
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .build();
         registry.resolve();
 
-        assertNull(material.getProperty(StandardProperties.FALLBACK_TEXTURE_SET));
+        assertNull(material.getProperty(StandardProperties.FALLBACK_TEXTURE_SETS));
     }
 
     @Test

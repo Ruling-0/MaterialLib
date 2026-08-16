@@ -16,7 +16,7 @@ public final class FluidShapeBuilder {
     private String displayNameFormat;
     private FluidNamer namer;
     private FluidConfigurer configurer;
-    private FluidIconPather iconPather;
+    private IconPather iconPather;
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
 
@@ -47,13 +47,13 @@ public final class FluidShapeBuilder {
         return this;
     }
 
-    /// Sets the per-material icon path override, in place of the material's texture set; see [FluidIconPather].
-    public FluidShapeBuilder iconPath(FluidIconPather pather) {
+    /// Sets the per-material icon path override, tried ahead of the material's texture set; see [IconPather].
+    public FluidShapeBuilder iconPath(IconPather pather) {
         this.iconPather = Objects.requireNonNull(pather, "pather must not be null");
         return this;
     }
 
-    /// As [#iconPath(FluidIconPather)], for a single icon path shared by every served material.
+    /// As [#iconPath(IconPather)], for a single icon path shared by every served material.
     public FluidShapeBuilder iconPath(String path) {
         Objects.requireNonNull(path, "path must not be null");
         return iconPath((shape, material) -> path);

@@ -1,25 +1,30 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
-import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.util.IIcon;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins [ShapeIcons]' placeholder fallbacks. Only paths that never consult the resource manager run here; paths
-/// that check whether a texture file exists need a live client; see the example content.
+/// Pins [ShapeIcons]' placeholder fallbacks and the precedence of its texture-source chain. [ShapeIcons#resolve]
+/// takes an existence predicate, so its chain runs headless. The binding paths that consult the resource manager
+/// need a live client; see the example content.
 class ShapeIconsTest {
 
     private final MaterialRegistry registry = new MaterialRegistry();
     private final RecordingRegister register = new RecordingRegister();
+    private final TextureSet setA = TextureSet.of("testmod", "setA");
+    private final TextureSet setB = TextureSet.of("testmod", "setB");
+    private final TextureSet setC = TextureSet.of("testmod", "setC");
 
     /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
     /// to pin that binding it resolves the placeholder from both accessors instead of crashing. A pather
@@ -40,9 +45,29 @@ class ShapeIconsTest {
         assertNotNull(placeholder);
         assertSame(placeholder, icons.get(material.getIndex()));
         assertSame(placeholder, icons.getOverlay(material.getIndex()));
+        assertNull(icons.getOverlayOrNull(material.getIndex()));
     }
 
-    /// An index no material bound resolves to the empty placeholder from both accessors.
+    /// An empty fallback list is equivalent to no fallback at all: the chain runs out and the material binds the
+    /// placeholder.
+    @Test
+    void anEmptyFallbackListBindsThePlaceholderWithoutCrashing() {
+        Map<Property<?>, Object> properties = Map
+            .of(StandardProperties.NAME, "Broken", StandardProperties.FALLBACK_TEXTURE_SETS, List.of());
+        Material material = new Material(registry, "testmod", "Broken", properties, Set.of(), List.of());
+        registry.register(material);
+        registry.resolve();
+
+        ShapeIcons icons = new ShapeIcons(true);
+        assertDoesNotThrow(() -> icons.bind(register, new Material[] { material }, "gear"));
+
+        IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
+        assertNotNull(placeholder);
+        assertSame(placeholder, icons.get(material.getIndex()));
+    }
+
+    /// An index no material bound resolves to the empty placeholder from both placeholder accessors, and to null
+    /// from the nullable overlay accessor.
     @Test
     void unboundIndexFallsBackToPlaceholder() {
         ShapeIcons icons = new ShapeIcons(false);
@@ -52,49 +77,57 @@ class ShapeIconsTest {
         assertNotNull(placeholder);
         assertSame(placeholder, icons.get(7));
         assertSame(placeholder, icons.getOverlay(7));
+        assertNull(icons.getOverlayOrNull(7));
     }
 
-    private record FakeIcon(String name) implements IIcon {
+    /// A material's own texture set outranks its fallback sets.
+    @Test
+    void textureSetBeatsTheFirstFallback() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of(setB));
+        registry.resolve();
 
-        @Override
-        public int getIconWidth() { return 16; }
-
-        @Override
-        public int getIconHeight() { return 16; }
-
-        @Override
-        public float getMinU() { return 0; }
-
-        @Override
-        public float getMaxU() { return 1; }
-
-        @Override
-        public float getInterpolatedU(double u) {
-            return 0;
-        }
-
-        @Override
-        public float getMinV() { return 0; }
-
-        @Override
-        public float getMaxV() { return 1; }
-
-        @Override
-        public float getInterpolatedV(double v) {
-            return 0;
-        }
-
-        @Override
-        public String getIconName() { return name; }
+        assertSame(setA, ShapeIcons.resolve(material, List.of("gear"), path -> true).set());
     }
 
-    private static final class RecordingRegister implements IIconRegister {
+    /// Fallback texture sets are tried in list order.
+    @Test
+    void fallbackSetsAreTriedInOrder() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of(setB, setC));
+        registry.resolve();
+        Predicate<String> exceptSetA = path -> !path.equals(setA.iconPath("gear"));
+        Predicate<String> onlySetC = path -> path.equals(setC.iconPath("gear"));
 
-        final Map<String, IIcon> registered = new HashMap<>();
+        assertSame(setB, ShapeIcons.resolve(material, List.of("gear"), exceptSetA).set());
+        assertSame(setC, ShapeIcons.resolve(material, List.of("gear"), onlySetC).set());
+    }
 
-        @Override
-        public IIcon registerIcon(String path) {
-            return registered.computeIfAbsent(path, FakeIcon::new);
-        }
+    /// Within one texture source, an earlier candidate name wins.
+    @Test
+    void earlierCandidateNameWinsWithinASource() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+
+        ShapeIcons.ResolvedTexture resolved = ShapeIcons.resolve(material, List.of("gear_x", "gear"), path -> true);
+
+        assertEquals("gear_x", resolved.shapeName());
+    }
+
+    /// Every source of a material outranks every source of a unification alternative.
+    @Test
+    void ownSourcesBeatAnAlternatives() {
+        Material owner = declareMaterial("amod", "Testiron", setA, List.of(setB));
+        declareMaterial("bmod", "Testiron", setC, List.of());
+        registry.resolve();
+        Predicate<String> exceptSetA = path -> !path.equals(setA.iconPath("gear"));
+
+        assertSame(setB, ShapeIcons.resolve(owner, List.of("gear"), exceptSetA).set());
+    }
+
+    private Material declareMaterial(String modid, String name, TextureSet textureSet, List<TextureSet> fallbacks) {
+        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET,
+            textureSet, StandardProperties.FALLBACK_TEXTURE_SETS, fallbacks);
+        Material material = new Material(registry, modid, name, properties, Set.of(), List.of());
+        registry.register(material);
+        return material;
     }
 }

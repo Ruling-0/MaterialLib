@@ -4,7 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 
@@ -33,28 +36,18 @@ class ShapeFluidTest {
         assertEquals("legacy.testiron", molten.fluidName(iron));
     }
 
+    /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
+    /// to pin that a fluid whose texture-set chain holds nothing registers the placeholder. Only this branch runs
+    /// headless: every other outcome checks whether a texture file exists, which needs a live client.
     @Test
-    void iconPathFallsBackToTheTextureSetWithoutAPatherOrWhenItReturnsNull() {
-        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
-            .build();
+    void aMaterialWithNoTextureSetResolvesThePlaceholderIconPath() {
+        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
+        Material broken = new Material(registry, "examplemod", "Broken", properties, Set.of(), List.of());
+        registry.register(broken);
         registry.resolve();
-        ShapeFluid noPather = new ShapeFluid("examplemod", "molten", "Molten %s");
-        ShapeFluid nullPather = new ShapeFluid("examplemod", "molten", "Molten %s", null, null,
-            (shape, material) -> null);
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
 
-        assertEquals(texture.iconPath("molten"), noPather.iconPath(iron));
-        assertEquals(texture.iconPath("molten"), nullPather.iconPath(iron));
-    }
-
-    @Test
-    void iconPathUsesThePatherWhenItReturnsAPath() {
-        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
-            .build();
-        registry.resolve();
-        FluidIconPather pather = (shape, material) -> "gregtech:fluids/fluid.molten";
-        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", null, null, pather);
-
-        assertEquals("gregtech:fluids/fluid.molten", molten.iconPath(iron));
+        assertEquals(ShapeIcons.EMPTY_ICON, molten.resolveIconPath(broken));
     }
 
     @Test
