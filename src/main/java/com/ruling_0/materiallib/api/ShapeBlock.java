@@ -297,10 +297,10 @@ public class ShapeBlock extends Block implements BackedShape {
         if (icons.isOverride(meta)) return 0xFFFFFF;
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         if (material == null) return 0xFFFFFF;
-        Integer override = material.getProperty(
-            baseTexture != null ? StandardProperties.BLOCK_OVERLAY_TINT : StandardProperties.BLOCK_TINT);
-        if (override != null) return override & 0xFFFFFF;
-        return material.getProperty(StandardProperties.TINT) & 0xFFFFFF;
+        Property<Integer> specific = baseTexture != null ? StandardProperties.BLOCK_OVERLAY_TINT :
+            StandardProperties.BLOCK_TINT;
+        Property<Integer> tint = material.getProperty(specific) != null ? specific : StandardProperties.TINT;
+        return MaterialTints.color(material, tint) & 0xFFFFFF;
     }
 
     @Override

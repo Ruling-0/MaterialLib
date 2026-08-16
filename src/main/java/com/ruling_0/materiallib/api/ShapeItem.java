@@ -169,6 +169,6 @@ public class ShapeItem extends Item implements BackedShape {
         if (renderPass != 0) return 0xFFFFFFFF;
         Material material = ShapeText.materialFor(stack);
         if (material == null || hasOverrideIcon(material)) return 0xFFFFFFFF;
-        return material.getProperty(StandardProperties.TINT);
+        return MaterialTints.color(material, StandardProperties.TINT);
     }
 }

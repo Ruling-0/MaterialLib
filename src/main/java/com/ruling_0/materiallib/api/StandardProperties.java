@@ -7,6 +7,12 @@ import com.ruling_0.materiallib.MaterialLib;
 
 /// The properties this mod defines and uses itself. Other mods define their own [Property] constants for values
 /// their shape and recipe generation consumes (melting point, tool durability, etc.).
+///
+/// A resource pack retints one material through a lang entry at
+/// `color.resource.materiallib.<MaterialName>.<propertyName>`, where `<MaterialName>` is the material's registry
+/// name in its exact case and `<propertyName>` is one of `tint`, `fluidTint`, `blockTint`, `blockOverlayTint`, or
+/// `cellTint`. The value is AARRGGBB hex. An entry changes what renders, not what [Material#getProperty] returns.
+/// Every material reads `tint`; the other four keys are read only for a material that sets the matching property.
 public final class StandardProperties {
 
     private StandardProperties() {}

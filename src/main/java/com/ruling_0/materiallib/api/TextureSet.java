@@ -9,7 +9,7 @@ package com.ruling_0.materiallib.api;
 /// `assets/materiallib/textures/<items|blocks>/mloverrides/<materialName>/<shape>[_OVERLAY].png`. `<materialName>` is
 /// the material's registry name in its exact case, and `<shape>` is the name the art is filed under inside a texture
 /// set. The winning file supplies its own `_OVERLAY` layer or none. Override art carries its own colors, so it draws
-/// untinted.
+/// untinted. A pack recolors art it does not replace through the tint lang keys instead; see [StandardProperties].
 public final class TextureSet {
 
     private final String modid;
