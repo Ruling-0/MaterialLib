@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,9 +52,9 @@ final class ShapeUnification {
         for (Map.Entry<String, List<Shape>> entry : candidatesByName.entrySet()) {
             String name = entry.getKey();
             List<Shape> candidates = entry.getValue();
-            String ownerModid = OwnerElection
-                .choose("Shape", name, candidates, Shape::getModId, persistedOwners.get(name), "registered");
-            Shape canonical = candidateOwnedBy(candidates, ownerModid);
+            Shape canonical = OwnerElection.chooseCandidate("Shape", name, candidates, Shape::getModId,
+                persistedOwners.get(name), "registered");
+            String ownerModid = canonical.getModId();
             canonicalByName.put(name, canonical);
             for (Shape candidate : candidates) {
                 if (candidate != canonical) {
@@ -66,15 +67,6 @@ final class ShapeUnification {
         }
         resolved = true;
         return owners;
-    }
-
-    private static Shape candidateOwnedBy(List<Shape> candidates, String modid) {
-        for (Shape candidate : candidates) {
-            if (candidate.getModId().equals(modid)) {
-                return candidate;
-            }
-        }
-        throw new IllegalStateException("No candidate shape is owned by " + modid);
     }
 
     private void logOreDictDivergence(String name, List<Shape> candidates, Shape canonical) {
@@ -107,6 +99,14 @@ final class ShapeUnification {
     Collection<Shape> canonicalShapes() {
         requireResolved("list canonical shapes");
         return canonicalByName.values();
+    }
+
+    /// Every shape registered as a candidate for `shape`'s name, in registration order, or the shape alone when
+    /// its name was never contested. Only available after [#resolve].
+    List<Shape> candidatesOf(Shape shape) {
+        requireResolved("list name candidates");
+        List<Shape> candidates = candidatesByName.get(shape.getName());
+        return candidates != null ? Collections.unmodifiableList(candidates) : List.of(shape);
     }
 
     private void requireResolved(String what) {

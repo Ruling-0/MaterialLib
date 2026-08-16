@@ -1,7 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.List;
-import java.util.Locale;
+import java.util.Set;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 
@@ -16,12 +16,13 @@ import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
-/// The Forge fluid backing a fluid [Shape]: one registered [Fluid] per material that generates the shape, named
-/// `<shape>.<material>` lowercased (e.g. `test.testiron`).
+/// The Forge fluid backing a fluid [Shape]: one registered [Fluid] per material that generates the shape, named by
+/// this shape's [FluidNamer] (by default `<shape>.<material>` lowercased, e.g. `test.testiron`).
 ///
 /// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
-/// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve and, on the
-/// client, binds each fluid's still and flowing icons from the material's [TextureSet].
+/// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve, configures
+/// newly registered fluids through this shape's [FluidConfigurer], and, on the client, binds each fluid's still and
+/// flowing icons from the material's [TextureSet].
 ///
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see
 /// [ShapeFluidInContainer]). Each fluid takes its display name from the shape's format and its color from the
@@ -30,10 +31,13 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 public class ShapeFluid implements ServedShape {
 
     private static final List<String> NO_OREDICTS = List.of();
+    private static final FluidConfigurer NO_OP_CONFIGURER = (material, fluid) -> {};
 
     private final String modid;
     private final String name;
     private final String displayNameFormat;
+    private final FluidNamer namer;
+    private final FluidConfigurer configurer;
 
     private final ServedMaterials served = new ServedMaterials();
 
@@ -42,9 +46,19 @@ public class ShapeFluid implements ServedShape {
     /// Creates a fluid shape. `displayNameFormat` is applied to the material name to build the fluid's display
     /// name, e.g. `"Molten %s"`. Identifiers must be non-empty and free of ':' and whitespace.
     public ShapeFluid(String modid, String name, String displayNameFormat) {
+        this(modid, name, displayNameFormat, null, null);
+    }
+
+    /// As [#ShapeFluid(String, String, String)], additionally setting this shape's [FluidNamer] and
+    /// [FluidConfigurer]. A null namer defaults to [FluidNamer#DEFAULT]; a null configurer performs no extra
+    /// configuration.
+    public ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer,
+                      FluidConfigurer configurer) {
         this.modid = Names.validate("fluid shape modid", modid);
         this.name = Names.validate("fluid shape name", name);
         this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
+        this.namer = namer != null ? namer : FluidNamer.DEFAULT;
+        this.configurer = configurer != null ? configurer : NO_OP_CONFIGURER;
     }
 
     @Override
@@ -69,26 +83,72 @@ public class ShapeFluid implements ServedShape {
     @Override
     public Material[] getServedMaterials() { return served.get(); }
 
-    /// The Forge fluid name for a material in this shape, e.g. `test.testiron`.
+    /// The Forge fluid name for a material in this shape, as produced by this shape's [FluidNamer].
     String fluidName(Material material) {
-        return (name + "." + material.getName()).toLowerCase(Locale.ENGLISH);
+        return namer.name(this, material);
     }
 
-    /// Registers one Forge fluid per served material.
-    void registerFluids() {
+    /// The first served material this shape and `candidate` name differently, or null when both name every served
+    /// material identically.
+    Material firstNameDivergence(ShapeFluid candidate) {
+        for (Material material : served.get()) {
+            if (!fluidName(material).equals(candidate.fluidName(material))) {
+                return material;
+            }
+        }
+        return null;
+    }
+
+    /// Logs where `candidate`, a fluid shape unified onto this one, would have named or configured this shape's
+    /// fluids differently.
+    void logCandidateDivergence(ShapeFluid candidate) {
+        try {
+            Material diverging = firstNameDivergence(candidate);
+            if (diverging != null) {
+                MaterialLib.LOG.error(
+                    "Fluid shapes {} and {} share a name but name the fluid of {} differently ({} vs {}); " +
+                        "registering only the owner's names, so stored fluid stacks depend on which mod owns the shape",
+                    Names.key(modid, name),
+                    Names.key(candidate.modid, candidate.name),
+                    diverging.getKey(),
+                    fluidName(diverging),
+                    candidate.fluidName(diverging));
+            }
+        }
+        catch (RuntimeException e) {
+            MaterialLib.LOG.error("Fluid namer of {} failed while comparing its names against {}", candidate, this, e);
+        }
+        if (candidate.configurer != NO_OP_CONFIGURER && candidate.configurer != configurer) {
+            MaterialLib.LOG.warn(
+                "Fluid shapes {} and {} share a name but set different fluid configurers; only the owner's runs",
+                Names.key(modid, name),
+                Names.key(candidate.modid, candidate.name));
+        }
+    }
+
+    /// Registers one Forge fluid per served material, validating and reserving each material's fluid name against
+    /// `usedFluidNames`, shared across every fluid shape resolving this session.
+    void registerFluids(Set<String> usedFluidNames) {
         fluidsByIndex.clear();
         for (Material material : served.get()) {
-            String fluidName = fluidName(material);
-            Fluid fluid = new MaterialFluid(fluidName, material);
-            if (!FluidRegistry.registerFluid(fluid)) {
-                fluid = FluidRegistry.getFluid(fluidName);
-                MaterialLib.LOG.warn(
-                    "Fluid {} of {} is already registered elsewhere; its tint, name, and icons will not apply",
-                    fluidName,
-                    material.getKey());
-            }
-            fluidsByIndex.put(material.getIndex(), fluid);
+            String fluidName = FluidNaming.validate(fluidName(material), this, material, usedFluidNames);
+            fluidsByIndex.put(material.getIndex(), registerOrReuse(fluidName, material));
         }
+    }
+
+    /// Registers a newly created [MaterialFluid] under `fluidName` and configures it, or -- if that name is already
+    /// registered by another mod -- reuses the existing fluid unmodified.
+    private Fluid registerOrReuse(String fluidName, Material material) {
+        Fluid created = new MaterialFluid(fluidName, material);
+        if (FluidRegistry.registerFluid(created)) {
+            configurer.configure(material, created);
+            return created;
+        }
+        MaterialLib.LOG.warn(
+            "Fluid {} of {} is already registered elsewhere; its tint, name, and icons will not apply",
+            fluidName,
+            material.getKey());
+        return FluidRegistry.getFluid(fluidName);
     }
 
     /// The fluid stack of `material` in this shape, with the given volume in millibuckets. The material must

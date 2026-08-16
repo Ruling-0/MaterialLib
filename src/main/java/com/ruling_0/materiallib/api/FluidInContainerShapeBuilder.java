@@ -15,7 +15,7 @@ public final class FluidInContainerShapeBuilder {
     private final String modid;
     private final String name;
     private Shape fluidShape;
-    private ItemStack emptyContainer;
+    private EmptyContainer emptyContainer;
     private int volume = FluidContainerRegistry.BUCKET_VOLUME;
     private String[] oreDicts;
     private String displayNameFormat;
@@ -27,7 +27,6 @@ public final class FluidInContainerShapeBuilder {
     }
 
     /// Sets the fluid this container holds; required. Pass the shape returned by [MaterialLibAPI#newFluidShape].
-    /// Every material generating this container must also generate that fluid shape.
     public FluidInContainerShapeBuilder fluid(Shape fluidShape) {
         this.fluidShape = Objects.requireNonNull(fluidShape, "fluidShape must not be null");
         return this;
@@ -36,7 +35,17 @@ public final class FluidInContainerShapeBuilder {
     /// Sets the item returned when the fluid is drained from the container, e.g. an empty bucket. Omit for a
     /// container consumed on drain.
     public FluidInContainerShapeBuilder emptyContainer(ItemStack emptyContainer) {
-        this.emptyContainer = Objects.requireNonNull(emptyContainer, "emptyContainer must not be null");
+        this.emptyContainer = new EmptyContainer.Eager(
+            Objects.requireNonNull(emptyContainer, "emptyContainer must not be null"));
+        return this;
+    }
+
+    /// As [#emptyContainer(ItemStack)], but draining to an empty container item registered through
+    /// [MaterialLibAPI#registerEmptyContainer(String, String)], for an item that does not exist yet during
+    /// registration.
+    public FluidInContainerShapeBuilder emptyContainer(EmptyContainerHandle emptyContainer) {
+        this.emptyContainer = new EmptyContainer.Registered(
+            Objects.requireNonNull(emptyContainer, "emptyContainer must not be null"));
         return this;
     }
 
@@ -72,13 +81,10 @@ public final class FluidInContainerShapeBuilder {
             throw new IllegalStateException(
                 "Fluid container shape " + Names.key(modid, name) + " needs a fluid; call fluid(...) before build()");
         }
-        if (!(fluidShape instanceof ShapeFluid fluid)) {
-            throw new IllegalArgumentException(fluidShape + " is not a fluid shape");
-        }
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         return ShapeRegistry.instance()
-            .register(new ShapeFluidInContainer(modid, name, format, fluid, emptyContainer, volume, prefixes));
+            .register(new ShapeFluidInContainer(modid, name, format, fluidShape, emptyContainer, volume, prefixes));
     }
 }
