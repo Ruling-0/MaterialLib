@@ -40,7 +40,7 @@ public final class MaterialRegistry {
 
     private final Map<String, Material> materials = new Object2ObjectLinkedOpenHashMap<>();
     private final Map<String, Family> families = new Object2ObjectLinkedOpenHashMap<>();
-    private final List<PendingOp> pendingOps = new ObjectArrayList<>();
+    private final PendingOps pendingOps = new PendingOps();
     private boolean resolved;
     private Collection<Material> materialsView;
     private Collection<Family> familiesView;
@@ -113,15 +113,7 @@ public final class MaterialRegistry {
     public void resolve() {
         requireRegistration("resolve the registry");
         unifyMaterials();
-        for (PendingOp op : pendingOps) {
-            try {
-                op.action.run();
-            }
-            catch (RuntimeException e) {
-                throw new IllegalStateException("Failed to apply queued edit \"" + op.description + "\"", e);
-            }
-        }
-        pendingOps.clear();
+        pendingOps.drain();
 
         assignMaterialIndices();
 
@@ -371,7 +363,7 @@ public final class MaterialRegistry {
 
     private void enqueue(String description, Runnable action) {
         requireRegistration(description);
-        pendingOps.add(new PendingOp(description, action));
+        pendingOps.add(description, action);
     }
 
     void requireResolved(String action, String target) {
@@ -391,6 +383,4 @@ public final class MaterialRegistry {
                     "subscribed during construction");
         }
     }
-
-    private record PendingOp(String description, Runnable action) {}
 }
