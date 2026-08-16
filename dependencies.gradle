@@ -38,7 +38,7 @@ dependencies {
 
     implementation('com.github.GTNewHorizons:GTNHLib:0.11.37:dev')
 
-    implementation('com.github.GTNewHorizons:Postea:1.2.5:dev')
+    implementation('com.github.GTNewHorizons:Postea:1.2.6:dev')
 
     // Only for the @ThreadSafeISBRH annotation; an unresolvable annotation class is ignored at runtime.
     compileOnly('com.github.GTNewHorizons:Angelica:2.1.49:dev') { transitive = false }
