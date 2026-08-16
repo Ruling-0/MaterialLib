@@ -29,9 +29,7 @@ public final class IconSetBinder {
         }
     }
 
-    /// Every registered material in index order, the same order [ShapeRegistry] binds a shape's served materials
-    /// in. An icon set has no served materials of its own -- no material generates one -- so it binds against the
-    /// whole registry.
+    /// Every registered material in index order, the same order [ShapeRegistry] binds a shape's served materials in.
     private static Material[] registeredMaterials() {
         Collection<Material> registered = MaterialRegistry.instance().getMaterials();
         Material[] materials = registered.toArray(new Material[0]);

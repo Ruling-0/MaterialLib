@@ -14,10 +14,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// block the mod already owns.
 ///
 /// Created through [MaterialLibClient#newIconSet] before the first texture stitch. Icons bind for every registered
-/// material -- not for a served set, since no material generates an icon set -- when the chosen atlas stitches, and
-/// re-bind on every resource reload, so a caller must hold the set and read the icon per use rather than cache the
-/// returned [IIcon]. A material whose whole texture-set chain lacks the art binds the transparent placeholder and
-/// is named in one batched warning per stitch.
+/// material -- an icon set has no served set, since no material generates one -- when the chosen atlas stitches, and
+/// re-bind on every resource reload; a caller must hold the set and read the icon per use, never caching the
+/// returned [IIcon]. A material whose whole texture-set chain lacks the art binds the transparent placeholder.
 @SideOnly(Side.CLIENT)
 public final class IconSet {
 

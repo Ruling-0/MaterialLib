@@ -28,9 +28,8 @@ public final class MaterialLibClient {
 
     /// Creates and registers an icon set named `name` on `atlas`; see [IconSet]. Call from a mod's client proxy
     /// during preInit, or any time before the first texture stitch -- a set created later binds only on the next
-    /// resource reload. Unlike a shape, an icon set registers nothing with the game, so it is not bound to the
-    /// registration window; duplicate names are independent handles rather than an error, and cost no extra atlas
-    /// space because identical icon paths dedupe at registration.
+    /// resource reload. An icon set registers nothing with the game, so creation is not bound to the registration
+    /// window. Duplicate names bind independently; identical icon paths dedupe at registration.
     public static IconSet newIconSet(String modid, String name, IconSet.Atlas atlas) {
         IconSet set = new IconSet(modid, name, atlas);
         iconSets.add(set);

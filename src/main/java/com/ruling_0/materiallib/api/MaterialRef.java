@@ -11,10 +11,9 @@ import java.util.function.Supplier;
 /// inside a handler may read a field the owning mod has not filled in yet. Resolve no earlier than preInit, once
 /// the registry has resolved.
 ///
-/// A lambda rather than a registry name makes the reference compile-checked: renaming or deleting the target
-/// field breaks the build instead of surfacing as a runtime lookup miss.
+/// The lambda keeps a reference compile-checked: renaming or deleting the target field breaks the build.
 ///
-/// References compare by identity and never invoke the supplier for comparison.
+/// References compare by identity.
 public final class MaterialRef {
 
     private final Supplier<Material> supplier;
@@ -40,9 +39,7 @@ public final class MaterialRef {
         return material;
     }
 
-    /// `MaterialRef[modid:name]`, or `MaterialRef[unresolved]` where the supplier yields null or fails. Never
-    /// throws, since property values are rendered through `String.valueOf` at times when a reference may not
-    /// resolve.
+    /// `MaterialRef[modid:name]`, or `MaterialRef[unresolved]` where the supplier yields null or fails. Never throws.
     @Override
     public String toString() {
         try {

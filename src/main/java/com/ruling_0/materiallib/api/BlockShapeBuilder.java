@@ -52,8 +52,8 @@ public final class BlockShapeBuilder {
     /// Sets the name this shape's textures are filed under inside each texture set, defaulting to the shape name,
     /// so several shapes can share one art file (e.g. every item-pipe size drawing the matching fluid-pipe art).
     /// A shape with [#variants] extends the alias per variant the same way it extends the shape name, trying
-    /// `<alias>_<variant>` before `<alias>`. Under shape unification the owning declaration's alias wins, like
-    /// every other constructor-borne attribute.
+    /// `<alias>_<variant>` before `<alias>`. Under shape unification the owning declaration's alias wins; see
+    /// [ShapeUnification].
     public BlockShapeBuilder iconName(String iconName) {
         this.iconName = Objects.requireNonNull(iconName, "iconName must not be null");
         return this;

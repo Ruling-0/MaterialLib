@@ -251,7 +251,7 @@ public class ShapeBlock extends Block implements BackedShape {
 
     /// The icon bound for `material` on this shape, or the transparent placeholder when none resolved. Valid only
     /// after the block atlas has stitched. Icons re-bind on every resource reload, so a caller compositing this
-    /// icon itself must hold the shape and call this per use rather than cache the returned [IIcon].
+    /// icon itself must hold the shape and read the icon per use, never caching the returned [IIcon].
     @SideOnly(Side.CLIENT)
     public IIcon getMaterialIcon(Material material) {
         return icons.get(material.getIndex());

@@ -42,7 +42,7 @@ public final class ItemShapeBuilder {
 
     /// Sets the name this shape's textures are filed under inside each texture set, defaulting to the shape name,
     /// so several shapes can share one art file (e.g. every wire gauge drawing `wire.png`). Under shape
-    /// unification the owning declaration's alias wins, like every other constructor-borne attribute.
+    /// unification the owning declaration's alias wins; see [ShapeUnification].
     public ItemShapeBuilder iconName(String iconName) {
         this.iconName = Objects.requireNonNull(iconName, "iconName must not be null");
         return this;

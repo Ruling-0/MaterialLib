@@ -258,9 +258,9 @@ public final class ShapeRegistry {
         return variants.blockFor(variant);
     }
 
-    /// The backing item of the item shape owning `name`, or null when no shape owns that name. Fails when the name
-    /// is owned by a block or fluid shape instead. Intended for a mod that draws a material's shape art in its own
-    /// renderer; see [ShapeItem#getMaterialIcon].
+    /// The backing item of the item shape owning `name`, or null when no shape owns that name; a fluid-container
+    /// shape (see [ShapeFluidInContainer]) is an item shape and is returned. Fails when the name is owned by a
+    /// block or fluid shape. See [ShapeItem#getMaterialIcon].
     public ShapeItem getItemShape(String name) {
         requireResolved("look up a shape by name");
         ServedShape shape = servedByName.get(name);

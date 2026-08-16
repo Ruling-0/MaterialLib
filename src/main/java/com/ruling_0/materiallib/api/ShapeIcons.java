@@ -14,10 +14,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-/// The per-material icons of an item or block shape, keyed by material index. [#get] and [#getOverlay] never
-/// return null: an index that bound no icon resolves to the transparent [#EMPTY_ICON] placeholder. A material
-/// with a null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS] -- or a null entry
-/// inside the list -- is treated like one whose texture files do not exist.
+/// The per-material icons of an item or block shape, keyed by material index. Once [#bind] has run, [#get] and
+/// [#getOverlay] never return null: an index that bound no icon resolves to the transparent [#EMPTY_ICON]
+/// placeholder. A material with a null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS]
+/// -- or a null entry inside the list -- is treated like one whose texture files do not exist.
 final class ShapeIcons {
 
     /// The transparent placeholder icon path, present on both the item and block atlases.

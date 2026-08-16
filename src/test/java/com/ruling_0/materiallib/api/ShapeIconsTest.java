@@ -48,8 +48,8 @@ class ShapeIconsTest {
         assertNull(icons.getOverlayOrNull(material.getIndex()));
     }
 
-    /// An empty fallback list is equivalent to no fallback at all: the chain runs out and the material takes the
-    /// placeholder, rather than the list walk failing on the way.
+    /// An empty fallback list is equivalent to no fallback at all: the chain runs out and the material binds the
+    /// placeholder.
     @Test
     void anEmptyFallbackListBindsThePlaceholderWithoutCrashing() {
         Map<Property<?>, Object> properties = Map
