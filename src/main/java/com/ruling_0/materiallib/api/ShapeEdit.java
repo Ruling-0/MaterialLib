@@ -3,12 +3,8 @@ package com.ruling_0.materiallib.api;
 import java.util.Objects;
 
 /// Queued cross-mod changes to a [Shape] identified by name, obtained from [MaterialLibAPI#editShape].
-///
-/// Operations queue immediately as the methods are called; there is no terminal apply call. Operations from all
-/// mods are applied in call order when the shape registry resolves, so the shape does not need to be registered
-/// yet when an edit is made -- only by the end of the registration event. Operations targeting a shape that was
-/// never registered are skipped with a logged warning, which keeps edits directed at optional mods harmless. An
-/// edit addressed to any declaration of a unified name applies to the shape that owns the name.
+/// Queuing, ordering, and skip behavior are as in [MaterialEdit]; an edit addressed to any declaration of a
+/// unified name applies to the shape that owns the name.
 ///
 /// A shape is addressed by name alone, unlike a material: shape names are unified across mods into one owner
 /// (see [ShapeUnification]), so the modid identifies the editor rather than the target.

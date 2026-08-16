@@ -28,7 +28,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 /// be read yet, and neither can the bulk collection views. Once every handler has returned, [#resolve] merges
 /// same-name materials onto their owners, applies all queued edits in call order, derives family membership and
 /// per-material shape sets, and freezes the registry. From then on everything is readable and nothing can be
-/// registered or edited, which guarantees dependent mods a complete registry from their init onwards.
+/// registered or edited.
 ///
 /// Indices are assigned deterministically at resolve: the post-unification material names sorted ascending take
 /// indices 0..n-1, so identical registered sets derive identical assignments.
@@ -108,8 +108,8 @@ public final class MaterialRegistry {
 
     public boolean isResolved() { return resolved; }
 
-    /// Ends registration and freezes the registry. Invoked once by MaterialLib's preInit handler after the
-    /// registration event; other mods must not call it.
+    /// Ends registration and freezes the registry, once the registration event has returned; other mods must not
+    /// call it.
     public void resolve() {
         requireRegistration("resolve the registry");
         unifyMaterials();

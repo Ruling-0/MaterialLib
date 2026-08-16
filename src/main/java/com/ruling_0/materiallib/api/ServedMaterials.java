@@ -9,7 +9,7 @@ final class ServedMaterials {
     private Material[] materials = new Material[0];
     private boolean bound;
 
-    /// Binds the materials, ascending by index. `owner` names the shape in the error if it is bound twice.
+    /// Binds the materials. `owner` names the shape in the error if it is bound twice.
     void bind(Object owner, Material[] materials) {
         if (bound) {
             throw new IllegalStateException(owner + " already has its served materials bound");

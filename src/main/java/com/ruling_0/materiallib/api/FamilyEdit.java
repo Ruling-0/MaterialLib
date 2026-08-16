@@ -4,12 +4,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /// Queued cross-mod changes to a [Family] identified by key, obtained from [MaterialLibAPI#editFamily].
-///
-/// Operations queue immediately as the methods are called (varargs methods queue one operation per element);
-/// there is no terminal apply call. Operations from all mods are applied in call order when the registry
-/// resolves, so the family does not need to exist yet when an edit is made -- only by the end of the
-/// registration event. Operations targeting a family that was never registered are skipped with a logged
-/// warning, which keeps edits directed at optional mods harmless.
+/// Queuing, ordering, and skip behavior are as in [MaterialEdit].
 public final class FamilyEdit {
 
     private final MaterialRegistry registry;

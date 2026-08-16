@@ -15,9 +15,9 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 /// The client-side entry point of MaterialLib, for behavior that exists only on the client.
 ///
 /// A custom [IItemRenderer] can be attached to a material so every item shape of that material renders through
-/// Renderers are client-only, so they are registered here from a mod's client proxy rather than through the common
-/// [MaterialBuilder]; this keeps the material definition free of render types and safe to load on a dedicated server. A
-/// shape with no custom renderer for a material falls back to the material's texture and [StandardProperties#TINT].
+/// it. Renderers are client-only, so they are registered here from a mod's client proxy, keeping the material
+/// definition free of render types and safe to load on a dedicated server. A shape with no custom renderer for a
+/// material falls back to the material's texture and [StandardProperties#TINT].
 @SideOnly(Side.CLIENT)
 public final class MaterialLibClient {
 
