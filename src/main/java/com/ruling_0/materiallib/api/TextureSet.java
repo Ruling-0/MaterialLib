@@ -4,6 +4,12 @@ package com.ruling_0.materiallib.api;
 ///
 /// The `name` of this corresponds to the folder name holding the textures, either `textures/items/materials/<name>/`
 /// for items or `textures/blocks/materials/<name>/` for blocks and fluids.
+///
+/// A resource pack reskins one material alone, outranking every texture set, with a file at
+/// `assets/materiallib/textures/<items|blocks>/mloverrides/<materialName>/<shape>[_OVERLAY].png`. `<materialName>` is
+/// the material's registry name in its exact case, and `<shape>` is the name the art is filed under inside a texture
+/// set. The winning file supplies its own `_OVERLAY` layer or none. Override art carries its own colors, so it draws
+/// untinted.
 public final class TextureSet {
 
     private final String modid;
@@ -25,10 +31,6 @@ public final class TextureSet {
     /// The icon identifier for a shape's texture in this set, e.g. `examplemod:materials/shiny/gear`.
     public String iconPath(String shapeName) {
         return modid + ":materials/" + name + "/" + shapeName;
-    }
-
-    public String overlayPath(String shapeName) {
-        return iconPath(shapeName) + ShapeIcons.OVERLAY_SUFFIX;
     }
 
     @Override

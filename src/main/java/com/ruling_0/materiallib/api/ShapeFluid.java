@@ -2,6 +2,7 @@ package com.ruling_0.materiallib.api;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 
@@ -24,14 +25,15 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// A fluid shape is not a [BackedShape], as fluids are registered by name and not numeric ID. Materials declare it
 /// through [MaterialBuilder#generateShape]; the registry registers one fluid per material at resolve, configures
 /// newly registered fluids through this shape's [FluidConfigurer], and, on the client, binds each fluid's still and
-/// flowing icons from this shape's [IconPather] when it names an existing file (see
-/// [FluidShapeBuilder#iconPath]), and otherwise from the material's texture sets -- the same chain [ShapeIcons]
+/// flowing icons from a resource-pack override, then from this shape's [IconPather] when it names an existing file
+/// (see [FluidShapeBuilder#iconPath]), and otherwise from the material's texture sets -- the same chain [ShapeIcons]
 /// walks for an item or block icon.
 ///
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see
 /// [ShapeFluidInContainer]). Each fluid takes its display name from the shape's format and its color from the
 /// material's [StandardProperties#FLUID_TINT], or [StandardProperties#TINT] when unset, so tank and GUI renderers
-/// show the right name and tint without a custom fluid block.
+/// show the right name and tint without a custom fluid block. A fluid whose icon came from the resource-pack
+/// override location is untinted; see [ShapeItem#hasOverrideIcon].
 public class ShapeFluid implements ServedShape {
 
     private static final List<String> NO_OREDICTS = List.of();
@@ -49,6 +51,7 @@ public class ShapeFluid implements ServedShape {
 
     private final Int2ObjectMap<Fluid> fluidsByIndex = new Int2ObjectOpenHashMap<>();
     private final Set<Material> warnedMissingIcon = new ReferenceOpenHashSet<>();
+    private final Set<Material> overrideIcons = new ReferenceOpenHashSet<>();
 
     /// Creates a fluid shape. `displayNameFormat` is applied to the material name to build the fluid's display
     /// name, e.g. `"Molten %s"`. Identifiers must be non-empty and free of ':' and whitespace.
@@ -198,17 +201,19 @@ public class ShapeFluid implements ServedShape {
         }
     }
 
-    /// The icon path to register for `material`'s fluid: this shape's [IconPather] when set and it names an
-    /// existing file, otherwise the first name `material`'s texture-set chain resolves (see [ShapeIcons#resolve]),
-    /// or the [ShapeIcons#EMPTY_ICON] placeholder when neither does. Never null.
+    /// The icon path to register for `material`'s fluid, or the [ShapeIcons#EMPTY_ICON] placeholder when no source
+    /// carries one; see [ShapeIcons#resolvePath] for the order. Never null.
     String resolveIconPath(Material material) {
-        if (iconPather != null) {
-            String path = iconPather.iconPath(this, material);
-            if (path != null && blockTextureExists(path)) return path;
-        }
-        ShapeIcons.ResolvedTexture resolved = ShapeIcons.resolve(material, List.of(name),
-            ShapeFluid::blockTextureExists);
-        if (resolved != null) return resolved.set().iconPath(resolved.shapeName());
+        return resolveIconPath(material, ShapeFluid::blockTextureExists);
+    }
+
+    /// As [#resolveIconPath(Material)], with `exists` deciding whether an icon path names a file on the block
+    /// atlas.
+    String resolveIconPath(Material material, Predicate<String> exists) {
+        String path = ShapeIcons.resolvePath(material, List.of(name), this::patherPath, exists);
+        if (path != null && path.startsWith(ShapeIcons.OVERRIDE_ROOT)) overrideIcons.add(material);
+        else overrideIcons.remove(material);
+        if (path != null) return path;
         if (warnedMissingIcon.add(material)) {
             MaterialLib.LOG.warn(
                 "Fluid shape {} of {} resolved no icon; it will render the transparent placeholder",
@@ -216,6 +221,16 @@ public class ShapeFluid implements ServedShape {
                 material.getKey());
         }
         return ShapeIcons.EMPTY_ICON;
+    }
+
+    /// Whether `material`'s fluid icon resolved from the resource-pack override location; see
+    /// [ShapeItem#hasOverrideIcon].
+    boolean hasOverrideIcon(Material material) {
+        return overrideIcons.contains(material);
+    }
+
+    private String patherPath(Material material) {
+        return iconPather != null ? iconPather.iconPath(this, material) : null;
     }
 
     private static boolean blockTextureExists(String path) {
@@ -241,7 +256,10 @@ public class ShapeFluid implements ServedShape {
         }
 
         @Override
-        public int getColor() { return tintOf(material) & 0xFFFFFF; }
+        public int getColor() {
+            if (hasOverrideIcon(material)) return 0xFFFFFF;
+            return tintOf(material) & 0xFFFFFF;
+        }
     }
 
     /// The ARGB fill tint for `material`'s fluid: [StandardProperties#FLUID_TINT] when set, or

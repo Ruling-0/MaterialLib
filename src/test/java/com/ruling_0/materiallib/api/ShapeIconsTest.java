@@ -2,9 +2,11 @@ package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
@@ -15,10 +17,12 @@ import net.minecraft.util.IIcon;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins [ShapeIcons]' placeholder fallbacks and the precedence of its texture-source chain. [ShapeIcons#resolve]
-/// takes an existence predicate, so its chain runs headless. The binding paths that consult the resource manager
-/// need a live client; see the example content.
+/// Pins [ShapeIcons]' placeholder fallbacks and the precedence of its texture sources. [ShapeIcons#resolvePath]
+/// and [ShapeIcons#ShapeIcons(boolean, Predicate)] take an existence predicate, so both run headless.
 class ShapeIconsTest {
+
+    /// Accepts every path outside the resource-pack override root, so a chain test runs with that source missing.
+    private static final Predicate<String> NO_OVERRIDE = path -> !path.startsWith(ShapeIcons.OVERRIDE_ROOT);
 
     private final MaterialRegistry registry = new MaterialRegistry();
     private final RecordingRegister register = new RecordingRegister();
@@ -27,9 +31,7 @@ class ShapeIconsTest {
     private final TextureSet setC = TextureSet.of("testmod", "setC");
 
     /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
-    /// to pin that binding it resolves the placeholder from both accessors instead of crashing. A pather
-    /// returning null falls through to the same candidate chain; a pather returning a path needs a live client to
-    /// check the file exists, so only this branch runs headless.
+    /// to pin that binding it resolves the placeholder from both accessors instead of crashing.
     @Test
     void materialWithoutTextureSetBindsPlaceholderInsteadOfCrashing() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
@@ -37,7 +39,7 @@ class ShapeIconsTest {
         registry.register(material);
         registry.resolve();
 
-        ShapeIcons icons = new ShapeIcons(true);
+        ShapeIcons icons = new ShapeIcons(true, path -> false);
         assertDoesNotThrow(
             () -> icons.bind(register, new Material[] { material }, List.of("gear"), ignored -> null));
 
@@ -58,7 +60,7 @@ class ShapeIconsTest {
         registry.register(material);
         registry.resolve();
 
-        ShapeIcons icons = new ShapeIcons(true);
+        ShapeIcons icons = new ShapeIcons(true, path -> false);
         assertDoesNotThrow(() -> icons.bind(register, new Material[] { material }, "gear"));
 
         IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
@@ -70,7 +72,7 @@ class ShapeIconsTest {
     /// from the nullable overlay accessor.
     @Test
     void unboundIndexFallsBackToPlaceholder() {
-        ShapeIcons icons = new ShapeIcons(false);
+        ShapeIcons icons = new ShapeIcons(false, path -> false);
         icons.bind(register, new Material[0], "gear");
 
         IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
@@ -86,7 +88,7 @@ class ShapeIconsTest {
         Material material = declareMaterial("testmod", "Testiron", setA, List.of(setB));
         registry.resolve();
 
-        assertSame(setA, ShapeIcons.resolve(material, List.of("gear"), path -> true).set());
+        assertEquals(setA.iconPath("gear"), ShapeIcons.resolvePath(material, List.of("gear"), null, NO_OVERRIDE));
     }
 
     /// Fallback texture sets are tried in list order.
@@ -94,11 +96,11 @@ class ShapeIconsTest {
     void fallbackSetsAreTriedInOrder() {
         Material material = declareMaterial("testmod", "Testiron", setA, List.of(setB, setC));
         registry.resolve();
-        Predicate<String> exceptSetA = path -> !path.equals(setA.iconPath("gear"));
+        Predicate<String> exceptSetA = NO_OVERRIDE.and(path -> !path.equals(setA.iconPath("gear")));
         Predicate<String> onlySetC = path -> path.equals(setC.iconPath("gear"));
 
-        assertSame(setB, ShapeIcons.resolve(material, List.of("gear"), exceptSetA).set());
-        assertSame(setC, ShapeIcons.resolve(material, List.of("gear"), onlySetC).set());
+        assertEquals(setB.iconPath("gear"), ShapeIcons.resolvePath(material, List.of("gear"), null, exceptSetA));
+        assertEquals(setC.iconPath("gear"), ShapeIcons.resolvePath(material, List.of("gear"), null, onlySetC));
     }
 
     /// Within one texture source, an earlier candidate name wins.
@@ -107,9 +109,8 @@ class ShapeIconsTest {
         Material material = declareMaterial("testmod", "Testiron", setA, List.of());
         registry.resolve();
 
-        ShapeIcons.ResolvedTexture resolved = ShapeIcons.resolve(material, List.of("gear_x", "gear"), path -> true);
-
-        assertEquals("gear_x", resolved.shapeName());
+        assertEquals(setA.iconPath("gear_x"),
+            ShapeIcons.resolvePath(material, List.of("gear_x", "gear"), null, NO_OVERRIDE));
     }
 
     /// Every source of a material outranks every source of a unification alternative.
@@ -118,9 +119,83 @@ class ShapeIconsTest {
         Material owner = declareMaterial("amod", "Testiron", setA, List.of(setB));
         declareMaterial("bmod", "Testiron", setC, List.of());
         registry.resolve();
-        Predicate<String> exceptSetA = path -> !path.equals(setA.iconPath("gear"));
+        Predicate<String> exceptSetA = NO_OVERRIDE.and(path -> !path.equals(setA.iconPath("gear")));
 
-        assertSame(setB, ShapeIcons.resolve(owner, List.of("gear"), exceptSetA).set());
+        assertEquals(setB.iconPath("gear"), ShapeIcons.resolvePath(owner, List.of("gear"), null, exceptSetA));
+    }
+
+    /// A per-material icon path outranks the texture-set chain; returning null from it falls through to the chain.
+    @Test
+    void aPerMaterialPathBeatsTheTextureSetChain() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+
+        assertEquals("testmod:custom/iron_gear", ShapeIcons.resolvePath(material, List.of("gear"),
+            ignored -> "testmod:custom/iron_gear", NO_OVERRIDE));
+        assertEquals(setA.iconPath("gear"),
+            ShapeIcons.resolvePath(material, List.of("gear"), ignored -> null, NO_OVERRIDE));
+    }
+
+    /// Pins the pack-facing override path -- the override root, the material's registry name in its exact case,
+    /// and the first candidate name -- ahead of a texture set carrying the same candidates.
+    @Test
+    void anOverrideBeatsTheTextureSetAtItsPackFacingPath() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+
+        assertEquals("materiallib:mloverrides/Testiron/gear_x",
+            ShapeIcons.resolvePath(material, List.of("gear_x", "gear"), null, path -> true));
+    }
+
+    /// A resource-pack override outranks a per-material icon path.
+    @Test
+    void anOverrideBeatsThePerMaterialPath() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+
+        assertEquals(ShapeIcons.overridePath(material, "gear"), ShapeIcons.resolvePath(material, List.of("gear"),
+            ignored -> "testmod:custom/iron_gear", path -> true));
+    }
+
+    /// An override supplies its own `_OVERLAY` layer or none: a missing sibling binds no overlay even when the
+    /// texture set the override outranks carries one.
+    @Test
+    void anOverrideSuppliesItsOwnOverlayOrNone() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+        Material[] materials = { material };
+        String override = ShapeIcons.overridePath(material, "gear");
+
+        ShapeIcons withOverlay = new ShapeIcons(true, path -> true);
+        withOverlay.bind(register, materials, "gear");
+        IIcon overlay = withOverlay.getOverlayOrNull(material.getIndex());
+        assertNotNull(overlay);
+        assertSame(register.registered.get(override + ShapeIcons.OVERLAY_SUFFIX), overlay);
+
+        ShapeIcons withoutOverlay = new ShapeIcons(true, path -> !path.equals(override + ShapeIcons.OVERLAY_SUFFIX));
+        withoutOverlay.bind(register, materials, "gear");
+        assertSame(register.registered.get(override), withoutOverlay.get(material.getIndex()));
+        assertNull(withoutOverlay.getOverlayOrNull(material.getIndex()));
+    }
+
+    /// Only the override tier marks a material untinted, and re-binding without the pack clears that mark.
+    @Test
+    void onlyAnOverrideBoundIconIsFlaggedUntinted() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+        Material[] materials = { material };
+        boolean[] packLoaded = { true };
+        ShapeIcons icons = new ShapeIcons(true, path -> packLoaded[0] || NO_OVERRIDE.test(path));
+
+        icons.bind(register, materials, "gear");
+        assertTrue(icons.isOverride(material.getIndex()));
+
+        packLoaded[0] = false;
+        icons.bind(register, materials, List.of("gear"), ignored -> "testmod:custom/iron_gear");
+        assertFalse(icons.isOverride(material.getIndex()));
+
+        icons.bind(register, materials, "gear");
+        assertFalse(icons.isOverride(material.getIndex()));
     }
 
     private Material declareMaterial(String modid, String name, TextureSet textureSet, List<TextureSet> fallbacks) {

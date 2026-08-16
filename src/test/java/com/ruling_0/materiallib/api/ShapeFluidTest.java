@@ -1,8 +1,10 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Locale;
@@ -37,8 +39,7 @@ class ShapeFluidTest {
     }
 
     /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
-    /// to pin that a fluid whose texture-set chain holds nothing registers the placeholder. Only this branch runs
-    /// headless: every other outcome checks whether a texture file exists, which needs a live client.
+    /// to pin that a fluid resolving no icon registers the placeholder.
     @Test
     void aMaterialWithNoTextureSetResolvesThePlaceholderIconPath() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
@@ -47,7 +48,22 @@ class ShapeFluidTest {
         registry.resolve();
         ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
 
-        assertEquals(ShapeIcons.EMPTY_ICON, molten.resolveIconPath(broken));
+        assertEquals(ShapeIcons.EMPTY_ICON, molten.resolveIconPath(broken, path -> false));
+    }
+
+    /// Only an override-bound fluid icon is marked untinted, and a re-resolve without the pack clears that mark.
+    @Test
+    void onlyAnOverrideBoundFluidIconIsFlaggedUntinted() {
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
+            .build();
+        registry.resolve();
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
+
+        molten.resolveIconPath(iron, path -> true);
+        assertTrue(molten.hasOverrideIcon(iron));
+
+        molten.resolveIconPath(iron, path -> false);
+        assertFalse(molten.hasOverrideIcon(iron));
     }
 
     @Test

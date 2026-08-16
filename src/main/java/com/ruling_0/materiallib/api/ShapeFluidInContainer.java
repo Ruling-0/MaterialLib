@@ -143,13 +143,14 @@ public class ShapeFluidInContainer extends ShapeItem {
         return emptyIcon;
     }
 
-    /// White for the untinted container base in pass 0, the fill tint (see the class doc) for every later pass.
+    /// White for the untinted container base in pass 0, the fill tint (see the class doc) for every later pass. An
+    /// override-bound fill icon is white as well; see [ShapeItem#hasOverrideIcon].
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
         if (renderPass == 0) return 0xFFFFFFFF;
         Material material = ShapeText.materialFor(stack);
-        if (material == null) return 0xFFFFFFFF;
+        if (material == null || hasOverrideIcon(material)) return 0xFFFFFFFF;
         Integer cellTint = material.getProperty(StandardProperties.CELL_TINT);
         return cellTint != null ? cellTint : ShapeFluid.tintOf(material);
     }
