@@ -26,6 +26,26 @@ public final class StandardProperties {
     /// ARGB tint applied to the material's textures.
     public static final Property<Integer> TINT = Property.of(MaterialLib.MODID, "tint", 0xFFFFFFFF);
 
+    /// ARGB tint applied to a fluid shape's fill icon in place of [#TINT], for fluid art that already encodes its
+    /// color. Null when unset, falling back to [#TINT]. Applies to a fluid's fill layer and to the fill layer of a
+    /// [ShapeFluidInContainer] holding it; every other shape uses [#TINT].
+    public static final Property<Integer> FLUID_TINT = Property.of(MaterialLib.MODID, "fluidTint");
+
+    /// ARGB tint applied to a [ShapeBlock#hasBaseTexture] composite's overlay icon layer in place of [#TINT], for
+    /// overlay art that already encodes its color. Null when unset, falling back to [#TINT]. A block shape with no
+    /// base texture consults [#BLOCK_TINT] instead.
+    public static final Property<Integer> BLOCK_OVERLAY_TINT = Property.of(MaterialLib.MODID, "blockOverlayTint");
+
+    /// ARGB tint applied to a plain (no-base-texture) block shape's icon in place of [#TINT], for whole-block art
+    /// that already encodes its color. Null when unset, falling back to [#TINT]. A [ShapeBlock#hasBaseTexture]
+    /// composite consults [#BLOCK_OVERLAY_TINT] instead.
+    public static final Property<Integer> BLOCK_TINT = Property.of(MaterialLib.MODID, "blockTint");
+
+    /// ARGB tint applied to a [ShapeFluidInContainer]'s fill layer in place of the fluid fill tint, for a legacy
+    /// cell fill tinted differently than the fluid itself. Null when unset, falling back to [#FLUID_TINT], then
+    /// [#TINT]. The fluid's own rendering (see [ShapeFluid]) never consults this property.
+    public static final Property<Integer> CELL_TINT = Property.of(MaterialLib.MODID, "cellTint");
+
     /// Rejects the properties derived from builder arguments, which can never be set or removed directly.
     static void requireSettable(Property<?> property) {
         if (property == NAME || property == TEXTURE_SET) {

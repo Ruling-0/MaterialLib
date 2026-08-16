@@ -28,6 +28,13 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// TestGold show per-pair display names.
 public final class ExampleContent {
 
+    /// The base texture testOre's `stone` variant draws under its tinted material icon. Must name a texture the
+    /// 1.7.10 vanilla jar ships, with no `blocks/` segment (that folder is implicit in block icon identifiers).
+    static final String TEST_ORE_STONE_BASE_TEXTURE = "minecraft:stone";
+
+    /// As [#TEST_ORE_STONE_BASE_TEXTURE], for testOre's `cobblestone` variant.
+    static final String TEST_ORE_COBBLESTONE_BASE_TEXTURE = "minecraft:cobblestone";
+
     @SubscribeEvent
     public void onMaterialRegistration(MaterialRegistrationEvent event) {
         register();
@@ -59,8 +66,8 @@ public final class ExampleContent {
             .displayName("%s Ore")
             .oreDict("ore")
             .variants("stone", "cobblestone")
-            .variantBase("stone", "minecraft:stone")
-            .variantBase("cobblestone", "minecraft:cobblestone")
+            .variantBase("stone", TEST_ORE_STONE_BASE_TEXTURE)
+            .variantBase("cobblestone", TEST_ORE_COBBLESTONE_BASE_TEXTURE)
             .iconPath((shape, material) -> "TestGold".equals(material.getName()) ? "minecraft:gold_block" : null)
             .build();
 

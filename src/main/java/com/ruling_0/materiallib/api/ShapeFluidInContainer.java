@@ -22,11 +22,11 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// the registry enforces that at resolve.
 ///
 /// Renders in two passes: an untinted empty-container texture underneath the texture set's texture for this
-/// shape, which supplies the fluid fill and is tinted with [StandardProperties#TINT]. The container looks the
-/// same for every material, so the empty texture is a property of the shape rather than of a texture set: it
-/// defaults to `<modid>:materials/<name>_empty` in the shape's own domain, or the path
-/// [FluidInContainerShapeBuilder#emptyIcon] sets. For a path naming no existing texture file, see
-/// [#registerIcons].
+/// shape, which supplies the fluid fill and is tinted with [StandardProperties#CELL_TINT] when the material sets
+/// it, or with the fluid's fill tint (see [ShapeFluid#tintOf]) otherwise. The container looks the same for every
+/// material, so the empty texture is a property of the shape rather than of a texture set: it defaults to
+/// `<modid>:materials/<name>_empty` in the shape's own domain, or the path [FluidInContainerShapeBuilder#emptyIcon]
+/// sets. For a path naming no existing texture file, see [#registerIcons].
 public class ShapeFluidInContainer extends ShapeItem {
 
     private final Shape fluidShape;
@@ -102,7 +102,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     }
 
     /// Registers this container's fill icons, then its base icon at [#emptyIconPath], or the
-    /// [ShapeIcons#EMPTY_ICON] placeholder -- logged once -- if that path names no existing texture file.
+    /// [ShapeIcons#EMPTY_ICON] placeholder if that path names no existing texture file.
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister register) {
@@ -143,11 +143,14 @@ public class ShapeFluidInContainer extends ShapeItem {
         return emptyIcon;
     }
 
-    /// White for the untinted container base in pass 0, and the material tint -- [ShapeItem]'s pass-0 color -- for
-    /// every later pass.
+    /// White for the untinted container base in pass 0, the fill tint (see the class doc) for every later pass.
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
-        return renderPass == 0 ? 0xFFFFFFFF : super.getColorFromItemStack(stack, 0);
+        if (renderPass == 0) return 0xFFFFFFFF;
+        Material material = ShapeText.materialFor(stack);
+        if (material == null) return 0xFFFFFFFF;
+        Integer cellTint = material.getProperty(StandardProperties.CELL_TINT);
+        return cellTint != null ? cellTint : ShapeFluid.tintOf(material);
     }
 }

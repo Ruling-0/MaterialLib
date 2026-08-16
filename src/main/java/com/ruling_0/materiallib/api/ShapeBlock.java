@@ -15,7 +15,8 @@ import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
-import net.minecraftforge.client.MinecraftForgeClient;
+import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
+import com.ruling_0.materiallib.MaterialLib;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
@@ -34,11 +35,11 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// instances, and the block's item shows the same display name and advanced-tooltip attribution as an item shape.
 ///
 /// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
-/// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) in the solid render
-/// pass, under the tinted material icon drawn in the alpha pass; see [#registerBlockIcons] and [#canRenderInPass].
-/// Drops, hardness, resistance, and harvest level may be overridden per material and variant, and the harvest
-/// tool class per shape, through [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla
-/// default it replaces.
+/// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) under the tinted
+/// material icon, composited by [ShapeBlockRenderingHandler]; see [#registerBlockIcons] and [#hasBaseTexture].
+/// Drops, hardness, resistance, and harvest level may be overridden per material and variant, and the harvest tool
+/// class per shape, through [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla default
+/// it replaces.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;
@@ -54,6 +55,8 @@ public class ShapeBlock extends Block implements BackedShape {
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeIcons icons = new ShapeIcons(false);
     private IIcon baseIcon;
+    private boolean warnedMissingBaseTexture;
+    private int renderType = 0;
 
     /// Creates a block shape backed by a [net.minecraft.block.material.Material#iron] block. `oreDicts` are the
     /// oredict prefixes, at least one; `displayNameFormat` is applied to the material name to build the display
@@ -164,8 +167,50 @@ public class ShapeBlock extends Block implements BackedShape {
         List<String> candidates = groupName != null ? List.of(name, groupName) : List.of(name);
         icons.bind(register, served.get(), candidates, this::iconPathFor);
         if (baseTexture != null) {
-            baseIcon = register.registerIcon(baseTexture);
+            baseIcon = registerBaseIcon(register);
         }
+    }
+
+    /// Registers [#baseTexture] if it names an existing file, or the [ShapeIcons#EMPTY_ICON] placeholder if it
+    /// does not.
+    private IIcon registerBaseIcon(IIconRegister register) {
+        if (ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(baseTexture))) {
+            return register.registerIcon(baseTexture);
+        }
+        if (!warnedMissingBaseTexture) {
+            warnedMissingBaseTexture = true;
+            MaterialLib.LOG.warn(
+                "Block shape {} variant {} has no base texture at {}; it will render the empty placeholder instead",
+                name,
+                variant,
+                baseTexture);
+        }
+        return register.registerIcon(ShapeIcons.EMPTY_ICON);
+    }
+
+    /// Whether this variant draws a base texture layer under the tinted material icon; see [#registerBlockIcons].
+    public boolean hasBaseTexture() {
+        return baseTexture != null;
+    }
+
+    /// Sets the render type [#getRenderType] reports: [ShapeBlockRenderingHandler]'s render ID for a
+    /// [#hasBaseTexture] composite, or the vanilla full-cube default (0).
+    @SideOnly(Side.CLIENT)
+    public void setRenderType(int renderType) { this.renderType = renderType; }
+
+    @Override
+    public int getRenderType() { return renderType; }
+
+    /// This variant's base texture icon, or null when it declares none.
+    @SideOnly(Side.CLIENT)
+    IIcon baseIcon() {
+        return baseIcon;
+    }
+
+    /// The material icon bound at the given metadata; see [ShapeIcons#get].
+    @SideOnly(Side.CLIENT)
+    IIcon materialIcon(int meta) {
+        return icons.get(meta);
     }
 
     /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
@@ -175,25 +220,10 @@ public class ShapeBlock extends Block implements BackedShape {
         return iconPather != null ? iconPather.iconPath(this, material) : null;
     }
 
-    /// A block with no base texture renders as a single tinted layer. A block with a base texture
-    /// renders in two passes -- the untinted base in the solid pass 0, and the tinted material icon over it in
-    /// the alpha-blended pass 1 (pass 1 draws after pass 0, and the material texture's transparent pixels let
-    /// the base show through). The item form never sets an active render pass (pass -1) and shows the tinted
-    /// material icon; see [#canRenderInPass].
-    @Override
-    @SideOnly(Side.CLIENT)
-    public int getRenderBlockPass() { return baseTexture != null ? 1 : 0; }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public boolean canRenderInPass(int pass) {
-        return baseTexture == null ? pass == 0 : pass == 0 || pass == 1;
-    }
-
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIcon(int side, int meta) {
-        if (baseTexture != null && MinecraftForgeClient.getRenderPass() == 0) {
+        if (baseTexture != null) {
             return baseIcon;
         }
         return icons.get(meta);
@@ -202,24 +232,33 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderColor(int meta) {
+        if (baseTexture != null) {
+            return 0xFFFFFF;
+        }
         return tintFor(meta);
     }
 
     @Override
     @SideOnly(Side.CLIENT)
     public int colorMultiplier(IBlockAccess world, int x, int y, int z) {
-        if (baseTexture != null && MinecraftForgeClient.getRenderPass() == 0) {
+        if (baseTexture != null) {
             return 0xFFFFFF;
         }
         return tintFor(world.getBlockMetadata(x, y, z));
     }
 
-    /// The RGB tint of the material at the given metadata, or white when the metadata maps to no live material.
-    /// Block render colors carry no alpha, so the material's ARGB [StandardProperties#TINT] is masked to its low
-    /// 24 bits.
-    private static int tintFor(int meta) {
+    /// The RGB tint of the material at the given metadata, or white when the metadata maps to no live material:
+    /// [StandardProperties#BLOCK_OVERLAY_TINT] for a [#hasBaseTexture] composite's overlay layer,
+    /// [StandardProperties#BLOCK_TINT] for a plain block, [StandardProperties#TINT] when the specific property is
+    /// unset. Block render colors carry no alpha, so the resolved ARGB value is masked to its low 24 bits.
+    @SideOnly(Side.CLIENT)
+    int tintFor(int meta) {
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
-        return material != null ? material.getProperty(StandardProperties.TINT) & 0xFFFFFF : 0xFFFFFF;
+        if (material == null) return 0xFFFFFF;
+        Integer override = material.getProperty(
+            baseTexture != null ? StandardProperties.BLOCK_OVERLAY_TINT : StandardProperties.BLOCK_TINT);
+        if (override != null) return override & 0xFFFFFF;
+        return material.getProperty(StandardProperties.TINT) & 0xFFFFFF;
     }
 
     @Override
