@@ -2,9 +2,11 @@ package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Map;
@@ -174,6 +176,26 @@ class ShapeIconsTest {
         withoutOverlay.bind(register, materials, "gear");
         assertSame(register.registered.get(override), withoutOverlay.get(material.getIndex()));
         assertNull(withoutOverlay.getOverlayOrNull(material.getIndex()));
+    }
+
+    /// Only the override tier marks a material untinted, and re-binding without the pack clears that mark.
+    @Test
+    void onlyAnOverrideBoundIconIsFlaggedUntinted() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+        Material[] materials = { material };
+        boolean[] packLoaded = { true };
+        ShapeIcons icons = new ShapeIcons(true, path -> packLoaded[0] || NO_OVERRIDE.test(path));
+
+        icons.bind(register, materials, "gear");
+        assertTrue(icons.isOverride(material.getIndex()));
+
+        packLoaded[0] = false;
+        icons.bind(register, materials, List.of("gear"), ignored -> "testmod:custom/iron_gear");
+        assertFalse(icons.isOverride(material.getIndex()));
+
+        icons.bind(register, materials, "gear");
+        assertFalse(icons.isOverride(material.getIndex()));
     }
 
     private Material declareMaterial(String modid, String name, TextureSet textureSet, List<TextureSet> fallbacks) {

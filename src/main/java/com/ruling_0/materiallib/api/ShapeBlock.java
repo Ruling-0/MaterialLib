@@ -264,6 +264,12 @@ public class ShapeBlock extends Block implements BackedShape {
         return icons.getOverlayOrNull(material.getIndex());
     }
 
+    /// Whether `material`'s icon bound from the resource-pack override location; see [ShapeItem#hasOverrideIcon].
+    @SideOnly(Side.CLIENT)
+    public boolean hasOverrideIcon(Material material) {
+        return icons.isOverride(material.getIndex());
+    }
+
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderColor(int meta) {
@@ -285,9 +291,11 @@ public class ShapeBlock extends Block implements BackedShape {
     /// The RGB tint of the material at the given metadata, or white when the metadata maps to no live material:
     /// [StandardProperties#BLOCK_OVERLAY_TINT] for a [#hasBaseTexture] composite's overlay layer,
     /// [StandardProperties#BLOCK_TINT] for a plain block, [StandardProperties#TINT] when the specific property is
-    /// unset. Block render colors carry no alpha, so the resolved ARGB value is masked to its low 24 bits.
+    /// unset. An icon bound from the resource-pack override location is white as well; see [#hasOverrideIcon].
+    /// Block render colors carry no alpha, so the resolved ARGB value is masked to its low 24 bits.
     @SideOnly(Side.CLIENT)
     int tintFor(int meta) {
+        if (icons.isOverride(meta)) return 0xFFFFFF;
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         if (material == null) return 0xFFFFFF;
         Integer override = material.getProperty(

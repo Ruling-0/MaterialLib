@@ -155,11 +155,20 @@ public class ShapeItem extends Item implements BackedShape {
         return icons.getOverlayOrNull(material.getIndex());
     }
 
+    /// Whether `material`'s icon bound from the resource-pack override location (see [TextureSet]). Override art
+    /// carries its own colors, so MaterialLib draws it untinted. A caller compositing the icon itself skips its own
+    /// tint the same way.
+    @SideOnly(Side.CLIENT)
+    public boolean hasOverrideIcon(Material material) {
+        return icons.isOverride(material.getIndex());
+    }
+
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
         if (renderPass != 0) return 0xFFFFFFFF;
         Material material = ShapeText.materialFor(stack);
-        return material != null ? material.getProperty(StandardProperties.TINT) : 0xFFFFFFFF;
+        if (material == null || hasOverrideIcon(material)) return 0xFFFFFFFF;
+        return material.getProperty(StandardProperties.TINT);
     }
 }

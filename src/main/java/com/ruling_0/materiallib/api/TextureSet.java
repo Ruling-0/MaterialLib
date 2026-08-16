@@ -8,7 +8,8 @@ package com.ruling_0.materiallib.api;
 /// A resource pack reskins one material alone, outranking every texture set, with a file at
 /// `assets/materiallib/textures/<items|blocks>/mloverrides/<materialName>/<shape>[_OVERLAY].png`. `<materialName>` is
 /// the material's registry name in its exact case, and `<shape>` is the name the art is filed under inside a texture
-/// set. The winning file supplies its own `_OVERLAY` layer or none.
+/// set. The winning file supplies its own `_OVERLAY` layer or none. Override art carries its own colors, so it draws
+/// untinted.
 public final class TextureSet {
 
     private final String modid;

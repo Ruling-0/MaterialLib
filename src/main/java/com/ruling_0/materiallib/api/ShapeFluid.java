@@ -32,7 +32,8 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// A bare fluid has no item form, so its material tooltip is carried by its container item (see
 /// [ShapeFluidInContainer]). Each fluid takes its display name from the shape's format and its color from the
 /// material's [StandardProperties#FLUID_TINT], or [StandardProperties#TINT] when unset, so tank and GUI renderers
-/// show the right name and tint without a custom fluid block.
+/// show the right name and tint without a custom fluid block. A fluid whose icon came from the resource-pack
+/// override location is untinted; see [ShapeItem#hasOverrideIcon].
 public class ShapeFluid implements ServedShape {
 
     private static final List<String> NO_OREDICTS = List.of();
@@ -50,6 +51,7 @@ public class ShapeFluid implements ServedShape {
 
     private final Int2ObjectMap<Fluid> fluidsByIndex = new Int2ObjectOpenHashMap<>();
     private final Set<Material> warnedMissingIcon = new ReferenceOpenHashSet<>();
+    private final Set<Material> overrideIcons = new ReferenceOpenHashSet<>();
 
     /// Creates a fluid shape. `displayNameFormat` is applied to the material name to build the fluid's display
     /// name, e.g. `"Molten %s"`. Identifiers must be non-empty and free of ':' and whitespace.
@@ -209,6 +211,8 @@ public class ShapeFluid implements ServedShape {
     /// atlas.
     String resolveIconPath(Material material, Predicate<String> exists) {
         String path = ShapeIcons.resolvePath(material, List.of(name), this::patherPath, exists);
+        if (path != null && path.startsWith(ShapeIcons.OVERRIDE_ROOT)) overrideIcons.add(material);
+        else overrideIcons.remove(material);
         if (path != null) return path;
         if (warnedMissingIcon.add(material)) {
             MaterialLib.LOG.warn(
@@ -217,6 +221,12 @@ public class ShapeFluid implements ServedShape {
                 material.getKey());
         }
         return ShapeIcons.EMPTY_ICON;
+    }
+
+    /// Whether `material`'s fluid icon resolved from the resource-pack override location; see
+    /// [ShapeItem#hasOverrideIcon].
+    boolean hasOverrideIcon(Material material) {
+        return overrideIcons.contains(material);
     }
 
     private String patherPath(Material material) {
@@ -246,7 +256,10 @@ public class ShapeFluid implements ServedShape {
         }
 
         @Override
-        public int getColor() { return tintOf(material) & 0xFFFFFF; }
+        public int getColor() {
+            if (hasOverrideIcon(material)) return 0xFFFFFF;
+            return tintOf(material) & 0xFFFFFF;
+        }
     }
 
     /// The ARGB fill tint for `material`'s fluid: [StandardProperties#FLUID_TINT] when set, or

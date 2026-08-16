@@ -12,13 +12,15 @@ import com.ruling_0.materiallib.MaterialLib;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /// The per-material icons of an item or block shape, keyed by material index. Once [#bind] has run, [#get] and
 /// [#getOverlay] never return null: an index that bound no icon resolves to the transparent [#EMPTY_ICON]
 /// placeholder. A material with a null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS]
 /// -- or a null entry inside the list -- is treated like one whose texture files do not exist. A resource-pack file
-/// at [#overridePath] reskins a single material and outranks every other source; see [#resolvePath].
+/// at [#overridePath] reskins a single material, outranks every other source, and draws untinted ([#isOverride]);
+/// see [#resolvePath].
 final class ShapeIcons {
 
     /// The transparent placeholder icon path, present on both the item and block atlases.
@@ -32,6 +34,7 @@ final class ShapeIcons {
 
     private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectMap<IIcon> overlaysByIndex = new Int2ObjectOpenHashMap<>();
+    private final IntOpenHashSet overrideIndices = new IntOpenHashSet();
     private final boolean isItem;
     private final Predicate<String> exists;
     private IIcon emptyIcon;
@@ -65,6 +68,7 @@ final class ShapeIcons {
               Function<Material, String> perMaterialIconPath) {
         iconsByIndex.clear();
         overlaysByIndex.clear();
+        overrideIndices.clear();
         emptyIcon = register.registerIcon(EMPTY_ICON);
         List<String> unbound = null;
         for (Material material : materials) {
@@ -74,6 +78,7 @@ final class ShapeIcons {
                 unbound.add(material.getKey());
                 continue;
             }
+            if (path.startsWith(OVERRIDE_ROOT)) overrideIndices.add(material.getIndex());
             iconsByIndex.put(material.getIndex(), register.registerIcon(path));
             putOverlay(register, material, path + OVERLAY_SUFFIX);
         }
@@ -109,6 +114,11 @@ final class ShapeIcons {
     /// itself and needs to distinguish "no overlay" from the transparent placeholder.
     IIcon getOverlayOrNull(int index) {
         return overlaysByIndex.get(index);
+    }
+
+    /// Whether the icon bound for a material index came from the resource-pack override location.
+    boolean isOverride(int index) {
+        return overrideIndices.contains(index);
     }
 
     /// The resource-pack override icon path for `material`'s art filed under `shapeName`.

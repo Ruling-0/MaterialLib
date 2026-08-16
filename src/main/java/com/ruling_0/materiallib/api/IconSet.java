@@ -65,6 +65,11 @@ public final class IconSet {
         return icons.getOverlayOrNull(material.getIndex());
     }
 
+    /// Whether `material`'s icon bound from the resource-pack override location; see [ShapeItem#hasOverrideIcon].
+    public boolean hasOverrideIcon(Material material) {
+        return icons.isOverride(material.getIndex());
+    }
+
     void bind(IIconRegister register, Material[] materials) {
         icons.bind(register, materials, name);
     }
