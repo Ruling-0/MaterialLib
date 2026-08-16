@@ -7,6 +7,7 @@ final class TestServedShape implements ServedShape {
     private final String modid;
     private final String name;
     private Material[] served = new Material[0];
+    private final ShapeProperties props = new ShapeProperties();
 
     TestServedShape(String modid, String name) {
         this.modid = modid;
@@ -29,6 +30,11 @@ final class TestServedShape implements ServedShape {
 
     @Override
     public Material[] getServedMaterials() { return served; }
+
+    @Override
+    public ShapeProperties properties() {
+        return props;
+    }
 
     @Override
     public String toString() {

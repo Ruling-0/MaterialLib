@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+
 /// Builds and registers a simple block [Shape] backed by a [ShapeBlock]. Obtained from
 /// [MaterialLibAPI#newBlockShape] and finished with [#build], which must be called inside the owning mod's
 /// [MaterialRegistrationEvent] handler. Mods needing custom block behavior subclass [ShapeBlock] instead and
@@ -23,6 +25,7 @@ public final class BlockShapeBuilder {
     private BlockHarvestLevelFunction harvestLevelFn;
     private String harvestTool;
     private BlockIconPather iconPather;
+    private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
 
     BlockShapeBuilder(String modid, String name) {
@@ -119,6 +122,14 @@ public final class BlockShapeBuilder {
         return this;
     }
 
+    /// Sets a property value on the shape. Values are read back through [Shape#getProperty] and may be altered
+    /// by another mod through [MaterialLibAPI#editShape].
+    public <T> BlockShapeBuilder property(Property<T> property, T value) {
+        ShapeProperties.requireSettable(property, value);
+        properties.put(property, value);
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -134,11 +145,13 @@ public final class BlockShapeBuilder {
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn, harvestTool);
         if (variants == null) {
-            return ShapeRegistry.instance()
-                .register(new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior, iconPather));
+            ShapeBlock shape = new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior, iconPather);
+            shape.properties().setAll(shape, properties);
+            return ShapeRegistry.instance().register(shape);
         }
-        return ShapeRegistry.instance().register(
-            ShapeBlockVariants
-                .create(modid, name, format, prefixes, List.of(variants), variantBases, behavior, iconPather));
+        ShapeBlockVariants group = ShapeBlockVariants
+            .create(modid, name, format, prefixes, List.of(variants), variantBases, behavior, iconPather);
+        group.properties().setAll(group, properties);
+        return ShapeRegistry.instance().register(group);
     }
 }

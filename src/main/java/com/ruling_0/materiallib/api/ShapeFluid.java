@@ -44,6 +44,7 @@ public class ShapeFluid implements ServedShape {
     private final FluidIconPather iconPather;
 
     private final ServedMaterials served = new ServedMaterials();
+    private final ShapeProperties props = new ShapeProperties();
 
     private final Int2ObjectMap<Fluid> fluidsByIndex = new Int2ObjectOpenHashMap<>();
     private final Set<Material> warnedMissingIcon = new ReferenceOpenHashSet<>();
@@ -95,6 +96,11 @@ public class ShapeFluid implements ServedShape {
 
     @Override
     public Material[] getServedMaterials() { return served.get(); }
+
+    @Override
+    public ShapeProperties properties() {
+        return props;
+    }
 
     /// The Forge fluid name for a material in this shape, as produced by this shape's [FluidNamer].
     String fluidName(Material material) {
@@ -164,6 +170,11 @@ public class ShapeFluid implements ServedShape {
         return FluidRegistry.getFluid(fluidName);
     }
 
+    /// The fluid registered for `material` in this shape, or null when the material does not generate it.
+    Fluid fluid(Material material) {
+        return fluidsByIndex.get(material.getIndex());
+    }
+
     /// The fluid stack of `material` in this shape, with the given volume in millibuckets. The material must
     /// generate this shape.
     FluidStack fluidStack(Material material, int amount) {
@@ -212,7 +223,7 @@ public class ShapeFluid implements ServedShape {
 
     /// A material's fluid, naming itself from the shape's display format and coloring itself with the material's
     /// fill tint (see [#tintOf]) so renderers that read [Fluid#getColor] tint the fluid per material. 1.7.10 fluids
-    /// expose no color setter, only an overridable [Fluid#getColor], which is why this is a subclass.
+    /// expose no color setter, only an overridable [Fluid#getColor].
     private final class MaterialFluid extends Fluid {
 
         private final Material material;

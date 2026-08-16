@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.List;
+import java.util.Map;
 
 /// A form a material can take, such as an ingot, gear, block, or fluid.
 ///
@@ -30,4 +31,34 @@ public interface Shape {
     /// The variant names a block shape declares through [BlockShapeBuilder#variants], in declaration order, or
     /// empty for a shape with no variants (the common case, and every non-block shape).
     default List<String> getVariants() { return List.of(); }
+
+    /// Resolves a property for this shape: its own value, else the property's default. A shape that lost
+    /// unification reads the owner's values. Values are settled once shapes resolve; an earlier read sees only
+    /// this declaration's own values.
+    ///
+    /// Unlike [Material#getProperty] there is no inheritance tier: shapes have no grouping analogous to [Family].
+    /// Values are declared through the shape builders and altered through [MaterialLibAPI#editShape].
+    default <T> T getProperty(Property<T> property) {
+        return property.getDefaultValue();
+    }
+
+    /// Sets a property value on this shape, for the mod that declared it, and returns the shape so calls chain.
+    /// Only before shapes resolve.
+    ///
+    /// This is the counterpart of the shape builders' `property` for a shape registered as a subclass instead
+    /// (see [MaterialLibAPI#registerItemShape]), which never passes through a builder. Changing a shape
+    /// **another** mod declared goes through [MaterialLibAPI#editShape] instead: that addresses the owner by
+    /// name and applies after unification, so it overrides the owner's declaration, whereas this states one --
+    /// two declarations of the same property conflict, and the owner's wins.
+    default <T> Shape setProperty(Property<T> property, T value) {
+        throw new UnsupportedOperationException(this + " does not hold properties");
+    }
+
+    /// True if this shape sets the property explicitly; the property default does not count.
+    default boolean hasProperty(Property<?> property) {
+        return false;
+    }
+
+    /// The values set on this shape, excluding defaults.
+    default Map<Property<?>, Object> getOwnProperties() { return Map.of(); }
 }

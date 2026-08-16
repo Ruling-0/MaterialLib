@@ -5,6 +5,7 @@ import java.util.Collection;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 
+import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
 /// The public entry point of MaterialLib, wrapping the game's [MaterialRegistry] instance.
@@ -153,6 +154,12 @@ public final class MaterialLibAPI {
         return ShapeRegistry.instance().lookupBlock(block, metadata);
     }
 
+    /// The Forge fluid MaterialLib registered for `material` in `shape`, or null when the material does not
+    /// generate that fluid shape. `shape` must still be a fluid shape. Only available after shapes have resolved.
+    public static Fluid getFluid(Material material, Shape shape) {
+        return ShapeRegistry.instance().getFluid(material, shape);
+    }
+
     /// The fluid stack of `material` in `shape`, with the given volume in millibuckets. The shape must be a fluid
     /// shape that the material generates. Only available after shapes have resolved, at the end of MaterialLib's
     /// preInit.
@@ -168,6 +175,12 @@ public final class MaterialLibAPI {
     /// Queues changes to a family registered by any mod; see [FamilyEdit].
     public static FamilyEdit editFamily(String modid, String name) {
         return MaterialRegistry.instance().editFamily(modid, name);
+    }
+
+    /// Queues changes to a shape registered by any mod; see [ShapeEdit]. `modid` identifies the editor, not the
+    /// target.
+    public static ShapeEdit editShape(String modid, String name) {
+        return ShapeRegistry.instance().editShape(modid, name);
     }
 
     /// The material with the given key, or null if none exists. A key whose material unified onto another mod's

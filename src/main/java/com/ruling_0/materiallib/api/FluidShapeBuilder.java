@@ -1,6 +1,9 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.Map;
 import java.util.Objects;
+
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 
 /// Builds and registers a simple fluid [Shape] backed by a [ShapeFluid]. Obtained from [MaterialLibAPI#newFluidShape]
 /// and finished with [#build], which must be called inside the owning mod's [MaterialRegistrationEvent] handler.
@@ -14,6 +17,7 @@ public final class FluidShapeBuilder {
     private FluidNamer namer;
     private FluidConfigurer configurer;
     private FluidIconPather iconPather;
+    private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
 
     FluidShapeBuilder(String modid, String name) {
@@ -55,6 +59,14 @@ public final class FluidShapeBuilder {
         return iconPath((shape, material) -> path);
     }
 
+    /// Sets a property value on the shape. Values are read back through [Shape#getProperty] and may be altered
+    /// by another mod through [MaterialLibAPI#editShape].
+    public <T> FluidShapeBuilder property(Property<T> property, T value) {
+        ShapeProperties.requireSettable(property, value);
+        properties.put(property, value);
+        return this;
+    }
+
     /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
     public Shape build() {
         if (built) {
@@ -62,7 +74,8 @@ public final class FluidShapeBuilder {
         }
         built = true;
         String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        return ShapeRegistry.instance()
-            .register(new ShapeFluid(modid, name, format, namer, configurer, iconPather));
+        ShapeFluid shape = new ShapeFluid(modid, name, format, namer, configurer, iconPather);
+        shape.properties().setAll(shape, properties);
+        return ShapeRegistry.instance().register(shape);
     }
 }
