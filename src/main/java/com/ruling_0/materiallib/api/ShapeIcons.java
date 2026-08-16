@@ -73,7 +73,7 @@ final class ShapeIcons {
         if (unbound == null) return;
         int examples = Math.min(unbound.size(), 5);
         MaterialLib.LOG.warn(
-            "No {} icon resolved under {} for {}/{} served materials (e.g. {}); they will render the " +
+            "No {} icon resolved under {} for {}/{} materials (e.g. {}); they will render the " +
                 "transparent placeholder",
             isItem ? "item" : "block",
             shapeNameCandidates,
@@ -107,9 +107,7 @@ final class ShapeIcons {
     }
 
     /// The overlay icon for a material index, or null if none resolved, for a caller that composites the overlay
-    /// itself and needs to distinguish "no overlay" from the transparent placeholder. [#setIcons] stores an
-    /// explicit null for a material whose winning texture set has no `_OVERLAY` file, so a plain map miss covers
-    /// both that case and an index nothing ever bound.
+    /// itself and needs to distinguish "no overlay" from the transparent placeholder.
     IIcon getOverlayOrNull(int index) {
         return overlaysByIndex.get(index);
     }
@@ -181,11 +179,10 @@ final class ShapeIcons {
         putOverlay(register, material, textureSet.overlayPath(shapeName));
     }
 
-    /// Registers `material`'s overlay from `overlayPath` when that file exists, or records an explicit null when
-    /// it does not, so [#getOverlayOrNull] reports "this material has no overlay" rather than "never bound".
+    /// Registers `material`'s overlay from `overlayPath` when that file exists.
     private void putOverlay(IIconRegister register, Material material, String overlayPath) {
-        overlaysByIndex
-            .put(material.getIndex(), checkResLoc(overlayPath) ? register.registerIcon(overlayPath) : null);
+        if (!checkResLoc(overlayPath)) return;
+        overlaysByIndex.put(material.getIndex(), register.registerIcon(overlayPath));
     }
 
     private boolean checkResLoc(String path) {

@@ -21,7 +21,6 @@ public final class IconSetBinder {
     @SubscribeEvent
     public void onTextureStitch(TextureStitchEvent.Pre event) {
         int textureType = event.map.getTextureType();
-        if (textureType != 0 && textureType != 1) return;
         Material[] materials = null;
         for (IconSet set : MaterialLibClient.getIconSets()) {
             if (set.atlasType() != textureType) continue;
@@ -34,8 +33,7 @@ public final class IconSetBinder {
     /// in. An icon set has no served materials of its own -- no material generates one -- so it binds against the
     /// whole registry.
     private static Material[] registeredMaterials() {
-        Collection<Material> registered = MaterialRegistry.instance()
-            .getMaterials();
+        Collection<Material> registered = MaterialRegistry.instance().getMaterials();
         Material[] materials = registered.toArray(new Material[0]);
         Arrays.sort(materials, Comparator.comparingInt(Material::getIndex));
         return materials;
