@@ -9,9 +9,7 @@ class ShapeFluidInContainerTest {
 
     @Test
     void aNonFluidShapeIsRejectedAtConstruction() {
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> new TestContainer(new TestShape("testmod", "plate"), null));
+        assertThrows(IllegalArgumentException.class, () -> new TestContainer(new TestShape("testmod", "plate"), null));
     }
 
     @Test
@@ -19,9 +17,7 @@ class ShapeFluidInContainerTest {
         Shape fluid = new ShapeFluid("testmod", "molten", "Molten %s");
 
         assertEquals("testmod:materials/cell_empty", new TestContainer(fluid, null).emptyIconPath());
-        assertEquals(
-            "gregtech:items/cell_base",
-            new TestContainer(fluid, "gregtech:items/cell_base").emptyIconPath());
+        assertEquals("gregtech:items/cell_base", new TestContainer(fluid, "gregtech:items/cell_base").emptyIconPath());
     }
 
     private static final class TestContainer extends ShapeFluidInContainer {

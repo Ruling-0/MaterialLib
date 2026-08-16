@@ -46,7 +46,7 @@ public class ShapeFluidInContainer extends ShapeItem {
     }
 
     /// As [#ShapeFluidInContainer(String, String, String, ShapeFluid, ItemStack, int, String...)], but draining to
-    /// an empty container item registered through [MaterialLibAPI#registerEmptyContainer(String, String)].
+    /// an empty container item registered through [MaterialLibAPI#registerEmptyContainer(String, String, String)].
     protected ShapeFluidInContainer(String modid, String name, String displayNameFormat, Shape fluidShape,
                                     EmptyContainerHandle emptyContainer, int volume, String... oreDicts) {
         this(modid, name, displayNameFormat, fluidShape,
@@ -120,12 +120,6 @@ public class ShapeFluidInContainer extends ShapeItem {
                 path);
         }
         emptyIcon = register.registerIcon(ShapeIcons.EMPTY_ICON);
-    }
-
-    @Override
-    @SideOnly(Side.CLIENT)
-    public boolean requiresMultipleRenderPasses() {
-        return true;
     }
 
     /// The untinted container base for pass 0, and the material's fill icon -- [ShapeItem]'s pass-0 icon -- for

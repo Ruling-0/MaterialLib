@@ -65,9 +65,8 @@ public final class MaterialBuilder {
     }
 
     /// Removes a shape from the material, masking it when a family the material joins contributes it. Queued at
-    /// [#build] and otherwise identical to [MaterialEdit#removeShape] called straight after it: a later
-    /// [MaterialEdit#generateShape] for the same shape still lifts the mask, and a [#generateShape] later in
-    /// this builder cancels the removal.
+    /// [#build] and otherwise identical to [MaterialEdit#removeShape] called straight after it; a [#generateShape]
+    /// later in this builder cancels the removal.
     public MaterialBuilder removeShape(Shape shape) {
         Names.validate(shape);
         shapes.remove(shape);

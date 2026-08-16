@@ -19,7 +19,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 /// through [MaterialEdit#removeShape]. A family's tooltip lines appear on members' shapes after the material's own
 /// lines. Families are created through [MaterialLibAPI#newFamily] inside a [MaterialRegistrationEvent] handler
 /// and become read-only once the registry resolves at the end of MaterialLib's preInit. Membership is only
-/// available after resolution, since other mods may alter it through [FamilyEdit]s and [MaterialEdit]s until then.
+/// available after resolution.
 public final class Family {
 
     private final MaterialRegistry registry;

@@ -1,6 +1,5 @@
 package com.ruling_0.materiallib.api;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,9 +92,6 @@ final class ShapeBlockVariants implements BackedShape {
     ShapeBlock blockFor(String variant) {
         return blocks.get(variant);
     }
-
-    /// Every backing block, one per variant, in declaration order.
-    Collection<ShapeBlock> getVariantBlocks() { return blocks.values(); }
 
     @Override
     public void registerWithGame() {

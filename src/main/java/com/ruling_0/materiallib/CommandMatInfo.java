@@ -58,8 +58,7 @@ public class CommandMatInfo extends CommandBase {
     }
 
     /// Reports the held stack when it is a MaterialLib shape item or shape block item, returning whether it was.
-    /// A held block item resolves through [MaterialLibAPI#lookupBlock], so a variant's backing block reports the
-    /// declared shape and variant rather than the derived block name.
+    /// A held variant block item reports its declared shape and variant.
     private static boolean reportHeldItem(ICommandSender sender, ItemStack stack) {
         if (stack == null) return false;
         if (stack.getItem() instanceof ShapeItem item) {
@@ -96,9 +95,7 @@ public class CommandMatInfo extends CommandBase {
 
     private static void report(ICommandSender sender, Shape shape, String variant, Material material) {
         String variantSuffix = variant != null ? " variant " + variant : "";
-        send(
-            sender,
-            "Shape: " + shape.getModId() + ":" + shape.getName() + variantSuffix + " (" + type(shape) + ")");
+        send(sender, "Shape: " + shape.getModId() + ":" + shape.getName() + variantSuffix + " (" + type(shape) + ")");
         if (material == null) {
             send(sender, "Material: none loaded at this index");
             return;

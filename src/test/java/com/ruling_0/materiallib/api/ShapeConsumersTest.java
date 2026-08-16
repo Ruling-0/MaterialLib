@@ -17,12 +17,11 @@ class ShapeConsumersTest {
     private final TextureSet texture = TextureSet.of("testmod", "shiny");
 
     private Material material(String name) {
-        return registry.newMaterial("testmod", name, texture)
-            .build();
+        return registry.newMaterial("testmod", name, texture).build();
     }
 
-    private static TestServedShape shape(String name, Material... materials) {
-        TestServedShape shape = new TestServedShape("amod", name);
+    private static TestShape shape(String name, Material... materials) {
+        TestShape shape = new TestShape("amod", name);
         shape.bindServedMaterials(materials);
         return shape;
     }
@@ -31,8 +30,8 @@ class ShapeConsumersTest {
     void consumersRunInRegistrationOrderAndMaterialsInBoundOrder() {
         Material iron = material("Iron");
         Material gold = material("Gold");
-        TestServedShape gear = shape("gear", iron, gold);
-        TestServedShape plate = shape("plate", gold);
+        TestShape gear = shape("gear", iron, gold);
+        TestShape plate = shape("plate", gold);
 
         List<String> calls = new ArrayList<>();
         consumers.register(
@@ -66,7 +65,7 @@ class ShapeConsumersTest {
     @Test
     void anUnknownShapeNameIsSkippedAndLaterConsumersStillRun() {
         Material iron = material("Iron");
-        TestServedShape gear = shape("gear", iron);
+        TestShape gear = shape("gear", iron);
 
         List<String> calls = new ArrayList<>();
         consumers.register(ShapeConsumers.Phase.INIT, "amod", "missing", (s, m) -> calls.add("missing " + m.getName()));
@@ -81,7 +80,7 @@ class ShapeConsumersTest {
     void aThrowingConsumerFailsNamingTheModidShapeAndMaterialAndAbortsDispatch() {
         Material iron = material("Iron");
         Material gold = material("Gold");
-        TestServedShape gear = shape("gear", iron, gold);
+        TestShape gear = shape("gear", iron, gold);
         RuntimeException boom = new RuntimeException("boom");
         List<String> calls = new ArrayList<>();
         consumers.register(ShapeConsumers.Phase.INIT, "cmod", "gear", (s, m) -> {
@@ -95,7 +94,7 @@ class ShapeConsumersTest {
             () -> consumers.run(ShapeConsumers.Phase.INIT, Map.of("gear", gear)));
 
         assertEquals(
-            "Failed to run shape consumer from cmod on shape TestServedShape[amod:gear] and material testmod:Iron",
+            "Failed to run shape consumer from cmod on shape TestShape[amod:gear] and material testmod:Iron",
             e.getMessage());
         assertEquals(List.of("throwing Iron"), calls);
         assertSame(boom, e.getCause());
@@ -117,7 +116,7 @@ class ShapeConsumersTest {
     @Test
     void consumersRunOnlyInTheirRegisteredPhase() {
         Material iron = material("Iron");
-        TestServedShape gear = shape("gear", iron);
+        TestShape gear = shape("gear", iron);
 
         List<String> calls = new ArrayList<>();
         consumers.register(ShapeConsumers.Phase.INIT, "amod", "gear", (s, m) -> calls.add("init " + m.getName()));
@@ -134,7 +133,7 @@ class ShapeConsumersTest {
     @Test
     void thePhasesRunAndGuardIndependently() {
         Material iron = material("Iron");
-        TestServedShape gear = shape("gear", iron);
+        TestShape gear = shape("gear", iron);
 
         consumers.run(ShapeConsumers.Phase.INIT, Map.of("gear", gear));
 

@@ -31,8 +31,7 @@ class WorldMaterialIdsTest {
 
     private MaterialRegistry resolvedWith(String... names) {
         for (String name : names) {
-            registry.newMaterial("testmod", name, texture)
-                .build();
+            registry.newMaterial("testmod", name, texture).build();
         }
         registry.resolve();
         return registry;
@@ -43,9 +42,7 @@ class WorldMaterialIdsTest {
         Map<String, Integer> stored = Map.of("Iron", 0, "Gold", 1);
         Map<String, Integer> current = Map.of("Iron", 0, "Gold", 1, "Tin", 2);
 
-        assertFalse(
-            WorldMaterialIds.diff(stored, current)
-                .isMismatch());
+        assertFalse(WorldMaterialIds.diff(stored, current).isMismatch());
     }
 
     @Test
@@ -54,9 +51,7 @@ class WorldMaterialIdsTest {
 
         assertTrue(diff.isMismatch());
         assertEquals(Map.of(0, 5), diff.movedIndices());
-        assertTrue(
-            diff.removedIndices()
-                .isEmpty());
+        assertTrue(diff.removedIndices().isEmpty());
     }
 
     @Test
@@ -65,9 +60,7 @@ class WorldMaterialIdsTest {
 
         assertTrue(diff.isMismatch());
         assertEquals(List.of(1), diff.removedIndices());
-        assertTrue(
-            diff.movedIndices()
-                .isEmpty());
+        assertTrue(diff.movedIndices().isEmpty());
     }
 
     @Test
@@ -112,16 +105,8 @@ class WorldMaterialIdsTest {
         assertEquals(resolved.getContentHash(), stored.hash());
         assertEquals(resolved.getAssignedIndices(), stored.materials());
         assertEquals(2, WorldMaterialIds.currentListVersion());
-        assertEquals(
-            0,
-            MaterialIdTransitions.load(transitionsDir())
-                .compose(1, 2)
-                .get(1));
-        assertEquals(
-            MaterialMigration.DELETE,
-            MaterialIdTransitions.load(transitionsDir())
-                .compose(1, 2)
-                .get(0));
+        assertEquals(0, MaterialIdTransitions.load(transitionsDir()).compose(1, 2).get(1));
+        assertEquals(MaterialMigration.DELETE, MaterialIdTransitions.load(transitionsDir()).compose(1, 2).get(0));
     }
 
     @Test
@@ -133,11 +118,7 @@ class WorldMaterialIdsTest {
         WorldMaterialIds.check(resolved, dir);
 
         assertEquals(5, MaterialIdStore.read(storeFile()).listVersion());
-        assertEquals(
-            0,
-            MaterialIdTransitions.load(transitionsDir())
-                .compose(4, 5)
-                .get(1));
+        assertEquals(0, MaterialIdTransitions.load(transitionsDir()).compose(4, 5).get(1));
     }
 
     @Test
@@ -148,9 +129,6 @@ class WorldMaterialIdsTest {
         assertNull(WorldMaterialIds.check(resolved, dir));
 
         assertEquals(2, MaterialIdStore.read(storeFile()).listVersion());
-        assertTrue(
-            MaterialIdTransitions.load(transitionsDir())
-                .compose(1, 2)
-                .isEmpty());
+        assertTrue(MaterialIdTransitions.load(transitionsDir()).compose(1, 2).isEmpty());
     }
 }

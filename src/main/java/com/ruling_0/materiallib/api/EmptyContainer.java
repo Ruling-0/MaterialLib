@@ -22,8 +22,8 @@ sealed interface EmptyContainer {
         }
     }
 
-    /// An empty container item registered through [MaterialLibAPI#registerEmptyContainer(String, String)], usable
-    /// once its handle binds at resolve.
+    /// An empty container item registered through [MaterialLibAPI#registerEmptyContainer(String, String, String)],
+    /// usable once its handle binds at resolve.
     record Registered(EmptyContainerHandle handle) implements EmptyContainer {
 
         @Override

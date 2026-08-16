@@ -48,13 +48,9 @@ public final class ExampleContent {
             .oreDict("gear", "cog")
             .build();
 
-        Shape ingot = MaterialLibAPI.newItemShape(MaterialLib.MODID, "ingot")
-            .displayName("%s Ingot")
-            .build();
+        Shape ingot = MaterialLibAPI.newItemShape(MaterialLib.MODID, "ingot").displayName("%s Ingot").build();
 
-        Shape block = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "block")
-            .displayName("%s Block")
-            .build();
+        Shape block = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "block").displayName("%s Block").build();
 
         Shape testFrame = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "testFrame")
             .displayName("%s Frame")
@@ -84,9 +80,7 @@ public final class ExampleContent {
             .oreDict("bucket")
             .build();
 
-        Family testFamily = MaterialLibAPI.newFamily(MaterialLib.MODID, "Test")
-            .generateShape(testFrame)
-            .build();
+        Family testFamily = MaterialLibAPI.newFamily(MaterialLib.MODID, "Test").generateShape(testFrame).build();
 
         MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestIron", test)
             .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre)

@@ -10,12 +10,12 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 /// version to the next.
 ///
 /// Built from a transition's moved and removed index sets: a moved index is rewritten to its new value, and a
-/// removed index -- one whose material no longer exists -- deletes its stacks and turns its placed blocks to air,
-/// since the material cannot be shown. Every other index is unchanged. The remap is by damage value alone because
-/// one index means the same material across every shape.
+/// removed index -- one whose material no longer exists -- deletes its stacks and turns its placed blocks to air.
+/// Every other index is unchanged. The remap is by damage value alone because one index means the same material
+/// across every shape.
 public final class MaterialMigration {
 
-    /// [#lookup] result: the stored stack or placed block should be removed, its material no longer existing.
+    /// [#lookup] result: the stored stack or placed block should be removed.
     public static final int DELETE = -1;
 
     /// [#lookup] result: the stored damage value needs no change.
@@ -37,7 +37,4 @@ public final class MaterialMigration {
     public int lookup(int oldIndex) {
         return remap.getOrDefault(oldIndex, UNCHANGED);
     }
-
-    /// True if no stored stack or placed block needs migrating.
-    public boolean isEmpty() { return remap.isEmpty(); }
 }

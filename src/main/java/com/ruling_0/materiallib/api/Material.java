@@ -23,7 +23,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// Materials are created through [MaterialLibAPI#newMaterial] inside a [MaterialRegistrationEvent] handler and
 /// become read-only once the registry resolves at the end of MaterialLib's preInit. A material may belong to
 /// any number of [Family]s; membership, properties, and the effective shape set are only available after
-/// resolution, since other mods may alter them through [MaterialEdit]s until then.
+/// resolution.
 ///
 /// Two mods may declare a material with the same name without coordinating; at resolve such declarations unify
 /// into one material carrying the union of both -- shapes, families, tooltip lines, and properties, with the
@@ -147,8 +147,7 @@ public final class Material {
         registry.requireResolved("query properties of ", key);
         if (properties.containsKey(property)) return true;
         for (Family family : sortedFamilies) {
-            if (family.getOwnPropertiesInternal()
-                .containsKey(property)) return true;
+            if (family.getOwnPropertiesInternal().containsKey(property)) return true;
         }
         return false;
     }

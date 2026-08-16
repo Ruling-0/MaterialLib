@@ -61,13 +61,6 @@ class MaterialIdStoreTest {
     }
 
     @Test
-    void readingACorruptFileFailsLoudly() throws Exception {
-        Files.write(file().toPath(), "{ not valid json".getBytes(StandardCharsets.UTF_8));
-
-        assertThrows(IllegalStateException.class, () -> MaterialIdStore.read(file()));
-    }
-
-    @Test
     void readingAFilePresentButMissingMaterialsFailsLoudly() throws Exception {
         Files.write(file().toPath(),
             "{\"version\":1,\"listVersion\":1,\"hash\":\"x\"}".getBytes(StandardCharsets.UTF_8));

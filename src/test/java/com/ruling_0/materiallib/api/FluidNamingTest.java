@@ -14,8 +14,7 @@ class FluidNamingTest {
     private final MaterialRegistry registry = new MaterialRegistry();
     private final TextureSet texture = TextureSet.of("examplemod", "shiny");
     private final Shape molten = new TestShape("examplemod", "molten");
-    private final Material iron = registry.newMaterial("examplemod", "TestIron", texture)
-        .build();
+    private final Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
 
     @Test
     void aValidLowercaseNameIsAcceptedAndRecorded() {
@@ -49,9 +48,7 @@ class FluidNamingTest {
     void aNameContainingWhitespaceIsAccepted() {
         Set<String> usedNames = new HashSet<>();
 
-        assertEquals(
-            "acid naquadah emulsion",
-            FluidNaming.validate("acid naquadah emulsion", molten, iron, usedNames));
+        assertEquals("acid naquadah emulsion", FluidNaming.validate("acid naquadah emulsion", molten, iron, usedNames));
     }
 
     @Test

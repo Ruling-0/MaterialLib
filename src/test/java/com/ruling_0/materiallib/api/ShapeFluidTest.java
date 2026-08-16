@@ -20,8 +20,7 @@ class ShapeFluidTest {
 
     @Test
     void fluidNameIsShapeAndMaterialLowercasedByDefault() {
-        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
-            .build();
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
         ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
 
         assertEquals("molten.testiron", molten.fluidName(iron));
@@ -29,10 +28,8 @@ class ShapeFluidTest {
 
     @Test
     void aCustomNamerOverridesTheDefaultName() {
-        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
-            .build();
-        FluidNamer namer = (shape, material) -> "legacy." + material.getName()
-            .toLowerCase(Locale.ENGLISH);
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
+        FluidNamer namer = (shape, material) -> "legacy." + material.getName().toLowerCase(Locale.ENGLISH);
         ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", namer, null);
 
         assertEquals("legacy.testiron", molten.fluidName(iron));
@@ -68,8 +65,7 @@ class ShapeFluidTest {
 
     @Test
     void namerDivergenceIsDetectedPerServedMaterial() {
-        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
-            .build();
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
         ShapeFluid canonical = new ShapeFluid("examplemod", "molten", "Molten %s");
         canonical.bindServedMaterials(new Material[] { iron });
         ShapeFluid candidate = new ShapeFluid("othermod", "molten", "Molten %s",
@@ -82,8 +78,7 @@ class ShapeFluidTest {
 
     @Test
     void agreeingNamersReportNoDivergence() {
-        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
-            .build();
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
         ShapeFluid canonical = new ShapeFluid("examplemod", "molten", "Molten %s");
         canonical.bindServedMaterials(new Material[] { iron });
         ShapeFluid candidate = new ShapeFluid("othermod", "molten", "Molten %s");

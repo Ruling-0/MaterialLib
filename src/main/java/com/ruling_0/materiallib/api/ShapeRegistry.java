@@ -51,7 +51,7 @@ public final class ShapeRegistry {
     private final Map<Block, String> variantByBlock = new Reference2ObjectOpenHashMap<>();
     private Map<String, String> persistedOwners = new LinkedHashMap<>();
     private Map<String, String> assignedOwners = new LinkedHashMap<>();
-    private final List<PendingOp> pendingOps = new ObjectArrayList<>();
+    private final PendingOps pendingOps = new PendingOps();
     private boolean resolved;
 
     ShapeRegistry() {}
@@ -80,7 +80,7 @@ public final class ShapeRegistry {
     void enqueueShapeOp(String modid, String name, String description, Consumer<ServedShape> op) {
         String edit = description + " " + name + " (from " + modid + ")";
         requireRegistration(edit);
-        pendingOps.add(new PendingOp(edit, () -> {
+        pendingOps.add(edit, () -> {
             ServedShape target = unification.ownerOf(name);
             if (target == null) {
                 MaterialLib.LOG.warn("Skipping edit \"{}\" from {}: no shape named {} is registered", description,
@@ -88,19 +88,7 @@ public final class ShapeRegistry {
                 return;
             }
             op.accept(target);
-        }));
-    }
-
-    private void applyPendingOps() {
-        for (PendingOp op : pendingOps) {
-            try {
-                op.action.run();
-            }
-            catch (RuntimeException e) {
-                throw new IllegalStateException("Failed to apply queued edit \"" + op.description + "\"", e);
-            }
-        }
-        pendingOps.clear();
+        });
     }
 
     /// Freezes every candidate's property map, the owners' and the merged-away declarations' alike, so a stale
@@ -110,8 +98,6 @@ public final class ShapeRegistry {
             shape.properties().freeze();
         }
     }
-
-    private record PendingOp(String description, Runnable action) {}
 
     /// Records a shape as a candidate to own its name and returns the shape to generate. The owner is chosen at
     /// [#resolve], so the returned shape is unified onto the owner's backing object or fluid then.
@@ -335,8 +321,7 @@ public final class ShapeRegistry {
     /// Rejects a material that does not generate a shape.
     private static void requireServes(ServedShape shape, Material material) {
         if (!shape.serves(material)) {
-            throw new IllegalArgumentException(
-                "Material " + material.getKey() + " does not generate shape " + shape);
+            throw new IllegalArgumentException("Material " + material.getKey() + " does not generate shape " + shape);
         }
     }
 
@@ -353,7 +338,7 @@ public final class ShapeRegistry {
         MaterialRegistry.instance().requireResolved("resolve shapes", "");
         assignedOwners = unification.resolve(persistedOwners);
         unification.mergeProperties();
-        applyPendingOps();
+        pendingOps.drain();
         freezeProperties();
         collectCanonicalShapes();
         registerEmptyContainers();

@@ -31,8 +31,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// placed metadata; a material may instead be given a per-material icon ahead of its texture set through
 /// [#iconPathFor] (a subclass override) or a [BlockShapeBuilder#iconPath] pather. Create and register the block
 /// inside the owning mod's [MaterialRegistrationEvent] handler.
-/// MaterialLib registers the chosen owner's block under its own domain so the shape keeps a stable identity across
-/// instances, and the block's item shows the same display name and advanced-tooltip attribution as an item shape.
+/// MaterialLib registers the chosen owner's block under its own domain (see [ShapeOwnerStore]), and the block's item
+/// shows the same display name and advanced-tooltip attribution as an item shape.
 ///
 /// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
 /// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) under the tinted
@@ -250,8 +250,7 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// The icon bound for `material` on this shape, or the transparent placeholder when none resolved. Valid only
-    /// after the block atlas has stitched. Icons re-bind on every resource reload, so a caller compositing this
-    /// icon itself must hold the shape and read the icon per use, never caching the returned [IIcon].
+    /// after the block atlas has stitched; the caching contract of [ShapeItem#getMaterialIcon] applies.
     @SideOnly(Side.CLIENT)
     public IIcon getMaterialIcon(Material material) {
         return icons.get(material.getIndex());
@@ -307,8 +306,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     public float getBlockHardness(World world, int x, int y, int z) {
         Material material = behavior.hardness() != null ? materialAt(world, x, y, z) : null;
-        return material != null ? behavior.hardness().apply(material, variant) :
-            super.getBlockHardness(world, x, y, z);
+        return material != null ? behavior.hardness().apply(material, variant) : super.getBlockHardness(world, x, y, z);
     }
 
     @Override

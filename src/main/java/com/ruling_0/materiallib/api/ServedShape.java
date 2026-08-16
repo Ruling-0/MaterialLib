@@ -11,7 +11,7 @@ import java.util.Map;
 /// downstream registration sees a stable order.
 interface ServedShape extends Shape {
 
-    /// Binds the materials that generate this shape, ascending by index. Called once when the registry resolves.
+    /// Binds the materials that generate this shape.
     void bindServedMaterials(Material[] materials);
 
     Material[] getServedMaterials();

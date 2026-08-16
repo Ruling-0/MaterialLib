@@ -237,9 +237,8 @@ public class ShapeFluid implements ServedShape {
         return ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(path));
     }
 
-    /// A material's fluid, naming itself from the shape's display format and coloring itself with the material's
-    /// fill tint (see [#tintOf]) so renderers that read [Fluid#getColor] tint the fluid per material. 1.7.10 fluids
-    /// expose no color setter, only an overridable [Fluid#getColor].
+    /// A material's fluid, serving the display name and fill tint the class doc describes through overrides.
+    /// 1.7.10 fluids expose no color setter, only an overridable [Fluid#getColor].
     private final class MaterialFluid extends Fluid {
 
         private final Material material;

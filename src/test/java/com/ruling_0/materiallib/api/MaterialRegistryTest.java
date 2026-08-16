@@ -14,8 +14,7 @@ class MaterialRegistryTest {
 
     @Test
     void buildRegistersAndResolves() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).build();
         registry.resolve();
 
         assertSame(material, registry.getMaterial("testmod", "TestIron"));
@@ -32,16 +31,14 @@ class MaterialRegistryTest {
 
     @Test
     void duplicateMaterialKeyThrows() {
-        registry.newMaterial("testmod", "TestIron", texture)
-            .build();
+        registry.newMaterial("testmod", "TestIron", texture).build();
         MaterialBuilder duplicate = registry.newMaterial("testmod", "TestIron", texture);
         assertThrows(IllegalStateException.class, duplicate::build);
     }
 
     @Test
     void duplicateFamilyKeyThrows() {
-        registry.newFamily("testmod", "Alloys")
-            .build();
+        registry.newFamily("testmod", "Alloys").build();
         FamilyBuilder duplicate = registry.newFamily("testmod", "Alloys");
         assertThrows(IllegalStateException.class, duplicate::build);
     }
@@ -77,10 +74,8 @@ class MaterialRegistryTest {
 
     @Test
     void readBeforeResolveThrows() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
-        Family family = registry.newFamily("testmod", "Alloys")
-            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).build();
+        Family family = registry.newFamily("testmod", "Alloys").build();
         assertThrows(IllegalStateException.class, material::getShapes);
         assertThrows(IllegalStateException.class, material::getFamilies);
         assertThrows(IllegalStateException.class, () -> material.getProperty(StandardProperties.TINT));
@@ -95,16 +90,11 @@ class MaterialRegistryTest {
 
     @Test
     void skippedEditDoesNotStopLaterEdits() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
-        Material untouched = registry.newMaterial("testmod", "TestSilver", texture)
-            .build();
-        registry.editMaterial("absentmod", "Missing")
-            .setTint(0xFF0000FF);
-        registry.editFamily("absentmod", "Missing")
-            .setTint(0xFF0000FF);
-        registry.editMaterial("testmod", "TestIron")
-            .setTint(0xFF00FF00);
+        Material material = registry.newMaterial("testmod", "TestIron", texture).build();
+        Material untouched = registry.newMaterial("testmod", "TestSilver", texture).build();
+        registry.editMaterial("absentmod", "Missing").setTint(0xFF0000FF);
+        registry.editFamily("absentmod", "Missing").setTint(0xFF0000FF);
+        registry.editMaterial("testmod", "TestIron").setTint(0xFF00FF00);
         registry.resolve();
 
         assertEquals(0xFF00FF00, material.getProperty(StandardProperties.TINT));
@@ -114,12 +104,8 @@ class MaterialRegistryTest {
     @Test
     void resolvedViewsAreUnmodifiable() {
         Shape gear = new TestShape("testmod", "gear");
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .generateShape(gear)
-            .build();
-        Family family = registry.newFamily("testmod", "Alloys")
-            .addMaterial(material)
-            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).generateShape(gear).build();
+        Family family = registry.newFamily("testmod", "Alloys").addMaterial(material).build();
         registry.resolve();
 
         assertThrows(UnsupportedOperationException.class, () -> material.getShapes().add(gear));

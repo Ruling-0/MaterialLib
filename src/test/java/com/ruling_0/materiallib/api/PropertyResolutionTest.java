@@ -18,9 +18,7 @@ class PropertyResolutionTest {
 
     @Test
     void materialValueOverridesFamilyValueOverridesDefault() {
-        registry.newFamily("testmod", "Alloys")
-            .setProperty(MELTING_POINT, 1000)
-            .build();
+        registry.newFamily("testmod", "Alloys").setProperty(MELTING_POINT, 1000).build();
         Material own = registry.newMaterial("testmod", "WithOwn", texture)
             .setProperty(MELTING_POINT, 2000)
             .addToFamily("testmod", "Alloys")
@@ -28,8 +26,7 @@ class PropertyResolutionTest {
         Material inherited = registry.newMaterial("testmod", "FromFamily", texture)
             .addToFamily("testmod", "Alloys")
             .build();
-        Material standalone = registry.newMaterial("testmod", "Standalone", texture)
-            .build();
+        Material standalone = registry.newMaterial("testmod", "Standalone", texture).build();
         registry.resolve();
 
         assertEquals(2000, own.getProperty(MELTING_POINT));
@@ -40,11 +37,8 @@ class PropertyResolutionTest {
 
     @Test
     void tintDefaultsToWhite() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
-        Material tinted = registry.newMaterial("testmod", "TestGold", texture)
-            .setTint(0xFFFFCC00)
-            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).build();
+        Material tinted = registry.newMaterial("testmod", "TestGold", texture).setTint(0xFFFFCC00).build();
         registry.resolve();
 
         assertEquals(0xFFFFFFFF, material.getProperty(StandardProperties.TINT));
@@ -53,8 +47,7 @@ class PropertyResolutionTest {
 
     @Test
     void fallbackTextureSetsHaveNoDefault() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).build();
         registry.resolve();
 
         assertNull(material.getProperty(StandardProperties.FALLBACK_TEXTURE_SETS));
@@ -74,10 +67,8 @@ class PropertyResolutionTest {
 
     @Test
     void editsApplyRegardlessOfRegistrationOrder() {
-        registry.editMaterial("testmod", "TestIron")
-            .setProperty(MELTING_POINT, 1800);
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
+        registry.editMaterial("testmod", "TestIron").setProperty(MELTING_POINT, 1800);
+        Material material = registry.newMaterial("testmod", "TestIron", texture).build();
         registry.resolve();
 
         assertEquals(1800, material.getProperty(MELTING_POINT));
@@ -85,12 +76,9 @@ class PropertyResolutionTest {
 
     @Test
     void lastEditWins() {
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .build();
-        registry.editMaterial("testmod", "TestIron")
-            .setProperty(MELTING_POINT, 1000);
-        registry.editMaterial("testmod", "TestIron")
-            .setProperty(MELTING_POINT, 2000);
+        Material material = registry.newMaterial("testmod", "TestIron", texture).build();
+        registry.editMaterial("testmod", "TestIron").setProperty(MELTING_POINT, 1000);
+        registry.editMaterial("testmod", "TestIron").setProperty(MELTING_POINT, 2000);
         registry.resolve();
 
         assertEquals(2000, material.getProperty(MELTING_POINT));
@@ -98,15 +86,12 @@ class PropertyResolutionTest {
 
     @Test
     void removePropertyRestoresFamilyValue() {
-        registry.newFamily("testmod", "Alloys")
-            .setProperty(MELTING_POINT, 1000)
-            .build();
+        registry.newFamily("testmod", "Alloys").setProperty(MELTING_POINT, 1000).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .setProperty(MELTING_POINT, 2000)
             .addToFamily("testmod", "Alloys")
             .build();
-        registry.editMaterial("testmod", "TestIron")
-            .removeProperty(MELTING_POINT);
+        registry.editMaterial("testmod", "TestIron").removeProperty(MELTING_POINT);
         registry.resolve();
 
         assertEquals(1000, material.getProperty(MELTING_POINT));
@@ -114,16 +99,12 @@ class PropertyResolutionTest {
 
     @Test
     void familyEditSetsAndRemovesProperties() {
-        registry.newFamily("testmod", "Alloys")
-            .setProperty(MELTING_POINT, 1000)
-            .build();
+        registry.newFamily("testmod", "Alloys").setProperty(MELTING_POINT, 1000).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily("testmod", "Alloys")
             .build();
-        registry.editFamily("testmod", "Alloys")
-            .setProperty(DURABILITY, 500);
-        registry.editFamily("testmod", "Alloys")
-            .removeProperty(MELTING_POINT);
+        registry.editFamily("testmod", "Alloys").setProperty(DURABILITY, 500);
+        registry.editFamily("testmod", "Alloys").removeProperty(MELTING_POINT);
         registry.resolve();
 
         assertEquals(500, material.getProperty(DURABILITY));
@@ -147,9 +128,7 @@ class PropertyResolutionTest {
         assertThrows(
             IllegalArgumentException.class,
             () -> materialEdit.setProperty(StandardProperties.NAME, "Imposter"));
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> materialEdit.removeProperty(StandardProperties.TEXTURE_SET));
+        assertThrows(IllegalArgumentException.class, () -> materialEdit.removeProperty(StandardProperties.TEXTURE_SET));
 
         FamilyEdit familyEdit = registry.editFamily("testmod", "Alloys");
         assertThrows(
@@ -160,12 +139,8 @@ class PropertyResolutionTest {
 
     @Test
     void collidingFamilyValuesResolveAlphabetically() {
-        registry.newFamily("testmod", "Beta")
-            .setProperty(MELTING_POINT, 2000)
-            .build();
-        registry.newFamily("testmod", "Alpha")
-            .setProperty(MELTING_POINT, 1000)
-            .build();
+        registry.newFamily("testmod", "Beta").setProperty(MELTING_POINT, 2000).build();
+        registry.newFamily("testmod", "Alpha").setProperty(MELTING_POINT, 1000).build();
         Material inherited = registry.newMaterial("testmod", "Inherited", texture)
             .addToFamily("testmod", "Beta")
             .addToFamily("testmod", "Alpha")
@@ -183,12 +158,8 @@ class PropertyResolutionTest {
 
     @Test
     void alphabeticalOrderComparesFullKey() {
-        registry.newFamily("bmod", "Aaa")
-            .setProperty(MELTING_POINT, 2000)
-            .build();
-        registry.newFamily("amod", "Zzz")
-            .setProperty(MELTING_POINT, 1000)
-            .build();
+        registry.newFamily("bmod", "Aaa").setProperty(MELTING_POINT, 2000).build();
+        registry.newFamily("amod", "Zzz").setProperty(MELTING_POINT, 1000).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily("bmod", "Aaa")
             .addToFamily("amod", "Zzz")
@@ -200,11 +171,8 @@ class PropertyResolutionTest {
 
     @Test
     void uncontestedFamilyValueAppliesRegardlessOfOrder() {
-        registry.newFamily("testmod", "Alpha")
-            .build();
-        registry.newFamily("testmod", "Beta")
-            .setProperty(MELTING_POINT, 2000)
-            .build();
+        registry.newFamily("testmod", "Alpha").build();
+        registry.newFamily("testmod", "Beta").setProperty(MELTING_POINT, 2000).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)
             .addToFamily("testmod", "Alpha")
             .addToFamily("testmod", "Beta")
@@ -220,9 +188,7 @@ class PropertyResolutionTest {
     void propertyKeysCompareByIdentity() {
         Property<Integer> first = Property.of("testmod", "sameName");
         Property<Integer> second = Property.of("testmod", "sameName");
-        Material material = registry.newMaterial("testmod", "TestIron", texture)
-            .setProperty(first, 42)
-            .build();
+        Material material = registry.newMaterial("testmod", "TestIron", texture).setProperty(first, 42).build();
         registry.resolve();
 
         assertEquals(42, material.getProperty(first));

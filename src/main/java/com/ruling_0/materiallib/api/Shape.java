@@ -25,7 +25,7 @@ public interface Shape {
     /// The oredict prefixes for this shape. The full oredict entry for a material is each prefix followed by the
     /// material name, e.g. "gear" + "TestIron" -> "gearTestIron". A shape may expose several prefixes, registering
     /// its item under each (e.g. "gear" and "cog" give both "gearTestIron" and "cogTestIron"). At least one for an
-    /// item or block shape; a fluid shape has none..
+    /// item or block shape; a fluid shape has none.
     List<String> getOreDicts();
 
     /// The variant names a block shape declares through [BlockShapeBuilder#variants], in declaration order, or
@@ -46,10 +46,8 @@ public interface Shape {
     /// Only before shapes resolve.
     ///
     /// This is the counterpart of the shape builders' `property` for a shape registered as a subclass instead
-    /// (see [MaterialLibAPI#registerItemShape]), which never passes through a builder. Changing a shape
-    /// **another** mod declared goes through [MaterialLibAPI#editShape] instead: that addresses the owner by
-    /// name and applies after unification, so it overrides the owner's declaration, whereas this states one --
-    /// two declarations of the same property conflict, and the owner's wins.
+    /// (see [MaterialLibAPI#registerItemShape]). Changing a shape another mod declared goes through
+    /// [MaterialLibAPI#editShape]; see [ShapeEdit].
     default <T> Shape setProperty(Property<T> property, T value) {
         throw new UnsupportedOperationException(this + " does not hold properties");
     }

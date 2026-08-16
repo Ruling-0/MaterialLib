@@ -11,11 +11,10 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 /// The property values attached to a shape.
 ///
 /// Each shape type ([ShapeItem], [ShapeBlock], [ShapeFluid]) holds one of these by composition, for the same reason
-/// [ServedMaterials] is held that way: they extend unrelated Minecraft types and cannot share a supertype.
+/// [ServedMaterials] is held that way.
 ///
 /// A shape that loses unification points its holder at the winner's through [#redirectTo], so a stale reference kept
-/// by the mod that declared it still reads the canonical values. [Material] gets this from its own `canonical` field;
-/// shapes have no such field, and the alias map lives inside [ShapeUnification] where a shape cannot reach it.
+/// by the mod that declared it still reads the canonical values.
 final class ShapeProperties {
 
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();

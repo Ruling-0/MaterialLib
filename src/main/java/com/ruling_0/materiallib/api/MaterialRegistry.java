@@ -28,7 +28,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 /// be read yet, and neither can the bulk collection views. Once every handler has returned, [#resolve] merges
 /// same-name materials onto their owners, applies all queued edits in call order, derives family membership and
 /// per-material shape sets, and freezes the registry. From then on everything is readable and nothing can be
-/// registered or edited, which guarantees dependent mods a complete registry from their init onwards.
+/// registered or edited.
 ///
 /// Indices are assigned deterministically at resolve: the post-unification material names sorted ascending take
 /// indices 0..n-1, so identical registered sets derive identical assignments.
@@ -40,7 +40,7 @@ public final class MaterialRegistry {
 
     private final Map<String, Material> materials = new Object2ObjectLinkedOpenHashMap<>();
     private final Map<String, Family> families = new Object2ObjectLinkedOpenHashMap<>();
-    private final List<PendingOp> pendingOps = new ObjectArrayList<>();
+    private final PendingOps pendingOps = new PendingOps();
     private boolean resolved;
     private Collection<Material> materialsView;
     private Collection<Family> familiesView;
@@ -108,20 +108,12 @@ public final class MaterialRegistry {
 
     public boolean isResolved() { return resolved; }
 
-    /// Ends registration and freezes the registry. Invoked once by MaterialLib's preInit handler after the
-    /// registration event; other mods must not call it.
+    /// Ends registration and freezes the registry, once the registration event has returned; other mods must not
+    /// call it.
     public void resolve() {
         requireRegistration("resolve the registry");
         unifyMaterials();
-        for (PendingOp op : pendingOps) {
-            try {
-                op.action.run();
-            }
-            catch (RuntimeException e) {
-                throw new IllegalStateException("Failed to apply queued edit \"" + op.description + "\"", e);
-            }
-        }
-        pendingOps.clear();
+        pendingOps.drain();
 
         assignMaterialIndices();
 
@@ -251,8 +243,7 @@ public final class MaterialRegistry {
         byte[] bytes = digest.digest(String.join("\n", namesInIndexOrder).getBytes(StandardCharsets.UTF_8));
         StringBuilder hex = new StringBuilder(bytes.length * 2);
         for (byte b : bytes) {
-            hex.append(Character.forDigit((b >> 4) & 0xF, 16))
-                .append(Character.forDigit(b & 0xF, 16));
+            hex.append(Character.forDigit((b >> 4) & 0xF, 16)).append(Character.forDigit(b & 0xF, 16));
         }
         return hex.toString();
     }
@@ -372,7 +363,7 @@ public final class MaterialRegistry {
 
     private void enqueue(String description, Runnable action) {
         requireRegistration(description);
-        pendingOps.add(new PendingOp(description, action));
+        pendingOps.add(description, action);
     }
 
     void requireResolved(String action, String target) {
@@ -392,6 +383,4 @@ public final class MaterialRegistry {
                     "subscribed during construction");
         }
     }
-
-    private record PendingOp(String description, Runnable action) {}
 }

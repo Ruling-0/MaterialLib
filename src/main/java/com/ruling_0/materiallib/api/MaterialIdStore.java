@@ -48,10 +48,7 @@ public final class MaterialIdStore {
         data.listVersion = listVersion;
         data.hash = hash;
         data.materials = JsonStore.sorted(materials, Map.Entry.comparingByValue());
-        JsonStore.write(
-            file,
-            data,
-            "Could not write the material id list to " + file + "; refusing to continue.");
+        JsonStore.write(file, data, "Could not write the material id list to " + file + "; refusing to continue.");
     }
 
     /// The content hash of a stored assignment: the material names ordered by index, hashed as

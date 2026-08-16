@@ -18,10 +18,7 @@ class EmptyContainersTest {
     void aSingleCandidateOwnsItsName() {
         EmptyContainerHandle cell = containers.register("amod", "cellEmpty", null);
 
-        assertSame(
-            cell,
-            containers.chooseOwners()
-                .get("cellEmpty"));
+        assertSame(cell, containers.chooseOwners().get("cellEmpty"));
     }
 
     @Test
@@ -29,10 +26,7 @@ class EmptyContainersTest {
         EmptyContainerHandle bmod = containers.register("bmod", "cellEmpty", null);
         EmptyContainerHandle amod = containers.register("amod", "cellEmpty", null);
 
-        assertSame(
-            amod,
-            containers.chooseOwners()
-                .get("cellEmpty"));
+        assertSame(amod, containers.chooseOwners().get("cellEmpty"));
         assertEquals(List.of(bmod, amod), containers.candidatesOf("cellEmpty"));
     }
 
@@ -42,11 +36,7 @@ class EmptyContainersTest {
         containers.register("amod", "canEmpty", null);
         containers.register("amod", "cellEmpty", null);
 
-        assertEquals(
-            List.of("cellEmpty", "canEmpty"),
-            new ArrayList<>(
-                containers.chooseOwners()
-                    .keySet()));
+        assertEquals(List.of("cellEmpty", "canEmpty"), new ArrayList<>(containers.chooseOwners().keySet()));
     }
 
     @Test
@@ -67,21 +57,13 @@ class EmptyContainersTest {
 
         IllegalStateException thrown = assertThrows(IllegalStateException.class, () -> cell.getStack(1));
 
-        assertTrue(
-            thrown.getMessage()
-                .contains("amod:cellEmpty"));
+        assertTrue(thrown.getMessage().contains("amod:cellEmpty"));
     }
 
     @Test
     void theIconPathDefaultsToTheOwnersMaterialsFolder() {
-        assertEquals(
-            "amod:materials/cellEmpty",
-            containers.register("amod", "cellEmpty", null)
-                .iconPathOrDefault());
-        assertEquals(
-            "bmod:items/can",
-            containers.register("amod", "canEmpty", "bmod:items/can")
-                .iconPathOrDefault());
+        assertEquals("amod:materials/cellEmpty", containers.register("amod", "cellEmpty", null).iconPathOrDefault());
+        assertEquals("bmod:items/can", containers.register("amod", "canEmpty", "bmod:items/can").iconPathOrDefault());
     }
 
     @Test

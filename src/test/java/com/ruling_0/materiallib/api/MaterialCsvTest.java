@@ -14,15 +14,12 @@ class MaterialCsvTest {
     void dumpListsEveryAssignedIndexAscendingWithOwnerShapesAndFamilies() {
         // Registration order (Iron before Copper) and shape declaration order (plate before gear)
         // deliberately differ from the sorted output, so these assertions fail if either sort is dropped.
-        Family family = registry.newFamily("testmod", "Metals")
-            .generateShape(new TestShape("amod", "gear"))
-            .build();
+        Family family = registry.newFamily("testmod", "Metals").generateShape(new TestShape("amod", "gear")).build();
         registry.newMaterial("testmod", "Iron", texture)
             .generateShape(new TestShape("amod", "plate"))
             .addToFamily(family)
             .build();
-        registry.newMaterial("testmod", "Copper", texture)
-            .build();
+        registry.newMaterial("testmod", "Copper", texture).build();
         registry.resolve();
 
         assertEquals(
@@ -33,13 +30,10 @@ class MaterialCsvTest {
 
     @Test
     void fieldsContainingCommasOrQuotesAreQuotedWithDoubledQuotes() {
-        registry.newMaterial("testmod", "Iron,\"Cast\"", texture)
-            .build();
+        registry.newMaterial("testmod", "Iron,\"Cast\"", texture).build();
         registry.resolve();
 
-        assertEquals(
-            "index,name,owner,shapes,families\n" + "0,\"Iron,\"\"Cast\"\"\",testmod,,\n",
-            registry.dumpCsv());
+        assertEquals("index,name,owner,shapes,families\n" + "0,\"Iron,\"\"Cast\"\"\",testmod,,\n", registry.dumpCsv());
     }
 
     @Test

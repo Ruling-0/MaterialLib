@@ -22,10 +22,8 @@ class MaterialUnificationTest {
 
     @Test
     void sameNameMaterialsUnifyOntoTheAlphabeticallyFirstModidRegardlessOfOrder() {
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
+        registry.newMaterial("bmod", "testiron", otherTexture).build();
+        registry.newMaterial("amod", "testiron", ownerTexture).build();
         registry.resolve();
 
         assertEquals(1, registry.getMaterials().size());
@@ -39,46 +37,36 @@ class MaterialUnificationTest {
     @Test
     void aPersistedOwnerWinsOverTheAlphabeticalDefault() {
         registry.setPersistedOwners(Map.of("testiron", "bmod"));
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
+        registry.newMaterial("amod", "testiron", ownerTexture).build();
+        registry.newMaterial("bmod", "testiron", otherTexture).build();
         registry.resolve();
 
-        assertEquals("bmod", registry.getMaterial("amod", "testiron")
-            .getModId());
+        assertEquals("bmod", registry.getMaterial("amod", "testiron").getModId());
     }
 
     @Test
     void aPersistedOwnerAbsentThisSessionFallsBackToTheAlphabeticalDefault() {
         registry.setPersistedOwners(Map.of("testiron", "zmod"));
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
+        registry.newMaterial("bmod", "testiron", otherTexture).build();
+        registry.newMaterial("amod", "testiron", ownerTexture).build();
         registry.resolve();
 
-        assertEquals("amod", registry.getMaterial("amod", "testiron")
-            .getModId());
-        assertEquals("amod", registry.getAssignedOwners()
-            .get("testiron"));
+        assertEquals("amod", registry.getMaterial("amod", "testiron").getModId());
+        assertEquals("amod", registry.getAssignedOwners().get("testiron"));
     }
 
     @Test
     void aPersistedNameWithNoCandidateKeepsItsOwner() {
         registry.setPersistedOwners(Map.of("ghost", "cmod"));
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
+        registry.newMaterial("amod", "testiron", ownerTexture).build();
         registry.resolve();
 
-        assertEquals("cmod", registry.getAssignedOwners()
-            .get("ghost"));
+        assertEquals("cmod", registry.getAssignedOwners().get("ghost"));
     }
 
     @Test
     void everyMaterialNameRecordsAnOwner() {
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
+        registry.newMaterial("amod", "testiron", ownerTexture).build();
         registry.resolve();
 
         assertEquals(Map.of("testiron", "amod"), registry.getAssignedOwners());
@@ -88,10 +76,8 @@ class MaterialUnificationTest {
     void aMergedMaterialCarriesTheUnionOfDeclarations() {
         TestShape ownerShape = new TestShape("amod", "gear");
         TestShape otherShape = new TestShape("bmod", "plate");
-        Family alloys = registry.newFamily("amod", "Alloys")
-            .build();
-        Family heavy = registry.newFamily("bmod", "Heavy")
-            .build();
+        Family alloys = registry.newFamily("amod", "Alloys").build();
+        Family heavy = registry.newFamily("bmod", "Heavy").build();
         registry.newMaterial("amod", "testiron", ownerTexture)
             .generateShape(ownerShape)
             .setProperty(PROPERTY_A, 1)
@@ -116,12 +102,8 @@ class MaterialUnificationTest {
 
     @Test
     void conflictingPropertyValuesResolveToTheOwner() {
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .setProperty(MELTING_POINT, 1000)
-            .build();
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .setProperty(MELTING_POINT, 2000)
-            .build();
+        registry.newMaterial("amod", "testiron", ownerTexture).setProperty(MELTING_POINT, 1000).build();
+        registry.newMaterial("bmod", "testiron", otherTexture).setProperty(MELTING_POINT, 2000).build();
         registry.resolve();
 
         Material merged = registry.getMaterial("amod", "testiron");
@@ -131,15 +113,9 @@ class MaterialUnificationTest {
 
     @Test
     void tooltipLinesAppendOwnerFirstThenLosersInModidOrder() {
-        registry.newMaterial("cmod", "testiron", TextureSet.of("cmod", "c"))
-            .addTooltip("c-line")
-            .build();
-        registry.newMaterial("bmod", "testiron", TextureSet.of("bmod", "b"))
-            .addTooltip("b-line")
-            .build();
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .addTooltip("a-line")
-            .build();
+        registry.newMaterial("cmod", "testiron", TextureSet.of("cmod", "c")).addTooltip("c-line").build();
+        registry.newMaterial("bmod", "testiron", TextureSet.of("bmod", "b")).addTooltip("b-line").build();
+        registry.newMaterial("amod", "testiron", ownerTexture).addTooltip("a-line").build();
         registry.resolve();
 
         Material merged = registry.getMaterial("amod", "testiron");
@@ -148,47 +124,30 @@ class MaterialUnificationTest {
 
     @Test
     void anEditToTheLoserKeyOverridesTheOwnersDeclaredValue() {
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .setProperty(MELTING_POINT, 1000)
-            .build();
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
-        registry.editMaterial("bmod", "testiron")
-            .setProperty(MELTING_POINT, 2000);
+        registry.newMaterial("amod", "testiron", ownerTexture).setProperty(MELTING_POINT, 1000).build();
+        registry.newMaterial("bmod", "testiron", otherTexture).build();
+        registry.editMaterial("bmod", "testiron").setProperty(MELTING_POINT, 2000);
         registry.resolve();
 
-        assertEquals(
-            2000,
-            registry.getMaterial("amod", "testiron")
-                .getProperty(MELTING_POINT));
+        assertEquals(2000, registry.getMaterial("amod", "testiron").getProperty(MELTING_POINT));
     }
 
     @Test
     void editsToBothConstituentKeysApplyInCallOrder() {
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
-        registry.editMaterial("amod", "testiron")
-            .setProperty(MELTING_POINT, 1000);
-        registry.editMaterial("bmod", "testiron")
-            .setProperty(MELTING_POINT, 2000);
+        registry.newMaterial("amod", "testiron", ownerTexture).build();
+        registry.newMaterial("bmod", "testiron", otherTexture).build();
+        registry.editMaterial("amod", "testiron").setProperty(MELTING_POINT, 1000);
+        registry.editMaterial("bmod", "testiron").setProperty(MELTING_POINT, 2000);
         registry.resolve();
 
-        assertEquals(
-            2000,
-            registry.getMaterial("amod", "testiron")
-                .getProperty(MELTING_POINT));
+        assertEquals(2000, registry.getMaterial("amod", "testiron").getProperty(MELTING_POINT));
     }
 
     @Test
     void aUnifiedNameTakesOneIndex() {
-        registry.newMaterial("amod", "testiron", ownerTexture)
-            .build();
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
-        Material other = registry.newMaterial("amod", "other", TextureSet.of("amod", "plain"))
-            .build();
+        registry.newMaterial("amod", "testiron", ownerTexture).build();
+        registry.newMaterial("bmod", "testiron", otherTexture).build();
+        Material other = registry.newMaterial("amod", "other", TextureSet.of("amod", "plain")).build();
         registry.resolve();
 
         assertEquals(Map.of("other", 0, "testiron", 1), registry.getAssignedIndices());
@@ -200,17 +159,14 @@ class MaterialUnificationTest {
 
     @Test
     void aNameKeepsItsOwnerWhenAnotherModJoinsIt() {
-        registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
+        registry.newMaterial("bmod", "testiron", otherTexture).build();
         registry.resolve();
         Map<String, String> owners = new LinkedHashMap<>(registry.getAssignedOwners());
 
         MaterialRegistry relaunch = new MaterialRegistry();
         relaunch.setPersistedOwners(owners);
-        relaunch.newMaterial("amod", "testiron", ownerTexture)
-            .build();
-        relaunch.newMaterial("bmod", "testiron", otherTexture)
-            .build();
+        relaunch.newMaterial("amod", "testiron", ownerTexture).build();
+        relaunch.newMaterial("bmod", "testiron", otherTexture).build();
         relaunch.resolve();
 
         assertEquals(registry.getAssignedIndices(), relaunch.getAssignedIndices());
@@ -224,8 +180,7 @@ class MaterialUnificationTest {
         Material winner = registry.newMaterial("amod", "testiron", ownerTexture)
             .setProperty(MELTING_POINT, 1000)
             .build();
-        Material loser = registry.newMaterial("bmod", "testiron", otherTexture)
-            .build();
+        Material loser = registry.newMaterial("bmod", "testiron", otherTexture).build();
         registry.resolve();
 
         assertEquals(winner.getModId(), loser.getModId());

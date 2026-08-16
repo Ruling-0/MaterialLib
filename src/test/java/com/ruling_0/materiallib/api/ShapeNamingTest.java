@@ -11,8 +11,7 @@ class ShapeNamingTest {
     private final TextureSet texture = TextureSet.of("examplemod", "shiny");
 
     private Material material(String modid, String name) {
-        return registry.newMaterial(modid, name, texture)
-            .build();
+        return registry.newMaterial(modid, name, texture).build();
     }
 
     @Test

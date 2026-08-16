@@ -16,8 +16,7 @@ import java.util.Locale;
 public interface FluidNamer {
 
     /// The default namer: the shape and material names, joined by '.' and lowercased, e.g. `molten.testiron`.
-    FluidNamer DEFAULT = (shape, material) -> (shape.getName() + "." + material.getName())
-        .toLowerCase(Locale.ENGLISH);
+    FluidNamer DEFAULT = (shape, material) -> (shape.getName() + "." + material.getName()).toLowerCase(Locale.ENGLISH);
 
     /// The Forge fluid name for `material` in `shape`.
     String name(Shape shape, Material material);

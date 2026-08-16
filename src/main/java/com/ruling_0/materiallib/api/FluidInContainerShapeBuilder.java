@@ -46,7 +46,7 @@ public final class FluidInContainerShapeBuilder {
     }
 
     /// As [#emptyContainer(ItemStack)], but draining to an empty container item registered through
-    /// [MaterialLibAPI#registerEmptyContainer(String, String)], for an item that does not exist yet during
+    /// [MaterialLibAPI#registerEmptyContainer(String, String, String)], for an item that does not exist yet during
     /// registration.
     public FluidInContainerShapeBuilder emptyContainer(EmptyContainerHandle emptyContainer) {
         this.emptyContainer = new EmptyContainer.Registered(
@@ -94,8 +94,7 @@ public final class FluidInContainerShapeBuilder {
     /// or if no fluid was set.
     public Shape build() {
         if (built) {
-            throw new IllegalStateException(
-                "Fluid container shape " + Names.key(modid, name) + " was already built");
+            throw new IllegalStateException("Fluid container shape " + Names.key(modid, name) + " was already built");
         }
         if (fluidShape == null) {
             throw new IllegalStateException(
