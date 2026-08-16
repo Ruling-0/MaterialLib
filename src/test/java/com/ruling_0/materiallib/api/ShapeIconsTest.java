@@ -15,9 +15,8 @@ import net.minecraft.util.IIcon;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins [ShapeIcons]' placeholder fallbacks and the precedence of its texture-source chain. [ShapeIcons#resolve]
-/// takes an existence predicate, so its chain runs headless. The binding paths that consult the resource manager
-/// need a live client; see the example content.
+/// Pins [ShapeIcons]' placeholder fallbacks and the precedence of its texture sources. [ShapeIcons#resolvePath]
+/// and [ShapeIcons#ShapeIcons(boolean, Predicate)] take an existence predicate, so both run headless.
 class ShapeIconsTest {
 
     private final MaterialRegistry registry = new MaterialRegistry();
@@ -27,9 +26,7 @@ class ShapeIconsTest {
     private final TextureSet setC = TextureSet.of("testmod", "setC");
 
     /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
-    /// to pin that binding it resolves the placeholder from both accessors instead of crashing. A pather
-    /// returning null falls through to the same candidate chain; a pather returning a path needs a live client to
-    /// check the file exists, so only this branch runs headless.
+    /// to pin that binding it resolves the placeholder from both accessors instead of crashing.
     @Test
     void materialWithoutTextureSetBindsPlaceholderInsteadOfCrashing() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
@@ -37,7 +34,7 @@ class ShapeIconsTest {
         registry.register(material);
         registry.resolve();
 
-        ShapeIcons icons = new ShapeIcons(true);
+        ShapeIcons icons = new ShapeIcons(true, path -> false);
         assertDoesNotThrow(
             () -> icons.bind(register, new Material[] { material }, List.of("gear"), ignored -> null));
 
@@ -58,7 +55,7 @@ class ShapeIconsTest {
         registry.register(material);
         registry.resolve();
 
-        ShapeIcons icons = new ShapeIcons(true);
+        ShapeIcons icons = new ShapeIcons(true, path -> false);
         assertDoesNotThrow(() -> icons.bind(register, new Material[] { material }, "gear"));
 
         IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
@@ -70,7 +67,7 @@ class ShapeIconsTest {
     /// from the nullable overlay accessor.
     @Test
     void unboundIndexFallsBackToPlaceholder() {
-        ShapeIcons icons = new ShapeIcons(false);
+        ShapeIcons icons = new ShapeIcons(false, path -> false);
         icons.bind(register, new Material[0], "gear");
 
         IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
@@ -86,7 +83,7 @@ class ShapeIconsTest {
         Material material = declareMaterial("testmod", "Testiron", setA, List.of(setB));
         registry.resolve();
 
-        assertSame(setA, ShapeIcons.resolve(material, List.of("gear"), path -> true).set());
+        assertEquals(setA.iconPath("gear"), ShapeIcons.resolvePath(material, List.of("gear"), null, path -> true));
     }
 
     /// Fallback texture sets are tried in list order.
@@ -97,8 +94,8 @@ class ShapeIconsTest {
         Predicate<String> exceptSetA = path -> !path.equals(setA.iconPath("gear"));
         Predicate<String> onlySetC = path -> path.equals(setC.iconPath("gear"));
 
-        assertSame(setB, ShapeIcons.resolve(material, List.of("gear"), exceptSetA).set());
-        assertSame(setC, ShapeIcons.resolve(material, List.of("gear"), onlySetC).set());
+        assertEquals(setB.iconPath("gear"), ShapeIcons.resolvePath(material, List.of("gear"), null, exceptSetA));
+        assertEquals(setC.iconPath("gear"), ShapeIcons.resolvePath(material, List.of("gear"), null, onlySetC));
     }
 
     /// Within one texture source, an earlier candidate name wins.
@@ -107,9 +104,8 @@ class ShapeIconsTest {
         Material material = declareMaterial("testmod", "Testiron", setA, List.of());
         registry.resolve();
 
-        ShapeIcons.ResolvedTexture resolved = ShapeIcons.resolve(material, List.of("gear_x", "gear"), path -> true);
-
-        assertEquals("gear_x", resolved.shapeName());
+        assertEquals(setA.iconPath("gear_x"),
+            ShapeIcons.resolvePath(material, List.of("gear_x", "gear"), null, path -> true));
     }
 
     /// Every source of a material outranks every source of a unification alternative.
@@ -120,7 +116,19 @@ class ShapeIconsTest {
         registry.resolve();
         Predicate<String> exceptSetA = path -> !path.equals(setA.iconPath("gear"));
 
-        assertSame(setB, ShapeIcons.resolve(owner, List.of("gear"), exceptSetA).set());
+        assertEquals(setB.iconPath("gear"), ShapeIcons.resolvePath(owner, List.of("gear"), null, exceptSetA));
+    }
+
+    /// A per-material icon path outranks the texture-set chain; returning null from it falls through to the chain.
+    @Test
+    void aPerMaterialPathBeatsTheTextureSetChain() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+
+        assertEquals("testmod:custom/iron_gear", ShapeIcons.resolvePath(material, List.of("gear"),
+            ignored -> "testmod:custom/iron_gear", path -> true));
+        assertEquals(setA.iconPath("gear"),
+            ShapeIcons.resolvePath(material, List.of("gear"), ignored -> null, path -> true));
     }
 
     private Material declareMaterial(String modid, String name, TextureSet textureSet, List<TextureSet> fallbacks) {

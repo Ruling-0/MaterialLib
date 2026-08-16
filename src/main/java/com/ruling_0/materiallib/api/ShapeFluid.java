@@ -2,6 +2,7 @@ package com.ruling_0.materiallib.api;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 
@@ -198,17 +199,17 @@ public class ShapeFluid implements ServedShape {
         }
     }
 
-    /// The icon path to register for `material`'s fluid: this shape's [IconPather] when set and it names an
-    /// existing file, otherwise the first name `material`'s texture-set chain resolves (see [ShapeIcons#resolve]),
-    /// or the [ShapeIcons#EMPTY_ICON] placeholder when neither does. Never null.
+    /// The icon path to register for `material`'s fluid, or the [ShapeIcons#EMPTY_ICON] placeholder when no source
+    /// carries one; see [ShapeIcons#resolvePath] for the order. Never null.
     String resolveIconPath(Material material) {
-        if (iconPather != null) {
-            String path = iconPather.iconPath(this, material);
-            if (path != null && blockTextureExists(path)) return path;
-        }
-        ShapeIcons.ResolvedTexture resolved = ShapeIcons.resolve(material, List.of(name),
-            ShapeFluid::blockTextureExists);
-        if (resolved != null) return resolved.set().iconPath(resolved.shapeName());
+        return resolveIconPath(material, ShapeFluid::blockTextureExists);
+    }
+
+    /// As [#resolveIconPath(Material)], with `exists` deciding whether an icon path names a file on the block
+    /// atlas.
+    String resolveIconPath(Material material, Predicate<String> exists) {
+        String path = ShapeIcons.resolvePath(material, List.of(name), this::patherPath, exists);
+        if (path != null) return path;
         if (warnedMissingIcon.add(material)) {
             MaterialLib.LOG.warn(
                 "Fluid shape {} of {} resolved no icon; it will render the transparent placeholder",
@@ -216,6 +217,10 @@ public class ShapeFluid implements ServedShape {
                 material.getKey());
         }
         return ShapeIcons.EMPTY_ICON;
+    }
+
+    private String patherPath(Material material) {
+        return iconPather != null ? iconPather.iconPath(this, material) : null;
     }
 
     private static boolean blockTextureExists(String path) {

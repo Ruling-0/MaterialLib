@@ -37,8 +37,7 @@ class ShapeFluidTest {
     }
 
     /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
-    /// to pin that a fluid whose texture-set chain holds nothing registers the placeholder. Only this branch runs
-    /// headless: every other outcome checks whether a texture file exists, which needs a live client.
+    /// to pin that a fluid resolving no icon registers the placeholder.
     @Test
     void aMaterialWithNoTextureSetResolvesThePlaceholderIconPath() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
@@ -47,7 +46,7 @@ class ShapeFluidTest {
         registry.resolve();
         ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
 
-        assertEquals(ShapeIcons.EMPTY_ICON, molten.resolveIconPath(broken));
+        assertEquals(ShapeIcons.EMPTY_ICON, molten.resolveIconPath(broken, path -> false));
     }
 
     @Test
