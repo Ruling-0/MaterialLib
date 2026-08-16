@@ -3,7 +3,7 @@
 	"modList": [{
 		"modid": "${modId}",
 		"name": "${modName}",
-		"description": "A shared material and shape registry that generates unified items, blocks, and fluids.",
+		"description": "A library for managing materials and their item, block, and fluid represenations.",
 		"version": "${modVersion}",
 		"mcversion": "${minecraftVersion}",
 		"url": "https://github.com/Ruling-0/MaterialLib",
