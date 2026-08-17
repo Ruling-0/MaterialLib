@@ -147,19 +147,12 @@ public class ShapeItem extends Item implements BackedShape {
         return icons.get(damage);
     }
 
-    /// The icon bound for `material` on this shape, or the transparent placeholder when none resolved. Valid only
-    /// after the item atlas has stitched. Icons re-bind on every resource reload, so a caller compositing this icon
-    /// itself must hold the shape and read the icon per use, never caching the returned [IIcon].
+    /// The first layer of `material`'s icon stack on this shape, or the transparent placeholder when none resolved.
+    /// Valid only after the item atlas has stitched. Icons re-bind on every resource reload, so a caller compositing
+    /// this icon itself must hold the shape and read the icon per use, never caching the returned [IIcon].
     @SideOnly(Side.CLIENT)
     public IIcon getMaterialIcon(Material material) {
         return icons.get(material.getIndex());
-    }
-
-    /// The `_OVERLAY` icon bound for `material` on this shape, or null when its resolved texture set has none;
-    /// see [#getMaterialIcon] for the caching contract.
-    @SideOnly(Side.CLIENT)
-    public IIcon getMaterialOverlayIcon(Material material) {
-        return icons.getOverlayOrNull(material.getIndex());
     }
 
     /// The number of icon layers bound for `material` on this shape; see [TextureSet].

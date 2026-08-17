@@ -16,12 +16,11 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /// The per-material icon layer stacks of an item or block shape, keyed by material index. Once [#bind] has run,
-/// [#get], [#getOverlay], and [#layer] never return null: an index that bound no icon resolves to the transparent
-/// [#EMPTY_ICON] placeholder. See [TextureSet] for the files a stack is built from and the tints its layers take. A
-/// material with a null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS] -- or a null
-/// entry inside the list -- is treated like one whose texture files do not exist. A resource-pack file at
-/// [#overridePath] reskins a single material, outranks every other source, and draws untinted ([#isOverride]); see
-/// [#resolvePath].
+/// [#get] and [#layer] never return null: an index that bound no icon resolves to the transparent [#EMPTY_ICON]
+/// placeholder. See [TextureSet] for the files a stack is built from and the tints its layers take. A material with a
+/// null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS] -- or a null entry inside the
+/// list -- is treated like one whose texture files do not exist. A resource-pack file at [#overridePath] reskins a
+/// single material, outranks every other source, and draws untinted ([#isOverride]); see [#resolvePath].
 final class ShapeIcons {
 
     /// The transparent placeholder icon path, present on both the item and block atlases.
@@ -123,19 +122,6 @@ final class ShapeIcons {
     /// Whether `layer` is the trailing `_OVERLAY` layer of a material index's stack.
     boolean isOverlayLayer(int index, int layer) {
         return overlayIndices.contains(index) && layer == layerCount(index) - 1;
-    }
-
-    /// The overlay icon for a material index, or the empty placeholder if none resolved.
-    IIcon getOverlay(int index) {
-        IIcon icon = getOverlayOrNull(index);
-        return icon != null ? icon : emptyIcon;
-    }
-
-    /// The overlay icon for a material index, or null if none resolved, for a caller that composites the overlay
-    /// itself and needs to distinguish "no overlay" from the transparent placeholder.
-    IIcon getOverlayOrNull(int index) {
-        if (!overlayIndices.contains(index)) return null;
-        return layer(index, layerCount(index) - 1);
     }
 
     /// Whether the icon bound for a material index came from the resource-pack override location.

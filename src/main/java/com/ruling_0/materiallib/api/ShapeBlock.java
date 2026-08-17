@@ -271,18 +271,11 @@ public class ShapeBlock extends Block implements BackedShape {
         return icons.get(meta);
     }
 
-    /// The icon bound for `material` on this shape, or the transparent placeholder when none resolved. Valid only
-    /// after the block atlas has stitched; the caching contract of [ShapeItem#getMaterialIcon] applies.
+    /// The first layer of `material`'s icon stack on this shape, or the transparent placeholder when none resolved.
+    /// Valid only after the block atlas has stitched; the caching contract of [ShapeItem#getMaterialIcon] applies.
     @SideOnly(Side.CLIENT)
     public IIcon getMaterialIcon(Material material) {
         return icons.get(material.getIndex());
-    }
-
-    /// The `_OVERLAY` icon bound for `material` on this shape, or null when its resolved texture set has none;
-    /// see [#getMaterialIcon] for the caching contract.
-    @SideOnly(Side.CLIENT)
-    public IIcon getMaterialOverlayIcon(Material material) {
-        return icons.getOverlayOrNull(material.getIndex());
     }
 
     /// The number of icon layers bound for `material` on this shape; see [TextureSet].

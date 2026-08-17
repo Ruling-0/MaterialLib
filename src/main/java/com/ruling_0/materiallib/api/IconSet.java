@@ -47,15 +47,10 @@ public final class IconSet {
         this.icons = new ShapeIcons(atlas == Atlas.ITEMS);
     }
 
-    /// The icon bound for `material`, or the transparent placeholder when none resolved. Valid only once the
-    /// atlas has stitched.
+    /// The first layer of `material`'s icon stack, or the transparent placeholder when none resolved. Valid only
+    /// once the atlas has stitched.
     public IIcon getIcon(Material material) {
         return icons.get(material.getIndex());
-    }
-
-    /// The `_OVERLAY` icon bound for `material`, or null when its resolved texture set has none.
-    public IIcon getOverlayIcon(Material material) {
-        return icons.getOverlayOrNull(material.getIndex());
     }
 
     /// The number of icon layers bound for `material`; see [TextureSet].

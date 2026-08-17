@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,7 +34,7 @@ class ShapeIconsTest {
     private final TextureSet setC = TextureSet.of("testmod", "setC");
 
     /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
-    /// to pin that binding it resolves the placeholder from both accessors instead of crashing.
+    /// to pin that binding it resolves the placeholder instead of crashing.
     @Test
     void materialWithoutTextureSetBindsPlaceholderInsteadOfCrashing() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
@@ -49,8 +48,8 @@ class ShapeIconsTest {
         IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
         assertNotNull(placeholder);
         assertSame(placeholder, icons.get(material.getIndex()));
-        assertSame(placeholder, icons.getOverlay(material.getIndex()));
-        assertNull(icons.getOverlayOrNull(material.getIndex()));
+        assertEquals(1, icons.layerCount(material.getIndex()));
+        assertSame(placeholder, icons.layer(material.getIndex(), 1));
     }
 
     /// An empty fallback list is equivalent to no fallback at all: the chain runs out and the material binds the
@@ -71,8 +70,8 @@ class ShapeIconsTest {
         assertSame(placeholder, icons.get(material.getIndex()));
     }
 
-    /// An index no material bound resolves to the empty placeholder from both placeholder accessors, and to null
-    /// from the nullable overlay accessor.
+    /// An index no material bound reports one layer and resolves to the empty placeholder inside and outside the
+    /// stack's bounds.
     @Test
     void unboundIndexFallsBackToPlaceholder() {
         ShapeIcons icons = new ShapeIcons(false, path -> false);
@@ -81,8 +80,8 @@ class ShapeIconsTest {
         IIcon placeholder = register.registered.get(ShapeIcons.EMPTY_ICON);
         assertNotNull(placeholder);
         assertSame(placeholder, icons.get(7));
-        assertSame(placeholder, icons.getOverlay(7));
-        assertNull(icons.getOverlayOrNull(7));
+        assertEquals(1, icons.layerCount(7));
+        assertSame(placeholder, icons.layer(7, 1));
     }
 
     /// A material's own texture set outranks its fallback sets.
@@ -168,18 +167,19 @@ class ShapeIconsTest {
         registry.resolve();
         Material[] materials = { material };
         String override = ShapeIcons.overridePath(material, "gear");
+        int index = material.getIndex();
 
         ShapeIcons withOverlay = new ShapeIcons(true, NO_LAYERS);
         withOverlay.bind(register, materials, "gear");
-        IIcon overlay = withOverlay.getOverlayOrNull(material.getIndex());
-        assertNotNull(overlay);
-        assertSame(register.registered.get(override + ShapeIcons.OVERLAY_SUFFIX), overlay);
+        int last = withOverlay.layerCount(index) - 1;
+        assertTrue(withOverlay.isOverlayLayer(index, last));
+        assertSame(register.registered.get(override + ShapeIcons.OVERLAY_SUFFIX), withOverlay.layer(index, last));
 
         ShapeIcons withoutOverlay = new ShapeIcons(true,
             NO_LAYERS.and(path -> !path.equals(override + ShapeIcons.OVERLAY_SUFFIX)));
         withoutOverlay.bind(register, materials, "gear");
-        assertSame(register.registered.get(override), withoutOverlay.get(material.getIndex()));
-        assertNull(withoutOverlay.getOverlayOrNull(material.getIndex()));
+        assertSame(register.registered.get(override), withoutOverlay.get(index));
+        assertFalse(withoutOverlay.isOverlayLayer(index, withoutOverlay.layerCount(index) - 1));
     }
 
     /// Only the override tier marks a material untinted, and re-binding without the pack clears that mark.
@@ -218,10 +218,10 @@ class ShapeIconsTest {
         assertEquals(2, icons.layerCount(index));
         assertSame(register.registered.get(base), icons.layer(index, 0));
         assertSame(register.registered.get(base + ShapeIcons.LAYER_SUFFIX + 1), icons.layer(index, 1));
-        assertNull(icons.getOverlayOrNull(index));
+        assertFalse(icons.isOverlayLayer(index, 1));
     }
 
-    /// `_OVERLAY` binds as the stack's last layer, and the overlay accessors keep reporting exactly that layer.
+    /// `_OVERLAY` binds as the stack's last layer.
     @Test
     void anOverlayBindsAsTheStacksLastLayer() {
         Material material = declareMaterial("testmod", "Testiron", setA, List.of());
@@ -236,8 +236,6 @@ class ShapeIconsTest {
         assertEquals(2, icons.layerCount(index));
         assertSame(register.registered.get(base), icons.get(index));
         assertSame(register.registered.get(base + ShapeIcons.OVERLAY_SUFFIX), icons.layer(index, 1));
-        assertSame(icons.layer(index, 1), icons.getOverlay(index));
-        assertSame(icons.layer(index, 1), icons.getOverlayOrNull(index));
         assertTrue(icons.isOverlayLayer(index, 1));
     }
 
@@ -254,8 +252,8 @@ class ShapeIconsTest {
 
         assertEquals(1, icons.layerCount(index));
         assertSame(register.registered.get(base), icons.get(index));
-        assertNull(icons.getOverlayOrNull(index));
-        assertSame(register.registered.get(ShapeIcons.EMPTY_ICON), icons.getOverlay(index));
+        assertFalse(icons.isOverlayLayer(index, 0));
+        assertSame(register.registered.get(ShapeIcons.EMPTY_ICON), icons.layer(index, 1));
     }
 
     /// A stack resolves at one location: an override's numbered layers come from the override root, not from the
