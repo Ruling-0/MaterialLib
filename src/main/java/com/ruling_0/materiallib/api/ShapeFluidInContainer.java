@@ -21,12 +21,14 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// The container holds one fluid shape. A material that generates this shape must also generate that fluid shape;
 /// the registry enforces that at resolve.
 ///
-/// Renders in two passes: an untinted empty-container texture underneath the texture set's texture for this
-/// shape, which supplies the fluid fill and is tinted with [StandardProperties#CELL_TINT] when the material sets
-/// it, or with the fluid's fill tint (see [ShapeFluid#tintOf]) otherwise. The container looks the same for every
-/// material, so the empty texture is a property of the shape rather than of a texture set: it defaults to
-/// `<modid>:materials/<name>_empty` in the shape's own domain, or the path [FluidInContainerShapeBuilder#emptyIcon]
-/// sets. For a path naming no existing texture file, see [#registerIcons].
+/// Renders the fluid fill first -- the texture set's texture for this shape, one pass per icon layer as [ShapeItem]
+/// draws it -- then the untinted container base in a final pass over them. Container base art leaves its fill
+/// window fully transparent. The fill's first layer takes [StandardProperties#CELL_TINT] when the material sets it,
+/// or the fluid's fill tint (see [ShapeFluid#tintOf]) otherwise; every later fill layer takes the color [ShapeItem]
+/// gives it. The container looks the same for every material, so the empty texture is a property of the shape
+/// rather than of a texture set: it defaults to `<modid>:materials/<name>_empty` in the shape's own domain, or the
+/// path [FluidInContainerShapeBuilder#emptyIcon] sets. For a path naming no existing texture file, see
+/// [#registerIcons].
 public class ShapeFluidInContainer extends ShapeItem {
 
     private final Shape fluidShape;
@@ -122,34 +124,37 @@ public class ShapeFluidInContainer extends ShapeItem {
         emptyIcon = register.registerIcon(ShapeIcons.EMPTY_ICON);
     }
 
-    /// Two passes: the container base and the fill icon's first layer.
+    /// One pass per fill layer, plus the container base's final pass.
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderPasses(int meta) {
-        return 2;
+        return super.getRenderPasses(meta) + 1;
     }
 
-    /// The untinted container base for pass 0, and the material's fill icon -- [ShapeItem]'s pass-0 icon -- for
-    /// every later pass.
+    /// The fill's layer at `pass`, and the untinted container base for the final pass.
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamageForRenderPass(int damage, int pass) {
-        return pass == 0 ? emptyIcon : super.getIconFromDamageForRenderPass(damage, 0);
+        if (pass < super.getRenderPasses(damage)) return super.getIconFromDamageForRenderPass(damage, pass);
+        return emptyIcon;
     }
 
-    /// The container base, for callers that ask for a single icon; see [ShapeItem#getIconFromDamage].
+    /// The container base, not the fill, for callers that ask for a single icon; see [ShapeItem#getIconFromDamage].
     @Override
     @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamage(int damage) {
         return emptyIcon;
     }
 
-    /// White for the untinted container base in pass 0, the fill tint (see the class doc) for every later pass. An
-    /// override-bound fill icon is white as well; see [ShapeItem#hasOverrideIcon].
+    /// The fill tint (see the class doc) for the first pass, each later fill layer's own color (see
+    /// [ShapeItem#getColorFromItemStack]) for the passes after it, and white for the container base's final pass.
+    /// The first pass is white for a damage value carrying no live material and for an override-bound fill icon;
+    /// see [ShapeItem#hasOverrideIcon].
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
-        if (renderPass == 0) return 0xFFFFFFFF;
+        if (renderPass >= super.getRenderPasses(stack.getItemDamage())) return 0xFFFFFFFF;
+        if (renderPass > 0) return super.getColorFromItemStack(stack, renderPass);
         Material material = ShapeText.materialFor(stack);
         if (material == null || hasOverrideIcon(material)) return 0xFFFFFFFF;
         if (material.getProperty(StandardProperties.CELL_TINT) == null) return ShapeFluid.tintOf(material);
