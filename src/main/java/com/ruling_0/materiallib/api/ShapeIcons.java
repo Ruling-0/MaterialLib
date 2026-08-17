@@ -129,9 +129,7 @@ final class ShapeIcons {
         return overrideIndices.contains(index);
     }
 
-    /// The ARGB tint `material`'s stack takes at `layer`: [StandardProperties#TINT] for layer 0 and the
-    /// [StandardProperties#LAYER_TINTS] element for a later one. White for the trailing `_OVERLAY` layer, for a
-    /// layer the list codes no element for, and for an override-bound stack.
+    /// The ARGB tint `material`'s stack takes at `layer`; see [ShapeItem#getMaterialLayerColor].
     int layerColor(Material material, int layer) {
         int index = material.getIndex();
         if (isOverride(index)) return 0xFFFFFFFF;

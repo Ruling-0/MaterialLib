@@ -34,7 +34,6 @@ import org.lwjgl.opengl.GL11;
 @ThreadSafeISBRH(perThread = false)
 public final class ShapeBlockRenderingHandler implements ISimpleBlockRenderingHandler {
 
-    /// The render ID this handler is registered under; see [ShapeBlock#setRenderType].
     static final int RENDER_ID = RenderingRegistry.getNextAvailableRenderId();
 
     @Override
@@ -69,7 +68,6 @@ public final class ShapeBlockRenderingHandler implements ISimpleBlockRenderingHa
         GL11.glTranslatef(0.5F, 0.5F, 0.5F);
     }
 
-    /// The color a material icon layer draws with; see [ShapeBlock#tintFor] and [ShapeBlock#layerTint].
     private static int layerColor(ShapeBlock shape, int meta, int layer) {
         return layer == 0 ? shape.tintFor(meta) : shape.layerTint(meta, layer);
     }

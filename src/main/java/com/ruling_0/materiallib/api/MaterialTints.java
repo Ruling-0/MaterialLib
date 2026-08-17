@@ -28,8 +28,7 @@ final class MaterialTints {
         return resourceFor(material, property).getColor();
     }
 
-    /// The [ColorResource] backing `property` for `material`, created on first read and shared by every declaration
-    /// unified onto the same material.
+    /// The [ColorResource] backing `property` for `material`.
     static ColorResource resourceFor(Material material, Property<Integer> property) {
         Map<Material, ColorResource> byMaterial = RESOURCES.computeIfAbsent(property,
             ignored -> new ConcurrentHashMap<>());
@@ -46,8 +45,7 @@ final class MaterialTints {
     }
 
     /// The [ColorResource] backing `material`'s `_LAYER<layer>` tint, or null where
-    /// [StandardProperties#LAYER_TINTS] codes no element for that layer. Created on first read and shared by every
-    /// declaration unified onto the same material.
+    /// [StandardProperties#LAYER_TINTS] codes no element for that layer.
     static ColorResource layerResourceFor(Material material, int layer) {
         Material canonical = material.canonical();
         Integer coded = codedLayerTint(canonical, layer);

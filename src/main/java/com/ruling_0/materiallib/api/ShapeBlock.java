@@ -292,8 +292,7 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// The ARGB tint `material`'s layer `layer` takes on this shape; see [ShapeItem#getMaterialLayerColor]. Layer 0
-    /// reports the material's [StandardProperties#TINT], which a compositor supplying its own base modulation may
-    /// ignore.
+    /// reports the material's [StandardProperties#TINT], not [StandardProperties#BLOCK_TINT].
     @SideOnly(Side.CLIENT)
     public int getMaterialLayerColor(Material material, int layer) {
         return icons.layerColor(material, layer);
@@ -345,10 +344,9 @@ public class ShapeBlock extends Block implements BackedShape {
         return MaterialTints.color(material, tint) & 0xFFFFFF;
     }
 
-    /// The RGB tint of a material icon layer above the first at the given metadata:
-    /// [StandardProperties#LAYER_TINTS]' element for a numbered layer, white for the trailing `_OVERLAY` layer,
-    /// for a layer the list codes no element for, for an override-bound stack, and for metadata mapping to no live
-    /// material. Masked to 24 bits like [#tintFor].
+    /// The RGB tint of a material icon layer above the first at the given metadata, or white when the metadata maps
+    /// to no live material; see [ShapeItem#getMaterialLayerColor] for the layer colors. Masked to 24 bits like
+    /// [#tintFor].
     @SideOnly(Side.CLIENT)
     int layerTint(int meta, int layer) {
         if (icons.isOverride(meta) || icons.isOverlayLayer(meta, layer)) return 0xFFFFFF;

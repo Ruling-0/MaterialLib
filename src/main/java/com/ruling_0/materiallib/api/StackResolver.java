@@ -17,7 +17,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 /// name identifies it on its own (see [Material]). A shape token is matched exactly and case-sensitively against the
 /// registered names, which are an item shape's name, a variant-less block shape's name, or one variant block's
 /// `<shapeName>_<variant>` (see [ShapeNaming#variantBlockName]). Fluid shapes are not among them. A lookup matching
-/// nothing returns null or an empty list and logs one error naming what it was given.
+/// nothing returns null or an empty list and logs an error.
 ///
 /// The lookups read the resolved registries through caches built on first call, so they run from a consuming mod's
 /// preInit onwards and never from inside a [MaterialRegistrationEvent] handler.
