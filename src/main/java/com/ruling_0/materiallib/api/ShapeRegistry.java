@@ -434,7 +434,7 @@ public final class ShapeRegistry {
         }
     }
 
-    private void requireResolved(String what) {
+    void requireResolved(String what) {
         if (!resolved) {
             throw new IllegalStateException(
                 "Cannot " + what + ": shapes have not resolved yet. They are available once MaterialLib's " +
