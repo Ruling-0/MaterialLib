@@ -37,6 +37,16 @@ public final class MaterialBuilder {
         return setProperty(StandardProperties.TINT, tint);
     }
 
+    /// Sets [StandardProperties#LAYER_TINTS], the ARGB tints of the shape textures' numbered icon layers, the
+    /// first tinting `_LAYER1`.
+    public MaterialBuilder setLayerTints(int... tints) {
+        Integer[] boxed = new Integer[tints.length];
+        for (int i = 0; i < tints.length; i++) {
+            boxed[i] = tints[i];
+        }
+        return setProperty(StandardProperties.LAYER_TINTS, List.of(boxed));
+    }
+
     /// Sets [StandardProperties#FLUID_TINT], the ARGB tint applied to a fluid shape's fill icon in place of
     /// [StandardProperties#TINT].
     public MaterialBuilder setFluidTint(int fluidTint) {

@@ -17,12 +17,16 @@ import net.minecraft.util.IIcon;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins [ShapeIcons]' placeholder fallbacks and the precedence of its texture sources. [ShapeIcons#resolvePath]
-/// and [ShapeIcons#ShapeIcons(boolean, Predicate)] take an existence predicate, so both run headless.
+/// Pins [ShapeIcons]' placeholder fallbacks, the precedence of its texture sources, and the shape of the layer
+/// stack it binds. [ShapeIcons#resolvePath] and [ShapeIcons#ShapeIcons(boolean, Predicate)] take an existence
+/// predicate, so both run headless.
 class ShapeIconsTest {
 
     /// Accepts every path outside the resource-pack override root, so a chain test runs with that source missing.
     private static final Predicate<String> NO_OVERRIDE = path -> !path.startsWith(ShapeIcons.OVERRIDE_ROOT);
+
+    /// Accepts no numbered layer sibling, bounding the layer probe of a test that otherwise accepts every path.
+    private static final Predicate<String> NO_LAYERS = path -> !path.contains(ShapeIcons.LAYER_SUFFIX);
 
     private final MaterialRegistry registry = new MaterialRegistry();
     private final RecordingRegister register = new RecordingRegister();
@@ -165,13 +169,14 @@ class ShapeIconsTest {
         Material[] materials = { material };
         String override = ShapeIcons.overridePath(material, "gear");
 
-        ShapeIcons withOverlay = new ShapeIcons(true, path -> true);
+        ShapeIcons withOverlay = new ShapeIcons(true, NO_LAYERS);
         withOverlay.bind(register, materials, "gear");
         IIcon overlay = withOverlay.getOverlayOrNull(material.getIndex());
         assertNotNull(overlay);
         assertSame(register.registered.get(override + ShapeIcons.OVERLAY_SUFFIX), overlay);
 
-        ShapeIcons withoutOverlay = new ShapeIcons(true, path -> !path.equals(override + ShapeIcons.OVERLAY_SUFFIX));
+        ShapeIcons withoutOverlay = new ShapeIcons(true,
+            NO_LAYERS.and(path -> !path.equals(override + ShapeIcons.OVERLAY_SUFFIX)));
         withoutOverlay.bind(register, materials, "gear");
         assertSame(register.registered.get(override), withoutOverlay.get(material.getIndex()));
         assertNull(withoutOverlay.getOverlayOrNull(material.getIndex()));
@@ -184,7 +189,7 @@ class ShapeIconsTest {
         registry.resolve();
         Material[] materials = { material };
         boolean[] packLoaded = { true };
-        ShapeIcons icons = new ShapeIcons(true, path -> packLoaded[0] || NO_OVERRIDE.test(path));
+        ShapeIcons icons = new ShapeIcons(true, NO_LAYERS.and(path -> packLoaded[0] || NO_OVERRIDE.test(path)));
 
         icons.bind(register, materials, "gear");
         assertTrue(icons.isOverride(material.getIndex()));
@@ -195,6 +200,83 @@ class ShapeIconsTest {
 
         icons.bind(register, materials, "gear");
         assertFalse(icons.isOverride(material.getIndex()));
+    }
+
+    /// The numbered layers are probed upward from 1 and stop at the first absent number, so art skipping a number
+    /// leaves everything above it out of the stack.
+    @Test
+    void aGapInTheLayerNumbersEndsTheStack() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+        String base = setA.iconPath("gear");
+        Set<String> art = Set.of(base, base + ShapeIcons.LAYER_SUFFIX + 1, base + ShapeIcons.LAYER_SUFFIX + 3);
+        int index = material.getIndex();
+
+        ShapeIcons icons = new ShapeIcons(true, art::contains);
+        icons.bind(register, new Material[] { material }, "gear");
+
+        assertEquals(2, icons.layerCount(index));
+        assertSame(register.registered.get(base), icons.layer(index, 0));
+        assertSame(register.registered.get(base + ShapeIcons.LAYER_SUFFIX + 1), icons.layer(index, 1));
+        assertNull(icons.getOverlayOrNull(index));
+    }
+
+    /// `_OVERLAY` binds as the stack's last layer, and the overlay accessors keep reporting exactly that layer.
+    @Test
+    void anOverlayBindsAsTheStacksLastLayer() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+        String base = setA.iconPath("gear");
+        Set<String> art = Set.of(base, base + ShapeIcons.OVERLAY_SUFFIX);
+        int index = material.getIndex();
+
+        ShapeIcons icons = new ShapeIcons(true, art::contains);
+        icons.bind(register, new Material[] { material }, "gear");
+
+        assertEquals(2, icons.layerCount(index));
+        assertSame(register.registered.get(base), icons.get(index));
+        assertSame(register.registered.get(base + ShapeIcons.OVERLAY_SUFFIX), icons.layer(index, 1));
+        assertSame(icons.layer(index, 1), icons.getOverlay(index));
+        assertSame(icons.layer(index, 1), icons.getOverlayOrNull(index));
+        assertTrue(icons.isOverlayLayer(index, 1));
+    }
+
+    /// Art with no siblings is a one-layer stack carrying no overlay.
+    @Test
+    void artWithNoSiblingsBindsASingleLayer() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+        String base = setA.iconPath("gear");
+        int index = material.getIndex();
+
+        ShapeIcons icons = new ShapeIcons(true, base::equals);
+        icons.bind(register, new Material[] { material }, "gear");
+
+        assertEquals(1, icons.layerCount(index));
+        assertSame(register.registered.get(base), icons.get(index));
+        assertNull(icons.getOverlayOrNull(index));
+        assertSame(register.registered.get(ShapeIcons.EMPTY_ICON), icons.getOverlay(index));
+    }
+
+    /// A stack resolves at one location: an override's numbered layers come from the override root, not from the
+    /// texture set the override outranks.
+    @Test
+    void anOverrideStacksLayersComeFromTheOverrideRoot() {
+        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
+        registry.resolve();
+        String override = ShapeIcons.overridePath(material, "gear");
+        String base = setA.iconPath("gear");
+        Set<String> art = Set.of(override, override + ShapeIcons.LAYER_SUFFIX + 1, base,
+            base + ShapeIcons.LAYER_SUFFIX + 1, base + ShapeIcons.LAYER_SUFFIX + 2);
+        int index = material.getIndex();
+
+        ShapeIcons icons = new ShapeIcons(true, art::contains);
+        icons.bind(register, new Material[] { material }, "gear");
+
+        assertTrue(icons.isOverride(index));
+        assertEquals(2, icons.layerCount(index));
+        assertSame(register.registered.get(override), icons.layer(index, 0));
+        assertSame(register.registered.get(override + ShapeIcons.LAYER_SUFFIX + 1), icons.layer(index, 1));
     }
 
     private Material declareMaterial(String modid, String name, TextureSet textureSet, List<TextureSet> fallbacks) {

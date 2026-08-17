@@ -122,6 +122,13 @@ public class ShapeFluidInContainer extends ShapeItem {
         emptyIcon = register.registerIcon(ShapeIcons.EMPTY_ICON);
     }
 
+    /// Two passes: the container base and the fill icon's first layer.
+    @Override
+    @SideOnly(Side.CLIENT)
+    public int getRenderPasses(int meta) {
+        return 2;
+    }
+
     /// The untinted container base for pass 0, and the material's fill icon -- [ShapeItem]'s pass-0 icon -- for
     /// every later pass.
     @Override

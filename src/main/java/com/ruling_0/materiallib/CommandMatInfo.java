@@ -119,7 +119,19 @@ public class CommandMatInfo extends CommandBase {
         if (TINT_PROPERTIES.contains(property)) {
             return String.format("0x%08X", value);
         }
+        if (property == StandardProperties.LAYER_TINTS) {
+            return hexList((List<?>) value);
+        }
         return String.valueOf(value);
+    }
+
+    /// The layer tints as AARRGGBB hex, in layer order.
+    private static String hexList(List<?> tints) {
+        List<String> hex = new ArrayList<>(tints.size());
+        for (Object tint : tints) {
+            hex.add(String.format("0x%08X", tint));
+        }
+        return hex.toString();
     }
 
     private static String type(Shape shape) {

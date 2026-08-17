@@ -18,10 +18,11 @@ import cpw.mods.fml.relauncher.SideOnly;
 ///
 /// Simple shapes are created through [MaterialLibAPI#newItemShape]. A mod that wants custom item behavior (right click
 /// logic, NBT) subclasses this and registers the instance through [MaterialLibAPI#registerItemShape]. The base handles
-/// subtypes, textures from each material's [TextureSet], the [StandardProperties#TINT] color, display names, and
-/// oredict. Create and register the item inside the owning mod's [MaterialRegistrationEvent] handler. MaterialLib
-/// registers the chosen owner's item under its own domain; see [ShapeOwnerStore]. An advanced tooltip names the mod
-/// that owns the shape and the mod that added the material.
+/// subtypes, textures from each material's [TextureSet] -- one render pass per icon layer -- the
+/// [StandardProperties#TINT] and [StandardProperties#LAYER_TINTS] colors, display names, and oredict. Create and
+/// register the item inside the owning mod's [MaterialRegistrationEvent] handler. MaterialLib registers the chosen
+/// owner's item under its own domain; see [ShapeOwnerStore]. An advanced tooltip names the mod that owns the shape
+/// and the mod that added the material.
 public class ShapeItem extends Item implements BackedShape {
 
     private final String modid;
@@ -128,8 +129,14 @@ public class ShapeItem extends Item implements BackedShape {
 
     @Override
     @SideOnly(Side.CLIENT)
+    public int getRenderPasses(int meta) {
+        return icons.layerCount(meta);
+    }
+
+    @Override
+    @SideOnly(Side.CLIENT)
     public IIcon getIconFromDamageForRenderPass(int damage, int renderPass) {
-        return renderPass == 0 ? icons.get(damage) : icons.getOverlay(damage);
+        return icons.layer(damage, renderPass);
     }
 
     /// The material's icon, for callers that ask for a single icon. Vanilla's implementation returns the
@@ -155,6 +162,19 @@ public class ShapeItem extends Item implements BackedShape {
         return icons.getOverlayOrNull(material.getIndex());
     }
 
+    /// The number of icon layers bound for `material` on this shape; see [TextureSet].
+    @SideOnly(Side.CLIENT)
+    public int getMaterialLayerCount(Material material) {
+        return icons.layerCount(material.getIndex());
+    }
+
+    /// The icon at `layer` of `material`'s stack on this shape, or the transparent placeholder outside the stack's
+    /// bounds; see [#getMaterialIcon] for the caching contract.
+    @SideOnly(Side.CLIENT)
+    public IIcon getMaterialLayerIcon(Material material, int layer) {
+        return icons.layer(material.getIndex(), layer);
+    }
+
     /// Whether `material`'s icon bound from the resource-pack override location (see [TextureSet]). Override art
     /// carries its own colors, so MaterialLib draws it untinted. A caller compositing the icon itself skips its own
     /// tint the same way.
@@ -163,12 +183,16 @@ public class ShapeItem extends Item implements BackedShape {
         return icons.isOverride(material.getIndex());
     }
 
+    /// The material's [StandardProperties#TINT] for the first pass and its [StandardProperties#LAYER_TINTS]
+    /// element for a later one. White for an `_OVERLAY` layer, for a layer the list codes no element for, for an
+    /// override-bound stack, and for a damage value carrying no live material.
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
-        if (renderPass != 0) return 0xFFFFFFFF;
         Material material = ShapeText.materialFor(stack);
         if (material == null || hasOverrideIcon(material)) return 0xFFFFFFFF;
-        return MaterialTints.color(material, StandardProperties.TINT);
+        if (renderPass == 0) return MaterialTints.color(material, StandardProperties.TINT);
+        if (icons.isOverlayLayer(material.getIndex(), renderPass)) return 0xFFFFFFFF;
+        return MaterialTints.layerColor(material, renderPass);
     }
 }
