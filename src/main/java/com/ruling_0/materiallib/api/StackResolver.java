@@ -19,8 +19,9 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 /// `<shapeName>_<variant>` (see [ShapeNaming#variantBlockName]). Fluid shapes are not among them. A lookup matching
 /// nothing returns null or an empty list and logs an error.
 ///
-/// The lookups read the resolved registries through caches built on first call, so they run from a consuming mod's
-/// preInit onwards and never from inside a [MaterialRegistrationEvent] handler.
+/// The lookups read the resolved registries through caches built on first call. They run from a consuming mod's
+/// preInit only when its `@Mod` dependencies order it after materiallib, from init onwards in any case, and never
+/// from inside a [MaterialRegistrationEvent] handler.
 public final class StackResolver {
 
     private static Map<String, Material> materialsByName;
