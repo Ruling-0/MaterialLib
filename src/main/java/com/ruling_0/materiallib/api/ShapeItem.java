@@ -175,6 +175,15 @@ public class ShapeItem extends Item implements BackedShape {
         return icons.layer(material.getIndex(), layer);
     }
 
+    /// The ARGB tint `material`'s layer `layer` takes on this shape: [StandardProperties#TINT] for layer 0 and the
+    /// [StandardProperties#LAYER_TINTS] element for a later one. White for the trailing `_OVERLAY` layer, for a
+    /// layer the list codes no element for, and for an override-bound stack. A caller compositing the icon itself
+    /// applies this per layer.
+    @SideOnly(Side.CLIENT)
+    public int getMaterialLayerColor(Material material, int layer) {
+        return icons.layerColor(material, layer);
+    }
+
     /// Whether `material`'s icon bound from the resource-pack override location (see [TextureSet]). Override art
     /// carries its own colors, so MaterialLib draws it untinted. A caller compositing the icon itself skips its own
     /// tint the same way.
@@ -183,16 +192,12 @@ public class ShapeItem extends Item implements BackedShape {
         return icons.isOverride(material.getIndex());
     }
 
-    /// The material's [StandardProperties#TINT] for the first pass and its [StandardProperties#LAYER_TINTS]
-    /// element for a later one. White for an `_OVERLAY` layer, for a layer the list codes no element for, for an
-    /// override-bound stack, and for a damage value carrying no live material.
+    /// The color of the stack's material at layer `renderPass`; see [#getMaterialLayerColor]. White for a damage
+    /// value carrying no live material.
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
         Material material = ShapeText.materialFor(stack);
-        if (material == null || hasOverrideIcon(material)) return 0xFFFFFFFF;
-        if (renderPass == 0) return MaterialTints.color(material, StandardProperties.TINT);
-        if (icons.isOverlayLayer(material.getIndex(), renderPass)) return 0xFFFFFFFF;
-        return MaterialTints.layerColor(material, renderPass);
+        return material != null ? icons.layerColor(material, renderPass) : 0xFFFFFFFF;
     }
 }

@@ -68,6 +68,11 @@ public final class IconSet {
         return icons.layer(material.getIndex(), layer);
     }
 
+    /// The ARGB tint `material`'s layer `layer` takes; see [ShapeItem#getMaterialLayerColor].
+    public int getLayerColor(Material material, int layer) {
+        return icons.layerColor(material, layer);
+    }
+
     /// Whether `material`'s icon bound from the resource-pack override location; see [ShapeItem#hasOverrideIcon].
     public boolean hasOverrideIcon(Material material) {
         return icons.isOverride(material.getIndex());

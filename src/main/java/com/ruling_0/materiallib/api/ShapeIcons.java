@@ -143,6 +143,17 @@ final class ShapeIcons {
         return overrideIndices.contains(index);
     }
 
+    /// The ARGB tint `material`'s stack takes at `layer`: [StandardProperties#TINT] for layer 0 and the
+    /// [StandardProperties#LAYER_TINTS] element for a later one. White for the trailing `_OVERLAY` layer, for a
+    /// layer the list codes no element for, and for an override-bound stack.
+    int layerColor(Material material, int layer) {
+        int index = material.getIndex();
+        if (isOverride(index)) return 0xFFFFFFFF;
+        if (layer == 0) return MaterialTints.color(material, StandardProperties.TINT);
+        if (isOverlayLayer(index, layer)) return 0xFFFFFFFF;
+        return MaterialTints.layerColor(material, layer);
+    }
+
     /// The resource-pack override icon path for `material`'s art filed under `shapeName`.
     static String overridePath(Material material, String shapeName) {
         return OVERRIDE_ROOT + material.getName() + "/" + shapeName;

@@ -17,9 +17,9 @@ import net.minecraft.util.IIcon;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins [ShapeIcons]' placeholder fallbacks, the precedence of its texture sources, and the shape of the layer
-/// stack it binds. [ShapeIcons#resolvePath] and [ShapeIcons#ShapeIcons(boolean, Predicate)] take an existence
-/// predicate, so both run headless.
+/// Pins [ShapeIcons]' placeholder fallbacks, the precedence of its texture sources, the shape of the layer stack it
+/// binds, and the color each layer takes. [ShapeIcons#resolvePath] and [ShapeIcons#ShapeIcons(boolean, Predicate)]
+/// take an existence predicate, so both run headless.
 class ShapeIconsTest {
 
     /// Accepts every path outside the resource-pack override root, so a chain test runs with that source missing.
@@ -277,6 +277,28 @@ class ShapeIconsTest {
         assertEquals(2, icons.layerCount(index));
         assertSame(register.registered.get(override), icons.layer(index, 0));
         assertSame(register.registered.get(override + ShapeIcons.LAYER_SUFFIX + 1), icons.layer(index, 1));
+    }
+
+    /// The trailing `_OVERLAY` layer draws untinted even where [StandardProperties#LAYER_TINTS] codes an element at
+    /// its index, while a numbered layer takes its coded element and layer 0 takes [StandardProperties#TINT].
+    @Test
+    void anOverlayLayerReportsWhiteWhileANumberedLayerReportsItsCodedTint() {
+        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Testlayered",
+            StandardProperties.TEXTURE_SET, setA, StandardProperties.TINT, 0xFFFFCC00,
+            StandardProperties.LAYER_TINTS, List.of(0xFF00FF00, 0xFF0000FF));
+        Material material = new Material(registry, "testmod", "Testlayered", properties, Set.of(), List.of());
+        registry.register(material);
+        registry.resolve();
+        String base = setA.iconPath("gear");
+        Set<String> art = Set.of(base, base + ShapeIcons.LAYER_SUFFIX + 1, base + ShapeIcons.OVERLAY_SUFFIX);
+
+        ShapeIcons icons = new ShapeIcons(true, art::contains);
+        icons.bind(register, new Material[] { material }, "gear");
+
+        assertTrue(icons.isOverlayLayer(material.getIndex(), 2));
+        assertEquals(0xFFFFCC00, icons.layerColor(material, 0));
+        assertEquals(0xFF00FF00, icons.layerColor(material, 1));
+        assertEquals(0xFFFFFFFF, icons.layerColor(material, 2));
     }
 
     private Material declareMaterial(String modid, String name, TextureSet textureSet, List<TextureSet> fallbacks) {

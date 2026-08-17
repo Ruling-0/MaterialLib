@@ -285,6 +285,27 @@ public class ShapeBlock extends Block implements BackedShape {
         return icons.getOverlayOrNull(material.getIndex());
     }
 
+    /// The number of icon layers bound for `material` on this shape; see [TextureSet].
+    @SideOnly(Side.CLIENT)
+    public int getMaterialLayerCount(Material material) {
+        return materialLayerCount(material.getIndex());
+    }
+
+    /// The icon at `layer` of `material`'s stack on this shape, or the transparent placeholder outside the stack's
+    /// bounds; see [#getMaterialIcon] for the caching contract.
+    @SideOnly(Side.CLIENT)
+    public IIcon getMaterialLayerIcon(Material material, int layer) {
+        return materialLayer(material.getIndex(), layer);
+    }
+
+    /// The ARGB tint `material`'s layer `layer` takes on this shape; see [ShapeItem#getMaterialLayerColor]. Layer 0
+    /// reports the material's [StandardProperties#TINT], which a compositor supplying its own base modulation may
+    /// ignore.
+    @SideOnly(Side.CLIENT)
+    public int getMaterialLayerColor(Material material, int layer) {
+        return icons.layerColor(material, layer);
+    }
+
     /// Whether `material`'s icon bound from the resource-pack override location; see [ShapeItem#hasOverrideIcon].
     @SideOnly(Side.CLIENT)
     public boolean hasOverrideIcon(Material material) {
