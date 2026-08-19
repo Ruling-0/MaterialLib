@@ -75,19 +75,31 @@ final class ShapeIcons {
         overrideIndices.clear();
         emptyIcon = register.registerIcon(EMPTY_ICON);
         List<String> unbound = null;
+        int generating = 0;
         for (Material material : materials) {
+            boolean marker = isMarker(material);
+            if (!marker) generating++;
             String path = resolvePath(material, shapeNameCandidates, perMaterialIconPath, this::checkResLoc);
             if (path == null) {
-                if (unbound == null) unbound = new ObjectArrayList<>();
-                unbound.add(material.getKey());
+                if (!marker) {
+                    if (unbound == null) unbound = new ObjectArrayList<>();
+                    unbound.add(material.getKey());
+                }
                 continue;
             }
             if (path.startsWith(OVERRIDE_ROOT)) overrideIndices.add(material.getIndex());
             layersByIndex.put(material.getIndex(), registerStack(register, material.getIndex(), path));
         }
-        warnUnbound(unbound, materials.length, shapeNameCandidates);
+        warnUnbound(unbound, generating, shapeNameCandidates);
     }
 
+    /// Whether `material` generates no shape at all: an ore-dictionary marker pseudo-material, which backs a name
+    /// without ever drawing, so a gap in its art reaches no player.
+    private static boolean isMarker(Material material) {
+        return material.getShapes().isEmpty();
+    }
+
+    /// Logs one line naming the materials that bound no icon, counted against the materials that generate a shape.
     private void warnUnbound(List<String> unbound, int total, List<String> shapeNameCandidates) {
         if (unbound == null) return;
         int examples = Math.min(unbound.size(), 5);
