@@ -255,6 +255,9 @@ public class ShapeFluid implements ServedShape {
         }
 
         @Override
+        public String getLocalizedName() { return ShapeText.displayName(ShapeFluid.this, displayNameFormat, material); }
+
+        @Override
         public int getColor() {
             if (hasOverrideIcon(material)) return 0xFFFFFF;
             return tintOf(material) & 0xFFFFFF;
