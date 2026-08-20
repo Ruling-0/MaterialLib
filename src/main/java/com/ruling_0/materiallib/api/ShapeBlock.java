@@ -354,10 +354,9 @@ public class ShapeBlock extends Block implements BackedShape {
     /// [#tintFor].
     @SideOnly(Side.CLIENT)
     int layerTint(int meta, int layer) {
-        if (icons.isOverride(meta) || icons.isOverlayLayer(meta, layer)) return 0xFFFFFF;
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         if (material == null) return 0xFFFFFF;
-        return MaterialTints.layerColor(material, layer) & 0xFFFFFF;
+        return icons.layerColor(material, layer) & 0xFFFFFF;
     }
 
     @Override

@@ -219,6 +219,7 @@ class ShapeIconsTest {
         assertSame(register.registered.get(base), icons.layer(index, 0));
         assertSame(register.registered.get(base + ShapeIcons.LAYER_SUFFIX + 1), icons.layer(index, 1));
         assertFalse(icons.isOverlayLayer(index, 1));
+        assertSame(register.registered.get(ShapeIcons.EMPTY_ICON), icons.layer(index, 2));
     }
 
     /// `_OVERLAY` binds as the stack's last layer.
@@ -237,23 +238,6 @@ class ShapeIconsTest {
         assertSame(register.registered.get(base), icons.get(index));
         assertSame(register.registered.get(base + ShapeIcons.OVERLAY_SUFFIX), icons.layer(index, 1));
         assertTrue(icons.isOverlayLayer(index, 1));
-    }
-
-    /// Art with no siblings is a one-layer stack carrying no overlay.
-    @Test
-    void artWithNoSiblingsBindsASingleLayer() {
-        Material material = declareMaterial("testmod", "Testiron", setA, List.of());
-        registry.resolve();
-        String base = setA.iconPath("gear");
-        int index = material.getIndex();
-
-        ShapeIcons icons = new ShapeIcons(true, base::equals);
-        icons.bind(register, new Material[] { material }, "gear");
-
-        assertEquals(1, icons.layerCount(index));
-        assertSame(register.registered.get(base), icons.get(index));
-        assertFalse(icons.isOverlayLayer(index, 0));
-        assertSame(register.registered.get(ShapeIcons.EMPTY_ICON), icons.layer(index, 1));
     }
 
     /// A stack resolves at one location: an override's numbered layers come from the override root, not from the

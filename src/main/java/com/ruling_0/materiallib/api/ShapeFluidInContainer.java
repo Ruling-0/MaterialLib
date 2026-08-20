@@ -24,7 +24,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// Renders the fluid fill first -- the texture set's texture for this shape, one pass per icon layer as [ShapeItem]
 /// draws it -- then the untinted container base in a final pass over them. Container base art leaves its fill
 /// window fully transparent. The fill's first layer takes [StandardProperties#CELL_TINT] when the material sets it,
-/// or the fluid's fill tint (see [ShapeFluid#tintOf]) otherwise; every later fill layer takes the color [ShapeItem]
+/// or the fluid's fill tint (see [ShapeFluid#tintOf]) otherwise. Every later fill layer takes the color [ShapeItem]
 /// gives it. The container looks the same for every material, so the empty texture is a property of the shape
 /// rather than of a texture set: it defaults to `<modid>:materials/<name>_empty` in the shape's own domain, or the
 /// path [FluidInContainerShapeBuilder#emptyIcon] sets. For a path naming no existing texture file, see

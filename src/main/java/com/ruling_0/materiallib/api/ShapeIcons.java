@@ -90,7 +90,7 @@ final class ShapeIcons {
         warnUnbound(unbound, generating, shapeNameCandidates);
     }
 
-    /// Binds only the transparent placeholder, dropping any per-material stacks; every lookup then resolves it.
+    /// Binds only the transparent placeholder, dropping any per-material stacks. Every lookup then resolves it.
     /// See [MaterialLibClient#deferIconBinding].
     void bindPlaceholder(IIconRegister register) {
         layersByIndex.clear();
@@ -100,12 +100,11 @@ final class ShapeIcons {
     }
 
     /// Whether `material` generates no shape at all: an ore-dictionary marker pseudo-material, which backs a name
-    /// without ever drawing, so a gap in its art reaches no player.
+    /// without ever drawing.
     private static boolean isMarker(Material material) {
         return material.getShapes().isEmpty();
     }
 
-    /// Logs one line naming the materials that bound no icon, counted against the materials that generate a shape.
     private void warnUnbound(List<String> unbound, int total, List<String> shapeNameCandidates) {
         if (unbound == null) return;
         int examples = Math.min(unbound.size(), 5);

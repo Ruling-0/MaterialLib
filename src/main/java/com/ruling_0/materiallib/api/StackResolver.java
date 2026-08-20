@@ -13,11 +13,11 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 /// Resolves MaterialLib stacks from the material name and shape token a config entry names, so a config entry keeps
 /// its target across sessions that renumber item metadata.
 ///
-/// A material is named by its bare name, with no modid: declarations sharing a name unify into one material, so the
-/// name identifies it on its own (see [Material]). A shape token is matched exactly and case-sensitively against the
-/// registered names, which are an item shape's name, a variant-less block shape's name, or one variant block's
-/// `<shapeName>_<variant>` (see [ShapeNaming#variantBlockName]). Fluid shapes are not among them. A lookup matching
-/// nothing returns null or an empty list and logs an error.
+/// A material is named by its bare name, with no modid: declarations sharing a name unify into one material (see
+/// [Material]). A shape token is matched exactly and case-sensitively against the registered names, which are an
+/// item shape's name, a variant-less block shape's name, or one variant block's `<shapeName>_<variant>` (see
+/// [ShapeNaming#variantBlockName]). Fluid shapes are not among them. A lookup matching nothing returns null or an
+/// empty list and logs an error.
 ///
 /// The lookups read the resolved registries through caches built on first call. They run from a consuming mod's
 /// preInit only when its `@Mod` dependencies order it after materiallib, from init onwards in any case, and never

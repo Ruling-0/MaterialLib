@@ -12,7 +12,7 @@ import com.ruling_0.materiallib.MaterialLib;
 /// `color.resource.materiallib.<MaterialName>.<propertyName>`, where `<MaterialName>` is the material's registry
 /// name in its exact case and `<propertyName>` is one of `tint`, `fluidTint`, `blockTint`, `blockOverlayTint`, or
 /// `cellTint`. The value is AARRGGBB hex. An entry changes what renders, not what [Material#getProperty] returns.
-/// Every material reads `tint`; the other four keys are read only for a material that sets the matching property.
+/// Every material reads `tint`. The other four keys are read only for a material that sets the matching property.
 /// A numbered icon layer is keyed `color.resource.materiallib.<MaterialName>.tint.<n>`, `<n>` being the layer's
 /// number, and is read only for a material whose [#LAYER_TINTS] codes element `n - 1`.
 public final class StandardProperties {
@@ -40,8 +40,8 @@ public final class StandardProperties {
     public static final Property<Integer> TINT = Property.of(MaterialLib.MODID, "tint", 0xFFFFFFFF);
 
     /// ARGB tints of a shape's numbered icon layers (see [TextureSet]), element 0 tinting `_LAYER1`. Null when
-    /// unset; a layer the list codes no element for draws untinted. A material-level list replaces a family-level
-    /// one entirely (standard property shadowing). Store an immutable list; the value is shared, never defensively
+    /// unset. A layer the list codes no element for draws untinted. A material-level list replaces a family-level
+    /// one entirely (standard property shadowing). Store an immutable list: the value is shared, never defensively
     /// copied.
     public static final Property<List<Integer>> LAYER_TINTS = Property.of(MaterialLib.MODID, "layerTints");
 

@@ -7,8 +7,8 @@ package com.ruling_0.materiallib.api;
 ///
 /// A shape's art may be a stack of layers drawn back to front: `<shape>.png`, then `<shape>_LAYER1.png`,
 /// `<shape>_LAYER2.png` and upward until a number is absent, then `<shape>_OVERLAY.png` last where it exists. The
-/// first layer takes the material's tint for the shape being drawn; `<shape>_LAYER<n>.png` takes element `n - 1` of
-/// [StandardProperties#LAYER_TINTS], or no tint where the list codes none; `_OVERLAY` art carries its own colors and
+/// first layer takes the material's tint for the shape being drawn. `<shape>_LAYER<n>.png` takes element `n - 1` of
+/// [StandardProperties#LAYER_TINTS], or no tint where the list codes none. `_OVERLAY` art carries its own colors and
 /// always draws untinted. The whole stack comes from the one texture source that wins the shape: a set carrying
 /// only `<shape>_LAYER1.png` contributes nothing.
 ///

@@ -261,11 +261,6 @@ public class ShapeFluid implements ServedShape {
         }
 
         @Override
-        public String getLocalizedName(FluidStack stack) {
-            return ShapeText.displayName(ShapeFluid.this, displayNameFormat, material);
-        }
-
-        @Override
         public String getLocalizedName() { return ShapeText.displayName(ShapeFluid.this, displayNameFormat, material); }
 
         @Override
