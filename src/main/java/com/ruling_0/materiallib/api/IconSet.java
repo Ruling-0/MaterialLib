@@ -77,6 +77,10 @@ public final class IconSet {
         icons.bind(register, materials, name);
     }
 
+    void bindPlaceholder(IIconRegister register) {
+        icons.bindPlaceholder(register);
+    }
+
     int atlasType() {
         return atlas.textureType;
     }

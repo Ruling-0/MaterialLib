@@ -17,8 +17,10 @@ public final class ShapeFluidIcons {
     @SubscribeEvent
     public void onTextureStitch(TextureStitchEvent.Pre event) {
         if (event.map.getTextureType() != 0) return;
+        boolean defer = MaterialLibClient.deferIconBinding();
         for (ShapeFluid fluid : ShapeRegistry.instance().getFluidShapes()) {
-            fluid.registerIcons(event.map);
+            if (defer) fluid.registerPlaceholderIcons(event.map);
+            else fluid.registerIcons(event.map);
         }
     }
 }

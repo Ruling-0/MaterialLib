@@ -21,9 +21,14 @@ public final class IconSetBinder {
     @SubscribeEvent
     public void onTextureStitch(TextureStitchEvent.Pre event) {
         int textureType = event.map.getTextureType();
+        boolean defer = MaterialLibClient.deferIconBinding();
         Material[] materials = null;
         for (IconSet set : MaterialLibClient.getIconSets()) {
             if (set.atlasType() != textureType) continue;
+            if (defer) {
+                set.bindPlaceholder(event.map);
+                continue;
+            }
             if (materials == null) materials = registeredMaterials();
             set.bind(event.map, materials);
         }

@@ -5,6 +5,8 @@ import java.util.Objects;
 
 import net.minecraftforge.client.IItemRenderer;
 
+import cpw.mods.fml.common.Loader;
+import cpw.mods.fml.common.LoaderState;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -35,6 +37,12 @@ public final class MaterialLibClient {
     }
 
     static List<IconSet> getIconSets() { return iconSets; }
+
+    /// Whether atlas stitches bind only the placeholder icon: true until FML finishes mod loading, since the
+    /// mid-startup resource refresh stitches a temporary atlas that the load-complete reload replaces.
+    static boolean deferIconBinding() {
+        return !Loader.instance().hasReachedState(LoaderState.AVAILABLE);
+    }
 
     /// Renders every item shape of `material` through `renderer`. Call from a mod's client proxy.
     public static void setItemRenderer(Material material, IItemRenderer renderer) {

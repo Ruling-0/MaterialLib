@@ -186,6 +186,11 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public void registerBlockIcons(IIconRegister register) {
+        if (MaterialLibClient.deferIconBinding()) {
+            icons.bindPlaceholder(register);
+            if (baseTexture != null) baseIcon = register.registerIcon(ShapeIcons.EMPTY_ICON);
+            return;
+        }
         String iconName = iconName();
         List<String> candidates = groupName != null ?
             List.of(ShapeNaming.variantBlockName(iconName, variant), iconName) : List.of(iconName);

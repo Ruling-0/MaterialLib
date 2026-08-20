@@ -70,10 +70,7 @@ final class ShapeIcons {
     /// ahead of the texture-set candidates; see [#resolvePath]. A null `perMaterialIconPath` skips that source.
     void bind(IIconRegister register, Material[] materials, List<String> shapeNameCandidates,
               Function<Material, String> perMaterialIconPath) {
-        layersByIndex.clear();
-        overlayIndices.clear();
-        overrideIndices.clear();
-        emptyIcon = register.registerIcon(EMPTY_ICON);
+        bindPlaceholder(register);
         List<String> unbound = null;
         int generating = 0;
         for (Material material : materials) {
@@ -91,6 +88,15 @@ final class ShapeIcons {
             layersByIndex.put(material.getIndex(), registerStack(register, material.getIndex(), path));
         }
         warnUnbound(unbound, generating, shapeNameCandidates);
+    }
+
+    /// Binds only the transparent placeholder, dropping any per-material stacks; every lookup then resolves it.
+    /// See [MaterialLibClient#deferIconBinding].
+    void bindPlaceholder(IIconRegister register) {
+        layersByIndex.clear();
+        overlayIndices.clear();
+        overrideIndices.clear();
+        emptyIcon = register.registerIcon(EMPTY_ICON);
     }
 
     /// Whether `material` generates no shape at all: an ore-dictionary marker pseudo-material, which backs a name

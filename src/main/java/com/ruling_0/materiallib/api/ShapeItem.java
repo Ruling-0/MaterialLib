@@ -118,6 +118,10 @@ public class ShapeItem extends Item implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public void registerIcons(IIconRegister register) {
+        if (MaterialLibClient.deferIconBinding()) {
+            icons.bindPlaceholder(register);
+            return;
+        }
         icons.bind(register, served.get(), iconName());
     }
 

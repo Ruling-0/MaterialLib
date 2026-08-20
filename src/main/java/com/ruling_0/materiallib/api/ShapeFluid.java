@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.util.IIcon;
 
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
@@ -198,6 +199,16 @@ public class ShapeFluid implements ServedShape {
             Fluid fluid = fluidsByIndex.get(material.getIndex());
             if (!(fluid instanceof MaterialFluid)) continue;
             fluid.setIcons(register.registerIcon(resolveIconPath(material)));
+        }
+    }
+
+    /// Binds the placeholder to every material's fluid; see [MaterialLibClient#deferIconBinding].
+    @SideOnly(Side.CLIENT)
+    void registerPlaceholderIcons(IIconRegister register) {
+        IIcon empty = register.registerIcon(ShapeIcons.EMPTY_ICON);
+        for (Material material : served.get()) {
+            Fluid fluid = fluidsByIndex.get(material.getIndex());
+            if (fluid instanceof MaterialFluid) fluid.setIcons(empty);
         }
     }
 
