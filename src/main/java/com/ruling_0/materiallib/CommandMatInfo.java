@@ -32,6 +32,11 @@ import com.ruling_0.materiallib.api.StandardProperties;
 /// MaterialLib shape.
 public class CommandMatInfo extends CommandBase {
 
+    /// The properties printed as AARRGGBB hex.
+    private static final Set<Property<?>> TINT_PROPERTIES = Set.of(StandardProperties.TINT,
+        StandardProperties.FLUID_TINT, StandardProperties.BLOCK_TINT, StandardProperties.BLOCK_OVERLAY_TINT,
+        StandardProperties.CELL_TINT);
+
     @Override
     public String getCommandName() { return "matinfo"; }
 
@@ -111,7 +116,7 @@ public class CommandMatInfo extends CommandBase {
 
     private static String formatValue(Material material, Property<?> property) {
         Object value = material.getProperty(property);
-        if (property == StandardProperties.TINT) {
+        if (TINT_PROPERTIES.contains(property)) {
             return String.format("0x%08X", value);
         }
         return String.valueOf(value);

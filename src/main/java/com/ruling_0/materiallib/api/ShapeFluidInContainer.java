@@ -145,7 +145,7 @@ public class ShapeFluidInContainer extends ShapeItem {
         if (renderPass == 0) return 0xFFFFFFFF;
         Material material = ShapeText.materialFor(stack);
         if (material == null || hasOverrideIcon(material)) return 0xFFFFFFFF;
-        Integer cellTint = material.getProperty(StandardProperties.CELL_TINT);
-        return cellTint != null ? cellTint : ShapeFluid.tintOf(material);
+        if (material.getProperty(StandardProperties.CELL_TINT) == null) return ShapeFluid.tintOf(material);
+        return MaterialTints.color(material, StandardProperties.CELL_TINT);
     }
 }
