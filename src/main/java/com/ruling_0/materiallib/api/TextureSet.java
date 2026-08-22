@@ -5,10 +5,17 @@ package com.ruling_0.materiallib.api;
 /// The `name` of this corresponds to the folder name holding the textures, either `textures/items/materials/<name>/`
 /// for items or `textures/blocks/materials/<name>/` for blocks and fluids.
 ///
+/// A shape's art may be a stack of layers drawn back to front: `<shape>.png`, then `<shape>_LAYER1.png`,
+/// `<shape>_LAYER2.png` and upward until a number is absent, then `<shape>_OVERLAY.png` last where it exists. The
+/// first layer takes the material's tint for the shape being drawn. `<shape>_LAYER<n>.png` takes element `n - 1` of
+/// [StandardProperties#LAYER_TINTS], or no tint where the list codes none. `_OVERLAY` art carries its own colors and
+/// always draws untinted. The whole stack comes from the one texture source that wins the shape: a set carrying
+/// only `<shape>_LAYER1.png` contributes nothing.
+///
 /// A resource pack reskins one material alone, outranking every texture set, with a file at
-/// `assets/materiallib/textures/<items|blocks>/mloverrides/<materialName>/<shape>[_OVERLAY].png`. `<materialName>` is
-/// the material's registry name in its exact case, and `<shape>` is the name the art is filed under inside a texture
-/// set. The winning file supplies its own `_OVERLAY` layer or none. Override art carries its own colors, so it draws
+/// `assets/materiallib/textures/<items|blocks>/mloverrides/<materialName>/<shape>.png`. `<materialName>` is the
+/// material's registry name in its exact case, and `<shape>` is the name the art is filed under inside a texture
+/// set. Its `_LAYER<n>` and `_OVERLAY` siblings are read from the override location too, and the whole stack draws
 /// untinted. A pack recolors art it does not replace through the tint lang keys instead; see [StandardProperties].
 public final class TextureSet {
 

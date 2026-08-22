@@ -15,12 +15,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-/// The per-material icons of an item or block shape, keyed by material index. Once [#bind] has run, [#get] and
-/// [#getOverlay] never return null: an index that bound no icon resolves to the transparent [#EMPTY_ICON]
-/// placeholder. A material with a null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS]
-/// -- or a null entry inside the list -- is treated like one whose texture files do not exist. A resource-pack file
-/// at [#overridePath] reskins a single material, outranks every other source, and draws untinted ([#isOverride]);
-/// see [#resolvePath].
+/// The per-material icon layer stacks of an item or block shape, keyed by material index. Once [#bind] has run,
+/// [#get] and [#layer] never return null: an index that bound no icon resolves to the transparent [#EMPTY_ICON]
+/// placeholder. See [TextureSet] for the files a stack is built from and the tints its layers take. A material with a
+/// null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS] -- or a null entry inside the
+/// list -- is treated like one whose texture files do not exist. A resource-pack file at [#overridePath] reskins a
+/// single material, outranks every other source, and draws untinted ([#isOverride]); see [#resolvePath].
 final class ShapeIcons {
 
     /// The transparent placeholder icon path, present on both the item and block atlases.
@@ -29,11 +29,15 @@ final class ShapeIcons {
     /// The suffix marking a shape texture's companion overlay layer, appended to the base icon path.
     static final String OVERLAY_SUFFIX = "_OVERLAY";
 
+    /// The suffix marking one numbered layer of a shape texture, appended to the base icon path together with the
+    /// layer's 1-based number.
+    static final String LAYER_SUFFIX = "_LAYER";
+
     /// The resource-pack override root; see [#resolvePath].
     static final String OVERRIDE_ROOT = MaterialLib.MODID + ":mloverrides/";
 
-    private final Int2ObjectMap<IIcon> iconsByIndex = new Int2ObjectOpenHashMap<>();
-    private final Int2ObjectMap<IIcon> overlaysByIndex = new Int2ObjectOpenHashMap<>();
+    private final Int2ObjectMap<IIcon[]> layersByIndex = new Int2ObjectOpenHashMap<>();
+    private final IntOpenHashSet overlayIndices = new IntOpenHashSet();
     private final IntOpenHashSet overrideIndices = new IntOpenHashSet();
     private final boolean isItem;
     private final Predicate<String> exists;
@@ -66,23 +70,39 @@ final class ShapeIcons {
     /// ahead of the texture-set candidates; see [#resolvePath]. A null `perMaterialIconPath` skips that source.
     void bind(IIconRegister register, Material[] materials, List<String> shapeNameCandidates,
               Function<Material, String> perMaterialIconPath) {
-        iconsByIndex.clear();
-        overlaysByIndex.clear();
-        overrideIndices.clear();
-        emptyIcon = register.registerIcon(EMPTY_ICON);
+        bindPlaceholder(register);
         List<String> unbound = null;
+        int generating = 0;
         for (Material material : materials) {
+            boolean marker = isMarker(material);
+            if (!marker) generating++;
             String path = resolvePath(material, shapeNameCandidates, perMaterialIconPath, this::checkResLoc);
             if (path == null) {
-                if (unbound == null) unbound = new ObjectArrayList<>();
-                unbound.add(material.getKey());
+                if (!marker) {
+                    if (unbound == null) unbound = new ObjectArrayList<>();
+                    unbound.add(material.getKey());
+                }
                 continue;
             }
             if (path.startsWith(OVERRIDE_ROOT)) overrideIndices.add(material.getIndex());
-            iconsByIndex.put(material.getIndex(), register.registerIcon(path));
-            putOverlay(register, material, path + OVERLAY_SUFFIX);
+            layersByIndex.put(material.getIndex(), registerStack(register, material.getIndex(), path));
         }
-        warnUnbound(unbound, materials.length, shapeNameCandidates);
+        warnUnbound(unbound, generating, shapeNameCandidates);
+    }
+
+    /// Binds only the transparent placeholder, dropping any per-material stacks. Every lookup then resolves it.
+    /// See [MaterialLibClient#deferIconBinding].
+    void bindPlaceholder(IIconRegister register) {
+        layersByIndex.clear();
+        overlayIndices.clear();
+        overrideIndices.clear();
+        emptyIcon = register.registerIcon(EMPTY_ICON);
+    }
+
+    /// Whether `material` generates no shape at all: an ore-dictionary marker pseudo-material, which backs a name
+    /// without ever drawing.
+    private static boolean isMarker(Material material) {
+        return material.getShapes().isEmpty();
     }
 
     private void warnUnbound(List<String> unbound, int total, List<String> shapeNameCandidates) {
@@ -98,27 +118,41 @@ final class ShapeIcons {
             String.join(", ", unbound.subList(0, examples)));
     }
 
-    /// The icon for a material index, or the empty placeholder if none resolved.
+    /// The first layer's icon for a material index, or the empty placeholder if none resolved.
     IIcon get(int index) {
-        IIcon icon = iconsByIndex.get(index);
-        return icon != null ? icon : emptyIcon;
+        return layer(index, 0);
     }
 
-    /// The overlay icon for a material index, or the empty placeholder if none resolved.
-    IIcon getOverlay(int index) {
-        IIcon icon = overlaysByIndex.get(index);
-        return icon != null ? icon : emptyIcon;
+    /// The icon at `layer` of a material index's stack, or the empty placeholder outside the stack's bounds.
+    IIcon layer(int index, int layer) {
+        IIcon[] layers = layersByIndex.get(index);
+        return layers != null && layer >= 0 && layer < layers.length ? layers[layer] : emptyIcon;
     }
 
-    /// The overlay icon for a material index, or null if none resolved, for a caller that composites the overlay
-    /// itself and needs to distinguish "no overlay" from the transparent placeholder.
-    IIcon getOverlayOrNull(int index) {
-        return overlaysByIndex.get(index);
+    /// The number of layers bound for a material index, at least one: an index that bound no icon reports the
+    /// single placeholder layer [#get] resolves.
+    int layerCount(int index) {
+        IIcon[] layers = layersByIndex.get(index);
+        return layers != null ? layers.length : 1;
+    }
+
+    /// Whether `layer` is the trailing `_OVERLAY` layer of a material index's stack.
+    boolean isOverlayLayer(int index, int layer) {
+        return overlayIndices.contains(index) && layer == layerCount(index) - 1;
     }
 
     /// Whether the icon bound for a material index came from the resource-pack override location.
     boolean isOverride(int index) {
         return overrideIndices.contains(index);
+    }
+
+    /// The ARGB tint `material`'s stack takes at `layer`; see [ShapeItem#getMaterialLayerColor].
+    int layerColor(Material material, int layer) {
+        int index = material.getIndex();
+        if (isOverride(index)) return 0xFFFFFFFF;
+        if (layer == 0) return MaterialTints.color(material, StandardProperties.TINT);
+        if (isOverlayLayer(index, layer)) return 0xFFFFFFFF;
+        return MaterialTints.layerColor(material, layer);
     }
 
     /// The resource-pack override icon path for `material`'s art filed under `shapeName`.
@@ -185,10 +219,22 @@ final class ShapeIcons {
         return null;
     }
 
-    /// Registers `material`'s overlay from `path` when that file exists.
-    private void putOverlay(IIconRegister register, Material material, String path) {
-        if (!checkResLoc(path)) return;
-        overlaysByIndex.put(material.getIndex(), register.registerIcon(path));
+    /// Registers the layer stack rooted at `path` for a material index and returns it in draw order; see
+    /// [TextureSet] for the files it is built from.
+    private IIcon[] registerStack(IIconRegister register, int index, String path) {
+        List<IIcon> layers = new ObjectArrayList<>();
+        layers.add(register.registerIcon(path));
+        for (int number = 1;; number++) {
+            String layerPath = path + LAYER_SUFFIX + number;
+            if (!checkResLoc(layerPath)) break;
+            layers.add(register.registerIcon(layerPath));
+        }
+        String overlay = path + OVERLAY_SUFFIX;
+        if (checkResLoc(overlay)) {
+            layers.add(register.registerIcon(overlay));
+            overlayIndices.add(index);
+        }
+        return layers.toArray(new IIcon[0]);
     }
 
     private boolean checkResLoc(String path) {

@@ -16,15 +16,16 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 
-/// Renders a [ShapeBlock#hasBaseTexture] composite -- an untinted base texture under a tinted material icon -- in
-/// world and in every item form (GUI slot, hotbar, held, and dropped). A block with no base texture keeps the
-/// vanilla full-cube render type and never reaches this handler; see [ShapeBlock#setRenderType].
+/// Renders a [ShapeBlock] composite -- an untinted base texture, where the variant declares one, under the
+/// material's icon layer stack -- in world and in every item form (GUI slot, hotbar, held, and dropped). A block
+/// with neither a base texture nor layered material art keeps the vanilla full-cube render type and never reaches
+/// this handler; see [ShapeBlock#setRenderType].
 ///
 /// Each layer is drawn with its icon and color passed in explicitly, under a [RenderBlocks] override texture, so
 /// the handler holds no state and one shared instance serves every thread of Angelica's off-thread chunk meshing.
-/// [#renderInventoryBlock] draws both layers back-to-back into the same [Tessellator] batch; [#renderWorldBlock]
-/// makes two standard-block draws with explicit colors. Submitting the coplanar quads with identical vertex data
-/// lets the depth test resolve the tie in submission order instead of z-fighting.
+/// [#renderInventoryBlock] draws the layers back-to-back into the same [Tessellator] batch; [#renderWorldBlock]
+/// makes one standard-block draw per layer with explicit colors. Submitting the coplanar quads with identical
+/// vertex data lets the depth test resolve the tie in submission order instead of z-fighting.
 ///
 /// The whole composite draws in the solid chunk pass (the vanilla render-pass defaults), where the alpha test cuts
 /// out the overlay's transparent pixels; the overlay icons are cutout textures, not translucent ones, matching
@@ -33,7 +34,7 @@ import org.lwjgl.opengl.GL11;
 @ThreadSafeISBRH(perThread = false)
 public final class ShapeBlockRenderingHandler implements ISimpleBlockRenderingHandler {
 
-    private static final int RENDER_ID = RenderingRegistry.getNextAvailableRenderId();
+    static final int RENDER_ID = RenderingRegistry.getNextAvailableRenderId();
 
     @Override
     public int getRenderId() { return RENDER_ID; }
@@ -54,11 +55,21 @@ public final class ShapeBlockRenderingHandler implements ISimpleBlockRenderingHa
 
         Tessellator tessellator = Tessellator.instance;
         tessellator.startDrawingQuads();
-        drawInventoryLayer(renderer, tessellator, shape, shape.baseIcon(), 0xFFFFFF);
-        drawInventoryLayer(renderer, tessellator, shape, shape.materialIcon(metadata), shape.tintFor(metadata));
+        IIcon base = shape.baseIcon();
+        if (base != null) {
+            drawInventoryLayer(renderer, tessellator, shape, base, 0xFFFFFF);
+        }
+        for (int layer = 0, layers = shape.materialLayerCount(metadata); layer < layers; layer++) {
+            drawInventoryLayer(renderer, tessellator, shape, shape.materialLayer(metadata, layer),
+                layerColor(shape, metadata, layer));
+        }
         tessellator.draw();
 
         GL11.glTranslatef(0.5F, 0.5F, 0.5F);
+    }
+
+    private static int layerColor(ShapeBlock shape, int meta, int layer) {
+        return layer == 0 ? shape.tintFor(meta) : shape.layerTint(meta, layer);
     }
 
     private static void drawInventoryLayer(RenderBlocks renderer, Tessellator tessellator, ShapeBlock shape,
@@ -93,8 +104,13 @@ public final class ShapeBlockRenderingHandler implements ISimpleBlockRenderingHa
         // override texture; a single draw stamps that texture once.
         if (renderer.hasOverrideBlockTexture()) return renderer.renderStandardBlock(shape, x, y, z);
         int meta = world.getBlockMetadata(x, y, z);
-        boolean rendered = drawWorldLayer(renderer, shape, x, y, z, shape.baseIcon(), 0xFFFFFF);
-        drawWorldLayer(renderer, shape, x, y, z, shape.materialIcon(meta), shape.tintFor(meta));
+        IIcon base = shape.baseIcon();
+        boolean rendered = base != null && drawWorldLayer(renderer, shape, x, y, z, base, 0xFFFFFF);
+        for (int layer = 0, layers = shape.materialLayerCount(meta); layer < layers; layer++) {
+            boolean drawn = drawWorldLayer(renderer, shape, x, y, z, shape.materialLayer(meta, layer),
+                layerColor(shape, meta, layer));
+            if (base == null && layer == 0) rendered = drawn;
+        }
         return rendered;
     }
 

@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.util.IIcon;
 
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
@@ -201,6 +202,16 @@ public class ShapeFluid implements ServedShape {
         }
     }
 
+    /// Binds the placeholder to every material's fluid; see [MaterialLibClient#deferIconBinding].
+    @SideOnly(Side.CLIENT)
+    void registerPlaceholderIcons(IIconRegister register) {
+        IIcon empty = register.registerIcon(ShapeIcons.EMPTY_ICON);
+        for (Material material : served.get()) {
+            Fluid fluid = fluidsByIndex.get(material.getIndex());
+            if (fluid instanceof MaterialFluid) fluid.setIcons(empty);
+        }
+    }
+
     /// The icon path to register for `material`'s fluid, or the [ShapeIcons#EMPTY_ICON] placeholder when no source
     /// carries one; see [ShapeIcons#resolvePath] for the order. Never null.
     String resolveIconPath(Material material) {
@@ -250,9 +261,7 @@ public class ShapeFluid implements ServedShape {
         }
 
         @Override
-        public String getLocalizedName(FluidStack stack) {
-            return ShapeText.displayName(ShapeFluid.this, displayNameFormat, material);
-        }
+        public String getLocalizedName() { return ShapeText.displayName(ShapeFluid.this, displayNameFormat, material); }
 
         @Override
         public int getColor() {

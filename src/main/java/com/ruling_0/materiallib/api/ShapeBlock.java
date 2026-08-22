@@ -40,6 +40,10 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// Drops, hardness, resistance, and harvest level may be overridden per material and variant, and the harvest tool
 /// class per shape, through [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla default
 /// it replaces.
+///
+/// [ShapeBlockRenderingHandler] also composites a material whose art binds more than one icon layer (see
+/// [TextureSet]). A stack's depth is known only once the atlas stitches, so [#registerBlockIcons] switches such a
+/// block to that handler's render type there and never switches back.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;
@@ -182,6 +186,11 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public void registerBlockIcons(IIconRegister register) {
+        if (MaterialLibClient.deferIconBinding()) {
+            icons.bindPlaceholder(register);
+            if (baseTexture != null) baseIcon = register.registerIcon(ShapeIcons.EMPTY_ICON);
+            return;
+        }
         String iconName = iconName();
         List<String> candidates = groupName != null ?
             List.of(ShapeNaming.variantBlockName(iconName, variant), iconName) : List.of(iconName);
@@ -189,6 +198,18 @@ public class ShapeBlock extends Block implements BackedShape {
         if (baseTexture != null) {
             baseIcon = registerBaseIcon(register);
         }
+        if (renderType == 0 && hasLayeredMaterial()) {
+            setRenderType(ShapeBlockRenderingHandler.RENDER_ID);
+        }
+    }
+
+    /// Whether any served material bound more than one icon layer.
+    @SideOnly(Side.CLIENT)
+    private boolean hasLayeredMaterial() {
+        for (Material material : served.get()) {
+            if (icons.layerCount(material.getIndex()) > 1) return true;
+        }
+        return false;
     }
 
     /// Registers [#baseTexture] if it names an existing file, or the [ShapeIcons#EMPTY_ICON] placeholder if it
@@ -213,8 +234,8 @@ public class ShapeBlock extends Block implements BackedShape {
         return baseTexture != null;
     }
 
-    /// Sets the render type [#getRenderType] reports: [ShapeBlockRenderingHandler]'s render ID for a
-    /// [#hasBaseTexture] composite, or the vanilla full-cube default (0).
+    /// Sets the render type [#getRenderType] reports: [ShapeBlockRenderingHandler]'s render ID for a composite,
+    /// or the vanilla full-cube default (0).
     @SideOnly(Side.CLIENT)
     public void setRenderType(int renderType) { this.renderType = renderType; }
 
@@ -227,10 +248,16 @@ public class ShapeBlock extends Block implements BackedShape {
         return baseIcon;
     }
 
-    /// The material icon bound at the given metadata; see [ShapeIcons#get].
+    /// The number of material icon layers bound at the given metadata; see [ShapeIcons#layerCount].
     @SideOnly(Side.CLIENT)
-    IIcon materialIcon(int meta) {
-        return icons.get(meta);
+    int materialLayerCount(int meta) {
+        return icons.layerCount(meta);
+    }
+
+    /// The material icon layer bound at the given metadata; see [ShapeIcons#layer].
+    @SideOnly(Side.CLIENT)
+    IIcon materialLayer(int meta, int layer) {
+        return icons.layer(meta, layer);
     }
 
     /// The icon path to try for `material` before this shape's texture-set candidates, or null to skip straight
@@ -249,18 +276,31 @@ public class ShapeBlock extends Block implements BackedShape {
         return icons.get(meta);
     }
 
-    /// The icon bound for `material` on this shape, or the transparent placeholder when none resolved. Valid only
-    /// after the block atlas has stitched; the caching contract of [ShapeItem#getMaterialIcon] applies.
+    /// The first layer of `material`'s icon stack on this shape, or the transparent placeholder when none resolved.
+    /// Valid only after the block atlas has stitched; the caching contract of [ShapeItem#getMaterialIcon] applies.
     @SideOnly(Side.CLIENT)
     public IIcon getMaterialIcon(Material material) {
         return icons.get(material.getIndex());
     }
 
-    /// The `_OVERLAY` icon bound for `material` on this shape, or null when its resolved texture set has none;
-    /// see [#getMaterialIcon] for the caching contract.
+    /// The number of icon layers bound for `material` on this shape; see [TextureSet].
     @SideOnly(Side.CLIENT)
-    public IIcon getMaterialOverlayIcon(Material material) {
-        return icons.getOverlayOrNull(material.getIndex());
+    public int getMaterialLayerCount(Material material) {
+        return materialLayerCount(material.getIndex());
+    }
+
+    /// The icon at `layer` of `material`'s stack on this shape, or the transparent placeholder outside the stack's
+    /// bounds; see [#getMaterialIcon] for the caching contract.
+    @SideOnly(Side.CLIENT)
+    public IIcon getMaterialLayerIcon(Material material, int layer) {
+        return materialLayer(material.getIndex(), layer);
+    }
+
+    /// The ARGB tint `material`'s layer `layer` takes on this shape; see [ShapeItem#getMaterialLayerColor]. Layer 0
+    /// reports the material's [StandardProperties#TINT], not [StandardProperties#BLOCK_TINT].
+    @SideOnly(Side.CLIENT)
+    public int getMaterialLayerColor(Material material, int layer) {
+        return icons.layerColor(material, layer);
     }
 
     /// Whether `material`'s icon bound from the resource-pack override location; see [ShapeItem#hasOverrideIcon].
@@ -272,7 +312,7 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderColor(int meta) {
-        if (baseTexture != null) {
+        if (rendersComposite()) {
             return 0xFFFFFF;
         }
         return tintFor(meta);
@@ -281,10 +321,16 @@ public class ShapeBlock extends Block implements BackedShape {
     @Override
     @SideOnly(Side.CLIENT)
     public int colorMultiplier(IBlockAccess world, int x, int y, int z) {
-        if (baseTexture != null) {
+        if (rendersComposite()) {
             return 0xFFFFFF;
         }
         return tintFor(world.getBlockMetadata(x, y, z));
+    }
+
+    /// Whether [ShapeBlockRenderingHandler] draws this block and supplies each layer's color itself.
+    @SideOnly(Side.CLIENT)
+    private boolean rendersComposite() {
+        return baseTexture != null || renderType != 0;
     }
 
     /// The RGB tint of the material at the given metadata, or white when the metadata maps to no live material:
@@ -301,6 +347,16 @@ public class ShapeBlock extends Block implements BackedShape {
             StandardProperties.BLOCK_TINT;
         Property<Integer> tint = material.getProperty(specific) != null ? specific : StandardProperties.TINT;
         return MaterialTints.color(material, tint) & 0xFFFFFF;
+    }
+
+    /// The RGB tint of a material icon layer above the first at the given metadata, or white when the metadata maps
+    /// to no live material; see [ShapeItem#getMaterialLayerColor] for the layer colors. Masked to 24 bits like
+    /// [#tintFor].
+    @SideOnly(Side.CLIENT)
+    int layerTint(int meta, int layer) {
+        Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
+        if (material == null) return 0xFFFFFF;
+        return icons.layerColor(material, layer) & 0xFFFFFF;
     }
 
     @Override

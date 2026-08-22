@@ -49,6 +49,7 @@ public final class ExampleContent {
             .build();
 
         Shape ingot = MaterialLibAPI.newItemShape(MaterialLib.MODID, "ingot").displayName("%s Ingot").build();
+        Shape ingot2 = MaterialLibAPI.newItemShape(MaterialLib.MODID, "ingot2").displayName("%s Special Ingot").build();
 
         Shape block = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "block").displayName("%s Block").build();
 
@@ -83,14 +84,15 @@ public final class ExampleContent {
         Family testFamily = MaterialLibAPI.newFamily(MaterialLib.MODID, "Test").generateShape(testFrame).build();
 
         MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestIron", test)
-            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre)
+            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2)
             .addToFamily(testFamily)
             .addTooltip("Iron strong")
             .build();
 
         MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestGold", test)
             .setTint(0xFFFFD700)
-            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre)
+            .setLayerTints(0xFF00D0D3, 0xFF6F00D1)
+            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2)
             .addToFamily(testFamily)
             .addTooltip("Shiny gold", "so shiny")
             .build();
