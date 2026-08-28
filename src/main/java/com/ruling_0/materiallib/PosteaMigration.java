@@ -1,5 +1,8 @@
 package com.ruling_0.materiallib;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
@@ -22,8 +25,9 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 
 /// MaterialLib's Postea transformer: rewrites every shape block's metadata and every shape stack's damage in a
 /// chunk or a player's data from the material id list version the data was saved under to the current one, through
-/// the world's [MaterialIdTransitions] chain. Data stamped by neither Postea nor an earlier MaterialLib reads as list
-/// version 1, the adopted baseline.
+/// the world's [MaterialIdTransitions] chain. Data Postea never stamped reads as list version 1, the adopted
+/// baseline. Data stamped ahead of the world's store, or across a span the store has no transition for, is left
+/// untouched: it stays recoverable once the matching store is back.
 ///
 /// Shape ids are derived from the registries on first use after each id remap, since FML rewrites numeric ids to the
 /// world's map after the server starts.
@@ -33,6 +37,7 @@ public final class PosteaMigration implements IVersionedTransformer {
 
     private static volatile IntSet blockIds;
     private static volatile IntSet itemIds;
+    private static final Set<Long> REPORTED_SPANS = ConcurrentHashMap.newKeySet();
 
     private PosteaMigration() {}
 
@@ -59,7 +64,10 @@ public final class PosteaMigration implements IVersionedTransformer {
 
     @Override
     public void transformChunk(ChunkTransformContext ctx) {
-        Int2IntMap remap = remap(storedOrLegacy(ctx.storedVersion(), ctx.levelTag()), ctx.currentVersion());
+        Int2IntMap remap = remap(
+            WorldMaterialIds.transitions(),
+            storedOrBaseline(ctx.storedVersion()),
+            ctx.currentVersion());
         if (remap.isEmpty()) return;
         IntSet blocks = blockIds();
         ctx.forEachBlock((x, y, z, id, meta) -> {
@@ -79,20 +87,38 @@ public final class PosteaMigration implements IVersionedTransformer {
 
     @Override
     public void transformPlayer(PlayerDataTransformContext ctx) {
-        Int2IntMap remap = remap(storedOrLegacy(ctx.storedVersion(), ctx.playerTag()), ctx.currentVersion());
+        Int2IntMap remap = remap(
+            WorldMaterialIds.transitions(),
+            storedOrBaseline(ctx.storedVersion()),
+            ctx.currentVersion());
         if (remap.isEmpty()) return;
         IntSet items = itemIds();
         ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items));
     }
 
-    /// The list version to migrate from: Postea's stamp, else the stamp earlier MaterialLib builds wrote on the
-    /// same tag, else 1.
-    static int storedOrLegacy(int stored, NBTTagCompound tag) {
-        return stored == ChunkTransformContext.UNSTAMPED ? ChunkVersionStamp.read(tag) : stored;
+    /// The list version to migrate from: Postea's stamp, or 1 for data that has none.
+    static int storedOrBaseline(int stored) {
+        return stored == ChunkTransformContext.UNSTAMPED ? 1 : stored;
     }
 
-    private static Int2IntMap remap(int from, int to) {
-        return from == to ? Int2IntMaps.EMPTY_MAP : WorldMaterialIds.transitions().remap(from, to);
+    /// The remap from `from` to `to`, or an empty map when nothing changes or the span cannot be composed.
+    static Int2IntMap remap(MaterialIdTransitions transitions, int from, int to) {
+        if (from == to) return Int2IntMaps.EMPTY_MAP;
+        try {
+            return transitions.remap(from, to);
+        }
+        catch (IllegalArgumentException | IllegalStateException e) {
+            if (REPORTED_SPANS.add(((long) from << 32) | (to & 0xFFFFFFFFL))) {
+                MaterialLib.LOG.error(
+                    "Saved data stamped at material id list version {} cannot be brought to the world's version {}; " +
+                        "leaving its material ids untouched. Restore the world's materiallib directory that matches " +
+                        "its chunks and player data. Cause: {}",
+                    from,
+                    to,
+                    e.getMessage());
+            }
+            return Int2IntMaps.EMPTY_MAP;
+        }
     }
 
     /// Rewrites `stack`'s damage through `remap` when its item is one of `shapeItems`; a deleted index strips the
