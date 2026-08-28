@@ -55,14 +55,26 @@ class PosteaMigrationTest {
         assertTrue(foreign.hasKey("id"));
     }
 
-    // Pins the adopted baseline: data stamped by neither Postea nor an earlier MaterialLib is list version 1.
+    // Pins the adopted baseline: data Postea never stamped is list version 1.
     @Test
-    void storedOrLegacyPrefersThePosteaStampThenTheLegacyKeyThenOne() {
-        NBTTagCompound legacy = new NBTTagCompound();
-        legacy.setInteger(ChunkVersionStamp.KEY, 3);
+    void unstampedDataIsListVersionOne() {
+        assertEquals(1, PosteaMigration.storedOrBaseline(ChunkTransformContext.UNSTAMPED));
+        assertEquals(4, PosteaMigration.storedOrBaseline(4));
+    }
 
-        assertEquals(4, PosteaMigration.storedOrLegacy(4, legacy));
-        assertEquals(3, PosteaMigration.storedOrLegacy(ChunkTransformContext.UNSTAMPED, legacy));
-        assertEquals(1, PosteaMigration.storedOrLegacy(ChunkTransformContext.UNSTAMPED, new NBTTagCompound()));
+    // A stamp ahead of the world's store (a restored store, copied region files) must not crash the chunk
+    // load; leaving the data untouched keeps it recoverable once the right store is back.
+    @Test
+    void remapSkipsAStampNewerThanTheStore() {
+        assertTrue(
+            PosteaMigration.remap(MaterialIdTransitions.empty(), 3, 2)
+                .isEmpty());
+    }
+
+    @Test
+    void remapSkipsASpanWhoseTransitionIsMissing() {
+        assertTrue(
+            PosteaMigration.remap(MaterialIdTransitions.empty(), 1, 3)
+                .isEmpty());
     }
 }
