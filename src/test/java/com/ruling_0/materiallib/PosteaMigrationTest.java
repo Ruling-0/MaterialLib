@@ -4,54 +4,65 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.List;
-import java.util.Map;
+import net.minecraft.nbt.NBTTagCompound;
 
-import com.gtnewhorizons.postea.utility.BlockConversionInfo;
-import com.ruling_0.materiallib.api.MaterialMigration;
+import com.gtnewhorizons.postea.api.ChunkTransformContext;
+import com.gtnewhorizons.postea.api.IDExtenderCompat;
+import com.ruling_0.materiallib.api.MaterialIdTransitions;
 
-import org.junit.jupiter.api.AfterEach;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.junit.jupiter.api.Test;
 
 class PosteaMigrationTest {
 
-    private static final int BLOCK_ID = 42;
+    private static final int SHAPE_ITEM_ID = 4200;
+    private static final IntSet SHAPE_ITEMS = new IntOpenHashSet(new int[] { SHAPE_ITEM_ID });
 
-    @AfterEach
-    void clearActiveMigration() {
-        PosteaMigration.setActiveMigration(null);
+    private static Int2IntMap remap() {
+        Int2IntMap remap = new Int2IntOpenHashMap();
+        remap.put(1, 5);
+        remap.put(2, MaterialIdTransitions.DELETE);
+        return remap;
+    }
+
+    private static NBTTagCompound stack(int id, int damage) {
+        NBTTagCompound stack = new NBTTagCompound();
+        IDExtenderCompat.setItemStackID(stack, id);
+        stack.setByte("Count", (byte) 1);
+        stack.setShort("Damage", (short) damage);
+        return stack;
     }
 
     @Test
-    void transformBlockAppliesEveryLookupOutcome() {
-        PosteaMigration.setActiveMigration(new MaterialMigration(Map.of(1, 5), List.of(2)));
+    void remapStackAppliesEveryOutcomeToShapeStacksOnly() {
+        NBTTagCompound unchanged = stack(SHAPE_ITEM_ID, 0);
+        NBTTagCompound moved = stack(SHAPE_ITEM_ID, 1);
+        NBTTagCompound deleted = stack(SHAPE_ITEM_ID, 2);
+        NBTTagCompound foreign = stack(7, 1);
 
-        BlockConversionInfo unchanged = placedBlock(0);
-        assertFalse(PosteaMigration.transformBlock(unchanged));
-        assertEquals(BLOCK_ID, unchanged.blockID);
-        assertEquals(0, unchanged.metadata);
+        for (NBTTagCompound stack : new NBTTagCompound[] { unchanged, moved, deleted, foreign }) {
+            PosteaMigration.remapStack(stack, remap(), SHAPE_ITEMS);
+        }
 
-        BlockConversionInfo moved = placedBlock(1);
-        assertTrue(PosteaMigration.transformBlock(moved));
-        assertEquals(BLOCK_ID, moved.blockID);
-        assertEquals(5, moved.metadata);
-
-        BlockConversionInfo deleted = placedBlock(2);
-        assertTrue(PosteaMigration.transformBlock(deleted));
-        assertEquals(0, deleted.blockID);
-        assertEquals(0, deleted.metadata);
+        assertEquals(0, unchanged.getShort("Damage"));
+        assertEquals(5, moved.getShort("Damage"));
+        assertFalse(deleted.hasKey("id"));
+        assertFalse(deleted.hasKey("idExt"));
+        assertEquals(1, foreign.getShort("Damage"));
+        assertTrue(foreign.hasKey("id"));
     }
 
+    // Pins the adopted baseline: data stamped by neither Postea nor an earlier MaterialLib is list version 1.
     @Test
-    void transformBlockWithoutAnActiveMigrationChangesNothing() {
-        BlockConversionInfo info = placedBlock(2);
+    void storedOrLegacyPrefersThePosteaStampThenTheLegacyKeyThenOne() {
+        NBTTagCompound legacy = new NBTTagCompound();
+        legacy.setInteger(ChunkVersionStamp.KEY, 3);
 
-        assertFalse(PosteaMigration.transformBlock(info));
-        assertEquals(BLOCK_ID, info.blockID);
-        assertEquals(2, info.metadata);
-    }
-
-    private static BlockConversionInfo placedBlock(int metadata) {
-        return new BlockConversionInfo("materiallib:block", BLOCK_ID, metadata, 0, 0, 0, null);
+        assertEquals(4, PosteaMigration.storedOrLegacy(4, legacy));
+        assertEquals(3, PosteaMigration.storedOrLegacy(ChunkTransformContext.UNSTAMPED, legacy));
+        assertEquals(1, PosteaMigration.storedOrLegacy(ChunkTransformContext.UNSTAMPED, new NBTTagCompound()));
     }
 }

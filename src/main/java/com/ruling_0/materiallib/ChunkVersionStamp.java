@@ -2,29 +2,16 @@ package com.ruling_0.materiallib;
 
 import net.minecraft.nbt.NBTTagCompound;
 
-import net.minecraftforge.event.world.ChunkDataEvent;
-
-import com.ruling_0.materiallib.api.WorldMaterialIds;
-
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-
-/// Stamps every saved chunk with the material id list version it was written under. The stamp records which
-/// assignment the chunk's stored indices reference.
+/// The list-version stamp MaterialLib wrote on chunk `Level` tags and player root tags before Postea stamped
+/// versions itself. Read as the fallback for data those builds saved.
 public final class ChunkVersionStamp {
 
-    /// The int NBT key carrying the list version.
     public static final String KEY = "materiallib:idListVersion";
 
-    /// The list version a stamped tag was written under. An absent key means the data predates stamping and
-    /// is treated as list version 1, the adopted baseline.
+    private ChunkVersionStamp() {}
+
+    /// The list version a tag was written under; 1 when the key is absent.
     public static int read(NBTTagCompound tag) {
         return tag.hasKey(KEY) ? tag.getInteger(KEY) : 1;
-    }
-
-    @SubscribeEvent
-    public void onChunkSave(ChunkDataEvent.Save event) {
-        NBTTagCompound data = event.getData();
-        NBTTagCompound level = data.getCompoundTag("Level");
-        level.setInteger(KEY, WorldMaterialIds.currentListVersion());
     }
 }
