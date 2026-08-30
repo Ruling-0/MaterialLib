@@ -2,14 +2,13 @@ package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -67,7 +66,7 @@ class WorldMaterialIdsTest {
     void checkStampsAFreshWorldAtListVersionOne() {
         MaterialRegistry resolved = resolvedWith("Gold", "Iron");
 
-        assertNull(WorldMaterialIds.check(resolved, dir));
+        WorldMaterialIds.check(resolved, dir);
 
         MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile());
         assertEquals(1, stored.listVersion());
@@ -82,7 +81,7 @@ class WorldMaterialIdsTest {
         MaterialRegistry resolved = resolvedWith("Gold", "Iron");
         MaterialIdStore.write(storeFile(), 3, resolved.getContentHash(), resolved.getAssignedIndices());
 
-        assertNull(WorldMaterialIds.check(resolved, dir));
+        WorldMaterialIds.check(resolved, dir);
 
         assertEquals(3, MaterialIdStore.read(storeFile()).listVersion());
         assertEquals(3, WorldMaterialIds.currentListVersion());
@@ -95,18 +94,19 @@ class WorldMaterialIdsTest {
         MaterialIdStore
             .write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Gone", "Iron")), Map.of("Gone", 0, "Iron", 1));
 
-        MaterialMigration migration = WorldMaterialIds.check(resolved, dir);
+        WorldMaterialIds.check(resolved, dir);
 
-        assertNotNull(migration);
-        assertEquals(0, migration.lookup(1));
-        assertEquals(MaterialMigration.DELETE, migration.lookup(0));
+        Int2IntMap remap = WorldMaterialIds.transitions()
+            .remap(1, 2);
+        assertEquals(0, remap.get(1));
+        assertEquals(MaterialIdTransitions.DELETE, remap.get(0));
         MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile());
         assertEquals(2, stored.listVersion());
         assertEquals(resolved.getContentHash(), stored.hash());
         assertEquals(resolved.getAssignedIndices(), stored.materials());
         assertEquals(2, WorldMaterialIds.currentListVersion());
         assertEquals(0, MaterialIdTransitions.load(transitionsDir()).compose(1, 2).get(1));
-        assertEquals(MaterialMigration.DELETE, MaterialIdTransitions.load(transitionsDir()).compose(1, 2).get(0));
+        assertEquals(MaterialIdTransitions.DELETE, MaterialIdTransitions.load(transitionsDir()).compose(1, 2).get(0));
     }
 
     @Test
@@ -126,9 +126,11 @@ class WorldMaterialIdsTest {
         MaterialRegistry resolved = resolvedWith("Iron", "Zinc");
         MaterialIdStore.write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Iron")), Map.of("Iron", 0));
 
-        assertNull(WorldMaterialIds.check(resolved, dir));
+        WorldMaterialIds.check(resolved, dir);
 
         assertEquals(2, MaterialIdStore.read(storeFile()).listVersion());
-        assertTrue(MaterialIdTransitions.load(transitionsDir()).compose(1, 2).isEmpty());
+        assertTrue(WorldMaterialIds.transitions()
+            .remap(1, 2)
+            .isEmpty());
     }
 }

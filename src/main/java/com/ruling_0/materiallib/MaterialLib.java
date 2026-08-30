@@ -3,6 +3,7 @@ package com.ruling_0.materiallib;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLModIdMappingEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerAboutToStartEvent;
@@ -15,7 +16,7 @@ import org.apache.logging.log4j.Logger;
      version = Tags.VERSION,
      name = "MaterialLib",
      acceptedMinecraftVersions = "[1.7.10]",
-     dependencies = "required-after:gtnhlib;required-after:postea;required-after:endlessids")
+     dependencies = "required-after:gtnhlib;required-after:postea@[1.2.6-mu,);required-after:endlessids")
 public class MaterialLib {
 
     public static final String MODID = "materiallib";
@@ -38,6 +39,11 @@ public class MaterialLib {
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
         proxy.postInit(event);
+    }
+
+    @Mod.EventHandler
+    public void idMappingsChanged(FMLModIdMappingEvent event) {
+        PosteaMigration.invalidateIds();
     }
 
     @Mod.EventHandler
