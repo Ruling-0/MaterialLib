@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
      version = Tags.VERSION,
      name = "MaterialLib",
      acceptedMinecraftVersions = "[1.7.10]",
-     dependencies = "required-after:gtnhlib;required-after:postea@[1.3.0,);required-after:endlessids")
+     dependencies = "required-after:gtnhlib;required-after:postea@[1.2.6-mu,);required-after:endlessids")
 public class MaterialLib {
 
     public static final String MODID = "materiallib";
