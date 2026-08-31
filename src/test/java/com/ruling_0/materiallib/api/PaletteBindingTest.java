@@ -61,6 +61,25 @@ class PaletteBindingTest {
             binder.calls.get(0));
     }
 
+    /// A material setting no palette never reaches the baker, even on a palette-enabled instance: the baker takes
+    /// the material's [PaletteRef] and would have nothing to hand it.
+    @Test
+    void aMaterialWithoutAPaletteNeverReachesTheBaker() {
+        Material material = declareMaterialWithoutPalette("Testiron");
+        registry.resolve();
+        String base = setA.iconPath("gear");
+        int index = material.getIndex();
+
+        ShapeIcons icons = new ShapeIcons(true, Set.of(base)::contains, binder);
+        icons.bind(register, new Material[] { material }, "gear");
+
+        assertTrue(binder.calls.isEmpty());
+        assertFalse(icons.isPaletteBaked(index));
+        assertEquals(1, icons.layerCount(index));
+        assertSame(register.registered.get(base), icons.get(index));
+        assertEquals(TINT, icons.layerColor(material, 0));
+    }
+
     /// A resource-pack override outranks a palette and never reaches the baker, so its art draws as authored.
     @Test
     void aResourcePackOverrideOutranksThePalette() {
@@ -152,8 +171,16 @@ class PaletteBindingTest {
     }
 
     private Material declareMaterial(String name, PaletteRef palette) {
-        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET,
-            setA, StandardProperties.TINT, TINT, StandardProperties.PALETTE, palette);
+        return declare(name, Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET, setA,
+            StandardProperties.TINT, TINT, StandardProperties.PALETTE, palette));
+    }
+
+    private Material declareMaterialWithoutPalette(String name) {
+        return declare(name, Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET, setA,
+            StandardProperties.TINT, TINT));
+    }
+
+    private Material declare(String name, Map<Property<?>, Object> properties) {
         Material material = new Material(registry, "testmod", name, properties, Set.of(), List.of());
         registry.register(material);
         return material;

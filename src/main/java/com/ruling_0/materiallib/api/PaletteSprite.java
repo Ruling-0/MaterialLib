@@ -87,10 +87,8 @@ final class PaletteSprite extends TextureAtlasSprite {
             }
             BufferedImage composited = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             composited.setRGB(0, 0, width, height, pixels, 0, width);
-            // Null tail like vanilla's read: TextureUtil.generateMipmapData indexes one slot per level.
-            BufferedImage[] levels = new BufferedImage[1 + Minecraft.getMinecraft().gameSettings.mipmapLevels];
-            levels[0] = composited;
-            loadSprite(levels, base.animation(),
+            loadSprite(frameLadder(composited, Minecraft.getMinecraft().gameSettings.mipmapLevels),
+                base.animation(),
                 !isItem && Minecraft.getMinecraft().gameSettings.anisotropicFiltering > 1);
             return false;
         }
@@ -98,6 +96,15 @@ final class PaletteSprite extends TextureAtlasSprite {
             MaterialLib.LOG.error("Could not bake {}; the sprite renders the missing texture", getIconName(), e);
             return true;
         }
+    }
+
+    /// The level array `loadSprite` takes for `composited`: the art in slot 0 and one null slot per mipmap level
+    /// above it, exactly as vanilla's own read leaves them. `TextureUtil.generateMipmapData` indexes a slot per
+    /// level and fills them itself, so an array sized to the art alone puts that indexing out of bounds.
+    static BufferedImage[] frameLadder(BufferedImage composited, int mipmapLevels) {
+        BufferedImage[] levels = new BufferedImage[1 + mipmapLevels];
+        levels[0] = composited;
+        return levels;
     }
 
     private BaseArt readBase(IResourceManager manager) {
