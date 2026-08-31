@@ -87,9 +87,10 @@ final class PaletteSprite extends TextureAtlasSprite {
             }
             BufferedImage composited = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             composited.setRGB(0, 0, width, height, pixels, 0, width);
-            loadSprite(
-                new BufferedImage[] { composited },
-                base.animation(),
+            // Null tail like vanilla's read: TextureUtil.generateMipmapData indexes one slot per level.
+            BufferedImage[] levels = new BufferedImage[1 + Minecraft.getMinecraft().gameSettings.mipmapLevels];
+            levels[0] = composited;
+            loadSprite(levels, base.animation(),
                 !isItem && Minecraft.getMinecraft().gameSettings.anisotropicFiltering > 1);
             return false;
         }
