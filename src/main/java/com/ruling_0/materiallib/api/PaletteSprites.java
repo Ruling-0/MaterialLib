@@ -8,7 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.imageio.ImageIO;
 
+import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.util.IIcon;
 import net.minecraft.util.ResourceLocation;
 
 import net.minecraftforge.client.event.TextureStitchEvent;
@@ -19,7 +23,8 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-/// The palette pngs behind [PaletteRef]: where they live, and their pixels for the sprites baking against them.
+/// The palette pngs behind [PaletteRef]: where they live, their pixels for the sprites baking against them, and
+/// the [#bake] entry point that puts such a sprite on an atlas.
 ///
 /// One png serves every material whose palette names it, each material reading its own column. A parsed png is
 /// held until the atlas stitches again, which drops it -- a stitch begins before the sprite loads that read it.
@@ -34,6 +39,24 @@ public final class PaletteSprites {
     @SubscribeEvent
     public void onTextureStitch(TextureStitchEvent.Pre event) {
         clearCache();
+    }
+
+    /// The atlas sprite baking `stack`'s art through `palette`, or null when `register` is not a texture atlas or
+    /// `palette` names no png, both of which leave the caller on the tint path.
+    ///
+    /// The sprite is named after the art and the palette column, so materials sharing both share one sprite, and
+    /// it is inserted rather than registered: the atlas clears its sprites before every bind, and a name it
+    /// registered itself would refuse the insert and read a file that does not exist.
+    static IIcon bake(IIconRegister register, boolean isItem, ShapeIcons.StackPaths stack, PaletteRef palette) {
+        if (!(register instanceof TextureMap map)) return null;
+        if (!paletteExists(palette)) return null;
+        String name = palette.bakedIconName(stack.base());
+        TextureAtlasSprite bound = map.getTextureExtry(name);
+        if (bound != null) return bound;
+        PaletteSprite sprite = new PaletteSprite(name, isItem, stack.base(), stack.layers(), stack.overlay(),
+            palette);
+        map.setTextureEntry(name, sprite);
+        return sprite;
     }
 
     static ResourceLocation palettePng(PaletteRef palette) {

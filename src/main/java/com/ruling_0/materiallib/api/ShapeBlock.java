@@ -58,7 +58,7 @@ public class ShapeBlock extends Block implements BackedShape {
 
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeProperties props = new ShapeProperties();
-    private final ShapeIcons icons = new ShapeIcons(false);
+    private final ShapeIcons icons = new ShapeIcons(false, true);
     private String iconNameOverride;
     private IIcon baseIcon;
     private boolean warnedMissingBaseTexture;
@@ -309,6 +309,12 @@ public class ShapeBlock extends Block implements BackedShape {
         return icons.isOverride(material.getIndex());
     }
 
+    /// Whether `material`'s icon was baked through its [PaletteRef]; see [ShapeItem#hasPaletteBakedIcon].
+    @SideOnly(Side.CLIENT)
+    public boolean hasPaletteBakedIcon(Material material) {
+        return icons.isPaletteBaked(material.getIndex());
+    }
+
     @Override
     @SideOnly(Side.CLIENT)
     public int getRenderColor(int meta) {
@@ -336,11 +342,13 @@ public class ShapeBlock extends Block implements BackedShape {
     /// The RGB tint of the material at the given metadata, or white when the metadata maps to no live material:
     /// [StandardProperties#BLOCK_OVERLAY_TINT] for a [#hasBaseTexture] composite's overlay layer,
     /// [StandardProperties#BLOCK_TINT] for a plain block, [StandardProperties#TINT] when the specific property is
-    /// unset. An icon bound from the resource-pack override location is white as well; see [#hasOverrideIcon].
-    /// Block render colors carry no alpha, so the resolved ARGB value is masked to its low 24 bits.
+    /// unset. An icon bound from the resource-pack override location is white as well, as is a palette-baked one;
+    /// see [#hasOverrideIcon] and [#hasPaletteBakedIcon]. Block render colors carry no alpha, so the resolved ARGB
+    /// value is masked to its low 24 bits.
     @SideOnly(Side.CLIENT)
     int tintFor(int meta) {
         if (icons.isOverride(meta)) return 0xFFFFFF;
+        if (icons.isPaletteBaked(meta)) return 0xFFFFFF;
         Material material = MaterialRegistry.instance().getMaterialByIndex(meta);
         if (material == null) return 0xFFFFFF;
         Property<Integer> specific = baseTexture != null ? StandardProperties.BLOCK_OVERLAY_TINT :
