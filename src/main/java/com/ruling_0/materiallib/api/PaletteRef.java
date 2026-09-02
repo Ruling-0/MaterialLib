@@ -13,9 +13,9 @@ import com.ruling_0.materiallib.MaterialLib;
 ///
 /// A palette png holds one palette per column, its entries running top to bottom. Trailing fully-transparent
 /// pixels mark a column shorter than the png is tall, letting ragged palettes share one file; an interior
-/// transparent entry is a real entry. No maximum height is assumed. Baking sorts the base texture's unique colors
-/// by descending luminance and maps them onto the column's entries in that order, clamping to the last entry
-/// where the art carries more colors than the palette; every pixel keeps its own alpha.
+/// transparent entry is a real entry. No maximum height is assumed. Baking sorts the base texture's distinct shades
+/// (its grayscale values, lightest first) and maps them onto the column's entries in that order, clamping to the
+/// last entry where the art carries more shades than the palette; every pixel keeps its own alpha.
 ///
 /// Only texture-set art bakes. A resource-pack override under `mloverrides/` and an [IconPather] path both
 /// outrank a palette and draw exactly as authored, and a fluid's still and flow textures never bake. A palette

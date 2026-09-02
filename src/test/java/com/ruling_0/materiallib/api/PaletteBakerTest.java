@@ -30,14 +30,16 @@ class PaletteBakerTest {
             PaletteBaker.bake(indexed, new int[] { RED, GREEN, BLUE }));
     }
 
-    /// 0x0B0100 and 0x000022 share a luminance under the 299/587/114 weights, so only the RGB tiebreak decides
-    /// which of them ranks first, and it must decide the same way whatever order the pixels arrive in.
+    /// A pixel ranks by its brightest channel alone, so hue never separates shades: a saturated pixel shares its
+    /// rank with the gray of the same value.
     @Test
-    void breaksLuminanceTiesByDescendingRgb() {
-        int[] base = { 0xFF000022, 0xFF0B0100 };
+    void pixelsOfTheSameValueShareARankWhateverTheirHue() {
+        int[] base = { 0xFF0000FF, 0xFFFFFFFF, 0xFF404040 };
 
-        assertArrayEquals(new int[] { 1, 0 }, PaletteBaker.index(base, 2, 1).indices());
-        assertArrayEquals(new int[] { 0, 1 }, PaletteBaker.index(new int[] { 0xFF0B0100, 0xFF000022 }, 2, 1).indices());
+        IndexedImage indexed = PaletteBaker.index(base, 3, 1);
+
+        assertEquals(2, indexed.uniqueCount());
+        assertArrayEquals(new int[] { 0, 0, 1 }, indexed.indices());
     }
 
     /// Art with more colors than the palette has entries keeps drawing: its extra shades all take the last entry.

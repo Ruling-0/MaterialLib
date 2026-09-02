@@ -1,17 +1,14 @@
 package com.ruling_0.materiallib.api;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrays;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-
 /// The pixel arithmetic behind [PaletteRef]: recoloring shape art through a palette column and flattening the
 /// recolored layers into one sprite.
 ///
-/// A base texture is first indexed -- its unique colors ranked from lightest to darkest, every pixel replaced by
-/// its rank. Ranking by luminance rather than by authored color is what lets one artwork accept any palette: rank
-/// 0 is the art's highlight, the last rank its deepest shadow, and a palette column supplies a color for each in
-/// that same order. A rank map depends only on the base texture, so one map serves every material baking that
-/// texture.
+/// A base texture is first indexed -- its distinct shades ranked from lightest to darkest, every pixel replaced
+/// by its rank. Shape art is grayscale, so a pixel's shade is its HSV value, the brightest of its channels; hue
+/// plays no part. Ranking by shade rather than by authored color is what lets one artwork accept any palette:
+/// rank 0 is the art's highlight, the last rank its deepest shadow, and a palette column supplies a color for
+/// each in that same order. A rank map depends only on the base texture, so one map serves every material baking
+/// that texture.
 ///
 /// Everything here is plain ARGB `int[]`. Reading pngs, locating palettes, and handing sprites to the texture
 /// atlas belong to the callers.
@@ -24,31 +21,26 @@ final class PaletteBaker {
     /// baking untouched. `uniqueCount` is the number of ranks, so a palette shorter than it will be clamped.
     record IndexedImage(int width, int height, int[] indices, int[] alphas, int uniqueCount) {}
 
-    /// Ranks the unique colors of `argb` by descending luminance, breaking ties by descending RGB so the ranking
-    /// is deterministic, and maps every pixel to its rank. Colors carried only by fully transparent pixels are
-    /// ignored.
+    /// Ranks the distinct shades of `argb` by descending value and maps every pixel to its rank. Shades carried
+    /// only by fully transparent pixels are ignored.
     static IndexedImage index(int[] argb, int width, int height) {
-        IntOpenHashSet distinct = new IntOpenHashSet();
+        boolean[] present = new boolean[256];
         for (int pixel : argb) {
-            if ((pixel >>> 24) != 0) distinct.add(pixel & 0xFFFFFF);
+            if ((pixel >>> 24) != 0) present[value(pixel)] = true;
         }
-        int[] unique = distinct.toIntArray();
-        IntArrays.quickSort(unique, (a, b) -> {
-            int byLuminance = Integer.compare(luminance(b), luminance(a));
-            return byLuminance != 0 ? byLuminance : Integer.compare(b, a);
-        });
-        Int2IntOpenHashMap rankOf = new Int2IntOpenHashMap(unique.length);
-        for (int rank = 0; rank < unique.length; rank++) {
-            rankOf.put(unique[rank], rank);
+        int[] rankOf = new int[256];
+        int ranks = 0;
+        for (int shade = 255; shade >= 0; shade--) {
+            if (present[shade]) rankOf[shade] = ranks++;
         }
         int[] indices = new int[argb.length];
         int[] alphas = new int[argb.length];
         for (int i = 0; i < argb.length; i++) {
             int alpha = argb[i] >>> 24;
             alphas[i] = alpha;
-            indices[i] = alpha == 0 ? -1 : rankOf.get(argb[i] & 0xFFFFFF);
+            indices[i] = alpha == 0 ? -1 : rankOf[value(argb[i])];
         }
-        return new IndexedImage(width, height, indices, alphas, unique.length);
+        return new IndexedImage(width, height, indices, alphas, ranks);
     }
 
     /// Recolors `base` through `palette`, one entry per rank. Ranks past the palette's last entry take that last
@@ -113,7 +105,7 @@ final class PaletteBaker {
         }
     }
 
-    private static int luminance(int rgb) {
-        return 299 * ((rgb >> 16) & 0xFF) + 587 * ((rgb >> 8) & 0xFF) + 114 * (rgb & 0xFF);
+    private static int value(int argb) {
+        return Math.max(Math.max((argb >> 16) & 0xFF, (argb >> 8) & 0xFF), argb & 0xFF);
     }
 }
