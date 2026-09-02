@@ -33,7 +33,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// texture. Every other failure -- an unresolvable palette column, a layer of the wrong size -- still flattens
 /// the art it has, uncolored, and logs.
 @SideOnly(Side.CLIENT)
-final class PaletteSprite extends TextureAtlasSprite {
+final class PaletteAtlasSprite extends TextureAtlasSprite {
 
     private record BaseArt(BufferedImage image, AnimationMetadataSection animation) {}
 
@@ -48,8 +48,8 @@ final class PaletteSprite extends TextureAtlasSprite {
     /// A sprite named `name` baking the art at `basePath`, its numbered layers at `layerPaths` and, when
     /// `overlayPath` is non-null, its overlay. Every path names an item texture when `isItem`, a block texture
     /// otherwise.
-    PaletteSprite(String name, boolean isItem, String basePath, List<String> layerPaths, String overlayPath,
-                  PaletteRef palette) {
+    PaletteAtlasSprite(String name, boolean isItem, String basePath, List<String> layerPaths, String overlayPath,
+                       PaletteRef palette) {
         super(name);
         this.isItem = isItem;
         this.basePath = basePath;

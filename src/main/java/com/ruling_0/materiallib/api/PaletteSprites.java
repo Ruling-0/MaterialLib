@@ -53,7 +53,7 @@ public final class PaletteSprites {
         String name = palette.bakedIconName(stack.base());
         TextureAtlasSprite bound = map.getTextureExtry(name);
         if (bound != null) return bound;
-        PaletteSprite sprite = new PaletteSprite(name, isItem, stack.base(), stack.layers(), stack.overlay(),
+        PaletteAtlasSprite sprite = new PaletteAtlasSprite(name, isItem, stack.base(), stack.layers(), stack.overlay(),
             palette);
         map.setTextureEntry(name, sprite);
         return sprite;
