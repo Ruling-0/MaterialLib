@@ -67,11 +67,9 @@ public final class StandardProperties {
     /// [#TINT]. The fluid's own rendering (see [ShapeFluid]) never consults this property.
     public static final Property<Integer> CELL_TINT = Property.of(MaterialLib.MODID, "cellTint");
 
-    /// The palette the material's shape art bakes through, replacing the tint path for that art; see [PaletteRef].
-    /// Null when unset, leaving the material tinted. A palette material ignores the `tint` lang keys for its shape
-    /// art, since nothing multiplies a tint over it; a fluid still reads [#TINT] and [#FLUID_TINT]. Set through
-    /// [MaterialBuilder#usePalette] or [MaterialEdit#usePalette]. A family sets it only through the generic
-    /// [FamilyBuilder#setProperty], one column rendering every member alike being rarely what a family wants.
+    /// The palette the material's shape art bakes through in place of the tint path; see [PaletteRef]. Null when
+    /// unset. A fluid still reads [#TINT] and [#FLUID_TINT]. A family sets it only through the generic
+    /// [FamilyBuilder#setProperty].
     public static final Property<PaletteRef> PALETTE = Property.of(MaterialLib.MODID, "palette");
 
     /// Rejects the properties derived from builder arguments, which can never be set or removed directly.

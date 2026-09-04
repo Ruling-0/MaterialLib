@@ -61,8 +61,7 @@ class PaletteBindingTest {
             binder.calls.get(0));
     }
 
-    /// A material setting no palette never reaches the baker, even on a palette-enabled instance: the baker takes
-    /// the material's [PaletteRef] and would have nothing to hand it.
+    /// A material setting no palette never reaches the baker, even on a palette-enabled instance.
     @Test
     void aMaterialWithoutAPaletteNeverReachesTheBaker() {
         Material material = declareMaterialWithoutPalette("Testiron");
@@ -136,7 +135,7 @@ class PaletteBindingTest {
         assertEquals(TINT, icons.layerColor(material, 0));
     }
 
-    /// A palette-disabled instance -- the one [IconSet] builds -- never reads the property.
+    /// A palette-disabled instance never reads the property.
     @Test
     void aPaletteDisabledInstanceIgnoresTheProperty() {
         Material material = declareMaterial("Testiron", METALS);
@@ -176,8 +175,8 @@ class PaletteBindingTest {
     }
 
     private Material declareMaterialWithoutPalette(String name) {
-        return declare(name, Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET, setA,
-            StandardProperties.TINT, TINT));
+        return declare(name,
+            Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET, setA, StandardProperties.TINT, TINT));
     }
 
     private Material declare(String name, Map<Property<?>, Object> properties) {

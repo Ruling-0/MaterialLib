@@ -27,8 +27,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// the [#bake] entry point that puts such a sprite on an atlas.
 ///
 /// One png serves every material whose palette names it, each material reading its own column. A parsed png is
-/// held until the atlas stitches again, which drops it -- a stitch begins before the sprite loads that read it.
-/// Registered on the Forge event bus from the client proxy.
+/// held until the next atlas stitch begins.
 @SideOnly(Side.CLIENT)
 public final class PaletteSprites {
 
@@ -42,11 +41,8 @@ public final class PaletteSprites {
     }
 
     /// The atlas sprite baking `stack`'s art through `palette`, or null when `register` is not a texture atlas or
-    /// `palette` names no png, both of which leave the caller on the tint path.
-    ///
-    /// The sprite is named after the art and the palette column, so materials sharing both share one sprite, and
-    /// it is inserted rather than registered: the atlas clears its sprites before every bind, and a name it
-    /// registered itself would refuse the insert and read a file that does not exist.
+    /// `palette` names no png. A sprite already on the atlas under [PaletteRef#bakedIconName] is reused; a new one
+    /// is inserted with `setTextureEntry`, which keeps the atlas from reading a file under that name.
     static IIcon bake(IIconRegister register, boolean isItem, ShapeIcons.StackPaths stack, PaletteRef palette) {
         if (!(register instanceof TextureMap map)) return null;
         if (!paletteExists(palette)) return null;

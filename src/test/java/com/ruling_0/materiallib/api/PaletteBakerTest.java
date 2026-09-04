@@ -89,8 +89,7 @@ class PaletteBakerTest {
         assertArrayEquals(new int[] { 0xFF111111, 0xFF222222 }, PaletteBaker.paletteColumn(png, 2, 4, 1));
     }
 
-    /// A column outside the png or holding nothing at all has no palette to report; the caller falls back rather
-    /// than baking through an empty one.
+    /// A column outside the png or holding nothing at all has no palette to report.
     @Test
     void anOutOfRangeOrFullyTransparentColumnHasNoPalette() {
         int[] png = { RED, 0, BLUE, 0 };

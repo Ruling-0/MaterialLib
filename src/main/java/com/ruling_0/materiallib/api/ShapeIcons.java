@@ -47,7 +47,7 @@ final class ShapeIcons {
     record StackPaths(String base, List<String> layers, String overlay) {}
 
     /// Bakes one stack of art into a single palette-colored atlas sprite, or returns null to leave the material on
-    /// the tint path. [PaletteSprites#bake] is the production implementation.
+    /// the tint path.
     interface PaletteBinder {
 
         IIcon bake(IIconRegister register, boolean isItem, StackPaths stack, PaletteRef palette);
@@ -167,25 +167,15 @@ final class ShapeIcons {
     private void warnUnbound(List<String> unbound, int total, List<String> shapeNameCandidates) {
         if (unbound == null) return;
         int examples = Math.min(unbound.size(), 5);
-        MaterialLib.LOG.warn(
-            "No {} icon resolved under {} for {}/{} materials (e.g. {}); they will render the " +
-                "transparent placeholder",
-            isItem ? "item" : "block",
-            shapeNameCandidates,
-            unbound.size(),
-            total,
-            String.join(", ", unbound.subList(0, examples)));
+        MaterialLib.LOG.warn("No {} icon resolved under {} for {}/{} materials (e.g. {})", isItem ? "item" : "block",
+            shapeNameCandidates, unbound.size(), total, String.join(", ", unbound.subList(0, examples)));
     }
 
     private void warnUnbaked(List<String> unpaletted, int total) {
         if (unpaletted == null) return;
         int examples = Math.min(unpaletted.size(), 5);
-        MaterialLib.LOG.warn(
-            "No palette png resolved for {}/{} {} materials (e.g. {}); they will render tinted instead of baked",
-            unpaletted.size(),
-            total,
-            isItem ? "item" : "block",
-            String.join(", ", unpaletted.subList(0, examples)));
+        MaterialLib.LOG.warn("No palette png resolved for {}/{} {} materials (e.g. {})", unpaletted.size(), total,
+            isItem ? "item" : "block", String.join(", ", unpaletted.subList(0, examples)));
     }
 
     /// The first layer's icon for a material index, or the empty placeholder if none resolved.
@@ -216,8 +206,7 @@ final class ShapeIcons {
         return overrideIndices.contains(index);
     }
 
-    /// Whether the single icon bound for a material index was baked through the material's [PaletteRef], which
-    /// carries its colors already.
+    /// Whether the icon bound for a material index was baked through the material's [PaletteRef].
     boolean isPaletteBaked(int index) {
         return paletteIndices.contains(index);
     }

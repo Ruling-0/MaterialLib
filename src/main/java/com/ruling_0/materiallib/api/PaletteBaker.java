@@ -18,7 +18,7 @@ final class PaletteBaker {
 
     /// A base texture reduced to palette ranks. `indices` holds each pixel's rank, or -1 where the pixel is fully
     /// transparent and takes no color from the palette; `alphas` holds each pixel's own alpha, which survives
-    /// baking untouched. `uniqueCount` is the number of ranks, so a palette shorter than it will be clamped.
+    /// baking untouched. `uniqueCount` is the number of ranks.
     record IndexedImage(int width, int height, int[] indices, int[] alphas, int uniqueCount) {}
 
     /// Ranks the distinct shades of `argb` by descending value and maps every pixel to its rank. Shades carried
@@ -44,9 +44,8 @@ final class PaletteBaker {
     }
 
     /// Recolors `base` through `palette`, one entry per rank. Ranks past the palette's last entry take that last
-    /// entry, so art carrying more colors than the palette has entries flattens its darkest shades together
-    /// instead of failing. A palette entry's own alpha is ignored: each pixel keeps the base's alpha, and a fully
-    /// transparent pixel stays fully transparent.
+    /// entry. A palette entry's own alpha is ignored: each pixel keeps the base's alpha, and a fully transparent
+    /// pixel stays fully transparent.
     static int[] bake(IndexedImage base, int[] palette) {
         int[] indices = base.indices();
         int[] alphas = base.alphas();
@@ -61,8 +60,7 @@ final class PaletteBaker {
     }
 
     /// Column `column` of a palette png, its entries running top to bottom, or null if the column lies outside the
-    /// png or holds no entries at all. Trailing fully transparent pixels are dropped, which is how columns of
-    /// different lengths share one png; an interior transparent pixel is a real entry.
+    /// png or holds no entries at all. Trailing fully transparent pixels are dropped.
     static int[] paletteColumn(int[] argb, int width, int height, int column) {
         if (column < 0 || column >= width) return null;
         int entries = height;

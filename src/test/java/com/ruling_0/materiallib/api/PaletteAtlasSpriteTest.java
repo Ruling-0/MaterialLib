@@ -8,9 +8,8 @@ import java.awt.image.BufferedImage;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins the level array [PaletteAtlasSprite] hands `loadSprite`. The array is sized by the client's mipmap setting and
-/// its tail is deliberately null, which no headless or server-side run can observe: a ladder holding only the art
-/// loads and stitches fine, then crashes the client in `TextureUtil.generateMipmapData`.
+/// Pins the level array [PaletteAtlasSprite] hands `loadSprite`: sized by the client's mipmap setting, with a null
+/// tail that no headless run can observe.
 class PaletteAtlasSpriteTest {
 
     /// One slot per mipmap level sits above the art -- four of them at the default client setting -- and every one

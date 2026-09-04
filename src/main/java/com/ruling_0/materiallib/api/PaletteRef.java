@@ -34,10 +34,9 @@ public record PaletteRef(String modid, String name, int column) {
         }
     }
 
-    /// The atlas name of the sprite baked from the art at `resolvedBasePath` through this palette. Naming it after
-    /// the resolved path lets materials sharing both base art and palette column share one sprite, while art a
-    /// texture set varies bakes separately. `mlbaked/` names no file on disk, so the name always reaches the
-    /// baking loader.
+    /// The atlas name of the sprite baked from the art at `resolvedBasePath` through this palette; materials
+    /// sharing both share the sprite. `mlbaked/` names no file on disk, so the name always reaches the baking
+    /// loader.
     public String bakedIconName(String resolvedBasePath) {
         return MaterialLib.MODID + ":mlbaked/" + resolvedBasePath.replace(':', '/') + "/" + modid + "/" + name + "/" +
             column;

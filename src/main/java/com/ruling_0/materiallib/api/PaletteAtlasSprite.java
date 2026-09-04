@@ -87,20 +87,19 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
             }
             BufferedImage composited = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             composited.setRGB(0, 0, width, height, pixels, 0, width);
-            loadSprite(frameLadder(composited, Minecraft.getMinecraft().gameSettings.mipmapLevels),
-                base.animation(),
+            loadSprite(frameLadder(composited, Minecraft.getMinecraft().gameSettings.mipmapLevels), base.animation(),
                 !isItem && Minecraft.getMinecraft().gameSettings.anisotropicFiltering > 1);
             return false;
         }
         catch (RuntimeException e) {
-            MaterialLib.LOG.error("Could not bake {}; the sprite renders the missing texture", getIconName(), e);
+            MaterialLib.LOG.error("Could not bake {}", getIconName(), e);
             return true;
         }
     }
 
     /// The level array `loadSprite` takes for `composited`: the art in slot 0 and one null slot per mipmap level
-    /// above it, exactly as vanilla's own read leaves them. `TextureUtil.generateMipmapData` indexes a slot per
-    /// level and fills them itself, so an array sized to the art alone puts that indexing out of bounds.
+    /// above it, exactly as vanilla's own read leaves them; `TextureUtil.generateMipmapData` fills one slot per
+    /// level itself.
     static BufferedImage[] frameLadder(BufferedImage composited, int mipmapLevels) {
         BufferedImage[] levels = new BufferedImage[1 + mipmapLevels];
         levels[0] = composited;
@@ -113,11 +112,7 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
             return new BaseArt(readImage(resource), (AnimationMetadataSection) resource.getMetadata("animation"));
         }
         catch (IOException e) {
-            MaterialLib.LOG.error(
-                "Could not read base texture {} of {}; the sprite renders the missing texture",
-                basePath,
-                getIconName(),
-                e);
+            MaterialLib.LOG.error("Could not read base texture {} of {}", basePath, getIconName(), e);
             return null;
         }
     }
@@ -130,22 +125,16 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
             image = readImage(manager.getResource(texturePath(path)));
         }
         catch (IOException e) {
-            warnLayer("Could not read {} for {}; that layer is dropped", path, getIconName(), e);
+            warnLayer("Could not read layer {} of {}", path, getIconName(), e);
             return null;
         }
         if (image.getWidth() != frameWidth || image.getHeight() < frameWidth) {
-            warnLayer(
-                "{} is {}x{} but {} draws {}px frames; that layer is dropped",
-                path,
-                image.getWidth(),
-                image.getHeight(),
-                getIconName(),
+            warnLayer("{} is {}x{} but {} draws {}px frames", path, image.getWidth(), image.getHeight(), getIconName(),
                 frameWidth);
             return null;
         }
         if (image.getHeight() > frameWidth) {
-            warnLayer("{} is animated, which a baked layer cannot be; only its top frame reaches {}", path,
-                getIconName());
+            warnLayer("{} is animated but a layer baked into {} cannot be", path, getIconName());
         }
         return image.getRGB(0, 0, frameWidth, frameWidth, null, 0, frameWidth);
     }
@@ -177,11 +166,8 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
     private void warnPalette() {
         if (warnedPalette) return;
         warnedPalette = true;
-        MaterialLib.LOG.warn(
-            "Could not resolve column {} of {}; {} keeps the colors its art was drawn in",
-            palette.column(),
-            PaletteSprites.palettePng(palette),
-            getIconName());
+        MaterialLib.LOG.warn("Could not resolve column {} of {} for {}", palette.column(),
+            PaletteSprites.palettePng(palette), getIconName());
     }
 
     private void warnLayer(String message, Object... args) {
