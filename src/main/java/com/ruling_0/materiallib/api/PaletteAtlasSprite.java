@@ -26,15 +26,14 @@ import cpw.mods.fml.relauncher.SideOnly;
 ///
 /// Baking happens inside Forge's custom-loader hook, which replaces the atlas's own read of a file named after
 /// the sprite. The name therefore only has to be unique on the atlas, and the art comes from the paths passed to
-/// the constructor. Animation follows the base texture: its `animation` metadata and strip height decide the
-/// frames, and a layer authored for one frame is repeated over all of them.
+/// the constructor. Animation follows the base texture.
 ///
-/// A base texture that cannot be read leaves the sprite unstitched, so the atlas fills it with the missing
-/// texture. Every other failure -- an unresolvable palette column, a layer of the wrong size -- still flattens
-/// the art it has, uncolored, and logs.
+/// A base texture that cannot be read is resolved as the missing texture. Other failures resolve as flattened
+/// but uncolored, with a log entry.
 @SideOnly(Side.CLIENT)
 final class PaletteAtlasSprite extends TextureAtlasSprite {
 
+    /// Record of a [BufferedImage] image and [AnimationMetadataSection] animation
     private record BaseArt(BufferedImage image, AnimationMetadataSection animation) {}
 
     private final boolean isItem;

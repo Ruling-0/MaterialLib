@@ -1,17 +1,8 @@
 package com.ruling_0.materiallib.api;
 
-/// The pixel arithmetic behind [PaletteRef]: recoloring shape art through a palette column and flattening the
-/// recolored layers into one sprite.
+/// Handles the pixel-level arithmetic behind [PaletteRef].
 ///
-/// A base texture is first indexed -- its distinct shades ranked from lightest to darkest, every pixel replaced
-/// by its rank. Shape art is grayscale, so a pixel's shade is its HSV value, the brightest of its channels; hue
-/// plays no part. Ranking by shade rather than by authored color is what lets one artwork accept any palette:
-/// rank 0 is the art's highlight, the last rank its deepest shadow, and a palette column supplies a color for
-/// each in that same order. A rank map depends only on the base texture, so one map serves every material baking
-/// that texture.
-///
-/// Everything here is plain ARGB `int[]`. Reading pngs, locating palettes, and handing sprites to the texture
-/// atlas belong to the callers.
+/// A base texture is indexed such that each pixel's HSV value has an index, sorted in order of decreasing value.
 final class PaletteBaker {
 
     private PaletteBaker() {}
