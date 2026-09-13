@@ -30,8 +30,8 @@ import cpw.mods.fml.common.registry.GameRegistry;
 ///
 /// TestPalette draws column 1 of the `test` palette, a four-entry column short enough to merge the art's darker
 /// shades. Its ingot2 shape shows the composite: the numbered layers baked through the same column and the
-/// `_OVERLAY` left in its authored colors, flattened into one animated sprite whose static layers repeat over
-/// both frames. testOre draws the baked icon over its untinted vanilla variant bases and testBucket a baked
+/// `_OVERLAY` left in its authored colors, flattened into one animated sprite from layers that are two-frame
+/// strips themselves. testOre draws the baked icon over its untinted vanilla variant bases and testBucket a baked
 /// fill over its untinted base, while the fluid still tints from the material's TINT.
 public final class ExampleContent {
 
@@ -76,7 +76,8 @@ public final class ExampleContent {
         Shape testFluid = MaterialLibAPI.newFluidShape(MaterialLib.MODID, "test").displayName("Molten %s")
             .iconPath("minecraft:water_still").build();
 
-        Shape testBucket = MaterialLibAPI.newFluidInContainerShape(MaterialLib.MODID, "testBucket").displayName("%s Bucket")
+        Shape testBucket = MaterialLibAPI.newFluidInContainerShape(MaterialLib.MODID, "testBucket")
+            .displayName("%s Bucket")
             .oreDict("bucket")
             .fluid(testFluid)
             .emptyContainer(new ItemStack(Items.bucket)).emptyIcon("minecraft:bucket_empty")
