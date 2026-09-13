@@ -34,7 +34,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 final class PaletteAtlasSprite extends TextureAtlasSprite {
 
-    /// Record of a [BufferedImage] image and [AnimationMetadataSection] animation
+    /// The base art, or a flattened strip, with the animation it plays.
     record Art(BufferedImage image, AnimationMetadataSection animation) {}
 
     private final boolean isItem;

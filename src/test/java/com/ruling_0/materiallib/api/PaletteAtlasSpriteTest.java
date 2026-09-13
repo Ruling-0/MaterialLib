@@ -46,6 +46,7 @@ class PaletteAtlasSpriteTest {
 
     /// Two 1x1 frames stacked into a 1x2 strip.
     private static final AnimationMetadataSection TWO_FRAMES = new AnimationMetadataSection(List.of(), 1, 1, 20);
+    private static final AnimationMetadataSection LAYER_ONLY = new AnimationMetadataSection(List.of(), 1, 1, 5);
 
     private final PngResources resources = new PngResources();
 
@@ -58,10 +59,10 @@ class PaletteAtlasSpriteTest {
 
     /// The base's two shades take the palette's two entries. A numbered layer marking only the second frame is
     /// baked through its own single rank and drawn on that frame alone; an overlay marking only the first frame is
-    /// drawn as authored on that frame alone.
+    /// drawn as authored on that frame alone. The layer's own animation metadata is ignored.
     @Test
     void layersBakeFrameForFrameWithTheBaseStrip() throws IOException {
-        resources.put(itemPng(LAYER), 1, 2, new int[] { 0, DARK }, null);
+        resources.put(itemPng(LAYER), 1, 2, new int[] { 0, DARK }, LAYER_ONLY);
         resources.put(itemPng(OVERLAY), 1, 2, new int[] { BLUE, 0 }, null);
         PaletteAtlasSprite sprite = new PaletteAtlasSprite("materiallib:mlbaked/anim", true, BASE, List.of(LAYER),
             OVERLAY, PALETTE);
@@ -72,7 +73,7 @@ class PaletteAtlasSpriteTest {
         assertArrayEquals(new int[] { BLUE, RED }, art.image().getRGB(0, 0, 1, 2, null, 0, 1));
     }
 
-    /// A layer authored at frame size against a two-frame base is neither cropped nor repeated: it is left out.
+    /// A layer authored at frame size against a two-frame base is left out.
     @Test
     void aLayerThatIsNotTheBaseStripIsLeftOut() throws IOException {
         resources.put(itemPng(LAYER), 1, 1, new int[] { DARK }, null);
