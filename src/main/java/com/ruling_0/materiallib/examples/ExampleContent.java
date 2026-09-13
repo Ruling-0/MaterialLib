@@ -51,15 +51,21 @@ public final class ExampleContent {
         TextureSet test = TextureSet.of(MaterialLib.MODID, "test");
 
         Shape testGear = MaterialLibAPI.newItemShape(MaterialLib.MODID, "testGear").displayName("%s Gear")
-            .oreDict("gear", "cog").build();
+            .oreDict("gear", "cog")
+            .build();
 
-        Shape ingot = MaterialLibAPI.newItemShape(MaterialLib.MODID, "ingot").displayName("%s Ingot").build();
-        Shape ingot2 = MaterialLibAPI.newItemShape(MaterialLib.MODID, "ingot2").displayName("%s Special Ingot").build();
+        Shape ingot = MaterialLibAPI.newItemShape(MaterialLib.MODID, "ingot").displayName("%s Ingot")
+            .build();
+        Shape ingot2 = MaterialLibAPI.newItemShape(MaterialLib.MODID, "ingot2").displayName("%s Special Ingot")
+            .build();
 
-        Shape block = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "block").displayName("%s Block").build();
+        Shape block = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "block").displayName("%s Block")
+            .build();
 
         Shape testFrame = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "testFrame").displayName("%s Frame")
-            .oreDict("frameGt").harvestTool("wrench").build();
+            .oreDict("frameGt")
+            .harvestTool("wrench")
+            .build();
 
         Shape testOre = MaterialLibAPI.newBlockShape(MaterialLib.MODID, "testOre").displayName("%s Ore").oreDict("ore")
             .variants("stone", "cobblestone").variantBase("stone", TEST_ORE_STONE_BASE_TEXTURE)
@@ -70,24 +76,33 @@ public final class ExampleContent {
         Shape testFluid = MaterialLibAPI.newFluidShape(MaterialLib.MODID, "test").displayName("Molten %s")
             .iconPath("minecraft:water_still").build();
 
-        Shape testBucket = MaterialLibAPI.newFluidInContainerShape(MaterialLib.MODID, "testBucket").fluid(testFluid)
-            .displayName("%s Bucket").emptyContainer(new ItemStack(Items.bucket)).emptyIcon("minecraft:bucket_empty")
-            .oreDict("bucket").build();
+        Shape testBucket = MaterialLibAPI.newFluidInContainerShape(MaterialLib.MODID, "testBucket").displayName("%s Bucket")
+            .oreDict("bucket")
+            .fluid(testFluid)
+            .emptyContainer(new ItemStack(Items.bucket)).emptyIcon("minecraft:bucket_empty")
+            .build();
 
         Family testFamily = MaterialLibAPI.newFamily(MaterialLib.MODID, "Test").generateShape(testFrame).build();
 
         MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestIron", test)
-            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2).addToFamily(testFamily)
-            .addTooltip("Iron strong").build();
+            .addToFamily(testFamily)
+            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2)
+            .addTooltip("Iron strong")
+            .build();
 
-        MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestGold", test).setTint(0xFFFFD700)
-            .setLayerTints(0xFF00D0D3, 0xFF6F00D1)
-            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2).addToFamily(testFamily)
-            .addTooltip("Shiny gold", "so shiny").build();
+        MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestGold", test)
+            .addToFamily(testFamily)
+            .setTint(0xFFFFD700).setLayerTints(0xFF00D0D3, 0xFF6F00D1)
+            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2)
+            .addTooltip("Shiny gold", "so shiny")
+            .build();
 
-        MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestPalette", test).usePalette(MaterialLib.MODID, "test", 1)
-            .setTint(0xFF4488FF).generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2)
-            .addToFamily(testFamily).addTooltip("Palette baked").build();
+        MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestPalette", test)
+            .addToFamily(testFamily)
+            .usePalette(MaterialLib.MODID, "test", 1).setTint(0xFF4488FF)
+            .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2)
+            .addTooltip("Palette baked")
+            .build();
 
         MaterialLibAPI.registerShapeConsumer(MaterialLib.MODID, testGear, (shape, material) -> {
             ItemStack gear = MaterialLibAPI.getStack(material, shape, 1);
