@@ -26,15 +26,16 @@ import cpw.mods.fml.relauncher.SideOnly;
 ///
 /// Baking happens inside Forge's custom-loader hook, which replaces the atlas's own read of a file named after
 /// the sprite. The name therefore only has to be unique on the atlas, and the art comes from the paths passed to
-/// the constructor. Animation follows the base texture.
+/// the constructor. Animation follows the base texture: every layer is a strip of the base's exact size, drawn
+/// frame for frame, and only the base's animation metadata is read.
 ///
 /// A base texture that cannot be read is resolved as the missing texture. Other failures resolve as flattened
-/// but uncolored, with a log entry.
+/// but uncolored, with a log entry. A layer of any other size is left out.
 @SideOnly(Side.CLIENT)
 final class PaletteAtlasSprite extends TextureAtlasSprite {
 
     /// Record of a [BufferedImage] image and [AnimationMetadataSection] animation
-    private record BaseArt(BufferedImage image, AnimationMetadataSection animation) {}
+    record Art(BufferedImage image, AnimationMetadataSection animation) {}
 
     private final boolean isItem;
     private final String basePath;
@@ -65,28 +66,9 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
     @Override
     public boolean load(IResourceManager manager, ResourceLocation location) {
         try {
-            BaseArt base = readBase(manager);
-            if (base == null) return true;
-            int width = base.image().getWidth();
-            int height = base.image().getHeight();
-            int frames = base.animation() != null ? height / width : 1;
-            int[] pixels = base.image().getRGB(0, 0, width, height, null, 0, width);
-            int[] entries = PaletteSprites.paletteEntries(manager, palette);
-            if (entries != null) pixels = PaletteBaker.bake(PaletteBaker.index(pixels, width, height), entries);
-            else warnPalette();
-            for (String layerPath : layerPaths) {
-                int[] layer = layerPixels(manager, layerPath, width);
-                if (layer == null) continue;
-                if (entries != null) layer = PaletteBaker.bake(PaletteBaker.index(layer, width, width), entries);
-                compositeFrames(pixels, layer, width, frames);
-            }
-            if (overlayPath != null) {
-                int[] overlay = layerPixels(manager, overlayPath, width);
-                if (overlay != null) compositeFrames(pixels, overlay, width, frames);
-            }
-            BufferedImage composited = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-            composited.setRGB(0, 0, width, height, pixels, 0, width);
-            loadSprite(frameLadder(composited, Minecraft.getMinecraft().gameSettings.mipmapLevels), base.animation(),
+            Art art = bake(manager);
+            if (art == null) return true;
+            loadSprite(frameLadder(art.image(), Minecraft.getMinecraft().gameSettings.mipmapLevels), art.animation(),
                 !isItem && Minecraft.getMinecraft().gameSettings.anisotropicFiltering > 1);
             return false;
         }
@@ -94,6 +76,31 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
             MaterialLib.LOG.error("Could not bake {}", getIconName(), e);
             return true;
         }
+    }
+
+    /// The flattened strip with the base texture's animation, or null when the base texture cannot be read.
+    Art bake(IResourceManager manager) {
+        Art base = readBase(manager);
+        if (base == null) return null;
+        int width = base.image().getWidth();
+        int height = base.image().getHeight();
+        int[] pixels = base.image().getRGB(0, 0, width, height, null, 0, width);
+        int[] entries = PaletteSprites.paletteEntries(manager, palette);
+        if (entries != null) pixels = PaletteBaker.bake(PaletteBaker.index(pixels, width, height), entries);
+        else warnPalette();
+        for (String layerPath : layerPaths) {
+            int[] layer = layerPixels(manager, layerPath, width, height);
+            if (layer == null) continue;
+            if (entries != null) layer = PaletteBaker.bake(PaletteBaker.index(layer, width, height), entries);
+            PaletteBaker.compositeOver(pixels, layer);
+        }
+        if (overlayPath != null) {
+            int[] overlay = layerPixels(manager, overlayPath, width, height);
+            if (overlay != null) PaletteBaker.compositeOver(pixels, overlay);
+        }
+        BufferedImage composited = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+        composited.setRGB(0, 0, width, height, pixels, 0, width);
+        return new Art(composited, base.animation());
     }
 
     /// The level array `loadSprite` takes for `composited`: the art in slot 0 and one null slot per mipmap level
@@ -105,10 +112,10 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
         return levels;
     }
 
-    private BaseArt readBase(IResourceManager manager) {
+    private Art readBase(IResourceManager manager) {
         try {
             IResource resource = manager.getResource(texturePath(basePath));
-            return new BaseArt(readImage(resource), (AnimationMetadataSection) resource.getMetadata("animation"));
+            return new Art(readImage(resource), (AnimationMetadataSection) resource.getMetadata("animation"));
         }
         catch (IOException e) {
             MaterialLib.LOG.error("Could not read base texture {} of {}", basePath, getIconName(), e);
@@ -116,9 +123,8 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
         }
     }
 
-    /// The top `frameWidth` x `frameWidth` frame of the art at `path`, or null when that art is unreadable or
-    /// does not cover such a frame.
-    private int[] layerPixels(IResourceManager manager, String path, int frameWidth) {
+    /// The pixels of the art at `path`, or null when that art is unreadable or is not `width` x `height`.
+    private int[] layerPixels(IResourceManager manager, String path, int width, int height) {
         BufferedImage image;
         try {
             image = readImage(manager.getResource(texturePath(path)));
@@ -127,26 +133,12 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
             warnLayer("Could not read layer {} of {}", path, getIconName(), e);
             return null;
         }
-        if (image.getWidth() != frameWidth || image.getHeight() < frameWidth) {
-            warnLayer("{} is {}x{} but {} draws {}px frames", path, image.getWidth(), image.getHeight(), getIconName(),
-                frameWidth);
+        if (image.getWidth() != width || image.getHeight() != height) {
+            warnLayer("{} is {}x{} but the base of {} is {}x{}", path, image.getWidth(), image.getHeight(),
+                getIconName(), width, height);
             return null;
         }
-        if (image.getHeight() > frameWidth) {
-            warnLayer("{} is animated but a layer baked into {} cannot be", path, getIconName());
-        }
-        return image.getRGB(0, 0, frameWidth, frameWidth, null, 0, frameWidth);
-    }
-
-    /// Draws `layer` over every frame region of `composited`, which holds `frames` frames of `frameWidth` square.
-    private static void compositeFrames(int[] composited, int[] layer, int frameWidth, int frames) {
-        int frameSize = frameWidth * frameWidth;
-        int[] frame = new int[frameSize];
-        for (int offset = 0; offset < frames * frameSize; offset += frameSize) {
-            System.arraycopy(composited, offset, frame, 0, frameSize);
-            PaletteBaker.compositeOver(frame, layer);
-            System.arraycopy(frame, 0, composited, offset, frameSize);
-        }
+        return image.getRGB(0, 0, width, height, null, 0, width);
     }
 
     private static BufferedImage readImage(IResource resource) throws IOException {
