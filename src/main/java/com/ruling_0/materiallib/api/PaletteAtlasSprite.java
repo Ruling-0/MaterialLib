@@ -21,8 +21,8 @@ import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
 /// One atlas sprite baked from a shape's art through a [PaletteRef]: the base texture and its numbered layers
-/// recolored by the palette's column, the overlay kept as authored, all flattened in draw order into the single
-/// sprite the atlas stitches.
+/// recolored by the palette's column, the overlay kept without coloring, all flattened in draw order into one
+/// sprite.
 ///
 /// Baking happens inside Forge's custom-loader hook, which replaces the atlas's own read of a file named after
 /// the sprite. The name therefore only has to be unique on the atlas, and the art comes from the paths passed to
@@ -34,7 +34,7 @@ import cpw.mods.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 final class PaletteAtlasSprite extends TextureAtlasSprite {
 
-    /// The base art, or a flattened strip, with the animation it plays.
+    /// Base art with composited layers, and any animation metadata
     record Art(BufferedImage image, AnimationMetadataSection animation) {}
 
     private final boolean isItem;
@@ -104,8 +104,7 @@ final class PaletteAtlasSprite extends TextureAtlasSprite {
     }
 
     /// The level array `loadSprite` takes for `composited`: the art in slot 0 and one null slot per mipmap level
-    /// above it, exactly as vanilla's own read leaves them; `TextureUtil.generateMipmapData` fills one slot per
-    /// level itself.
+    /// above it, similar to vanilla. `TextureUtil.generateMipmapData` fills one slot per level.
     static BufferedImage[] frameLadder(BufferedImage composited, int mipmapLevels) {
         BufferedImage[] levels = new BufferedImage[1 + mipmapLevels];
         levels[0] = composited;
