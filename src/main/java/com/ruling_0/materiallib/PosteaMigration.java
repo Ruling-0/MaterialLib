@@ -1,5 +1,8 @@
 package com.ruling_0.materiallib;
 
+import static net.minecraftforge.common.util.Constants.NBT.TAG_STRING;
+
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -8,6 +11,7 @@ import net.minecraft.item.Item;
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.gtnewhorizons.postea.api.ChunkTransformContext;
+import com.gtnewhorizons.postea.api.CustomDataTransformContext;
 import com.gtnewhorizons.postea.api.IDExtenderCompat;
 import com.gtnewhorizons.postea.api.IVersionedTransformer;
 import com.gtnewhorizons.postea.api.PlayerDataTransformContext;
@@ -24,10 +28,11 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 /// MaterialLib's Postea transformer: rewrites every shape block's metadata and every shape stack's damage in a
-/// chunk or a player's data from the material id list version the data was saved under to the current one, through
-/// the world's [MaterialIdTransitions] chain. Data Postea never stamped reads as list version 1, the adopted
-/// baseline. Data stamped ahead of the world's store, or across a span the store has no transition for, is left
-/// untouched: it stays recoverable once the matching store is back.
+/// chunk, a player's data, or a mod's own world storage from the material id list version the data was saved under
+/// to the current one, through the world's [MaterialIdTransitions] chain. Data Postea never stamped reads as list
+/// version 1, the adopted baseline. Data stamped ahead of the world's store, or across a span the store has no
+/// transition for, is left untouched: it stays recoverable once the matching store is back. Custom storage may
+/// hold stacks under registry names instead of numeric ids; those match against the shape items' names.
 ///
 /// Shape ids are derived from the registries on first use after each id remap, since FML rewrites numeric ids to the
 /// world's map after the server starts.
@@ -37,6 +42,7 @@ public final class PosteaMigration implements IVersionedTransformer {
 
     private static volatile IntSet blockIds;
     private static volatile IntSet itemIds;
+    private static volatile Set<String> itemNames;
     private static final Set<Long> REPORTED_SPANS = ConcurrentHashMap.newKeySet();
 
     private PosteaMigration() {}
@@ -46,10 +52,11 @@ public final class PosteaMigration implements IVersionedTransformer {
         VersionedReplacementManager.register(new PosteaMigration());
     }
 
-    /// Drops the cached shape ids.
+    /// Drops the cached shape ids and names.
     public static void invalidateIds() {
         blockIds = null;
         itemIds = null;
+        itemNames = null;
     }
 
     @Override
@@ -82,7 +89,8 @@ public final class PosteaMigration implements IVersionedTransformer {
             }
         });
         IntSet items = itemIds();
-        ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items));
+        Set<String> names = itemNames();
+        ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items, names));
     }
 
     @Override
@@ -93,7 +101,20 @@ public final class PosteaMigration implements IVersionedTransformer {
             ctx.currentVersion());
         if (remap.isEmpty()) return;
         IntSet items = itemIds();
-        ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items));
+        Set<String> names = itemNames();
+        ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items, names));
+    }
+
+    @Override
+    public void transformCustomData(CustomDataTransformContext ctx) {
+        Int2IntMap remap = remap(
+            WorldMaterialIds.transitions(),
+            storedOrBaseline(ctx.storedVersion()),
+            ctx.currentVersion());
+        if (remap.isEmpty()) return;
+        IntSet items = itemIds();
+        Set<String> names = itemNames();
+        ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items, names));
     }
 
     /// The list version to migrate from: Postea's stamp, or 1 for data that has none.
@@ -121,10 +142,12 @@ public final class PosteaMigration implements IVersionedTransformer {
         }
     }
 
-    /// Rewrites `stack`'s damage through `remap` when its item is one of `shapeItems`; a deleted index strips the
-    /// item id so the stack loads as empty.
-    static void remapStack(NBTTagCompound stack, Int2IntMap remap, IntSet shapeItems) {
-        if (!shapeItems.contains(IDExtenderCompat.getItemStackID(stack))) return;
+    /// Rewrites `stack`'s damage through `remap` when its item is one of `shapeItems` (numeric id) or
+    /// `shapeItemNames` (string id); a deleted index strips the item id so the stack loads as empty.
+    static void remapStack(NBTTagCompound stack, Int2IntMap remap, IntSet shapeItems, Set<String> shapeItemNames) {
+        boolean shape = stack.hasKey("id", TAG_STRING) ? shapeItemNames.contains(stack.getString("id")) :
+            shapeItems.contains(IDExtenderCompat.getItemStackID(stack));
+        if (!shape) return;
         int damage = stack.getShort("Damage");
         int result = remap.getOrDefault(damage, damage);
         if (result == damage) return;
@@ -163,5 +186,21 @@ public final class PosteaMigration implements IVersionedTransformer {
             itemIds = ids;
         }
         return ids;
+    }
+
+    private static Set<String> itemNames() {
+        Set<String> names = itemNames;
+        if (names == null) {
+            names = new HashSet<>();
+            ShapeRegistry registry = ShapeRegistry.instance();
+            for (ShapeItem item : registry.getItemShapes()) {
+                names.add(Item.itemRegistry.getNameForObject(item));
+            }
+            for (ShapeBlock block : registry.getBlockShapes()) {
+                names.add(Item.itemRegistry.getNameForObject(Item.getItemFromBlock(block)));
+            }
+            itemNames = names;
+        }
+        return names;
     }
 }

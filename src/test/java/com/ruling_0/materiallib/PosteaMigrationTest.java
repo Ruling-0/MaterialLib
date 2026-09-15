@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Collections;
+import java.util.Set;
+
 import net.minecraft.nbt.NBTTagCompound;
 
 import com.gtnewhorizons.postea.api.ChunkTransformContext;
@@ -20,6 +23,8 @@ class PosteaMigrationTest {
 
     private static final int SHAPE_ITEM_ID = 4200;
     private static final IntSet SHAPE_ITEMS = new IntOpenHashSet(new int[] { SHAPE_ITEM_ID });
+    private static final String SHAPE_ITEM_NAME = "materiallib:shape.ingot";
+    private static final Set<String> SHAPE_ITEM_NAMES = Collections.singleton(SHAPE_ITEM_NAME);
 
     private static Int2IntMap remap() {
         Int2IntMap remap = new Int2IntOpenHashMap();
@@ -36,6 +41,14 @@ class PosteaMigrationTest {
         return stack;
     }
 
+    private static NBTTagCompound stringStack(String id, int damage) {
+        NBTTagCompound stack = new NBTTagCompound();
+        stack.setString("id", id);
+        stack.setInteger("Count", 1);
+        stack.setShort("Damage", (short) damage);
+        return stack;
+    }
+
     @Test
     void remapStackAppliesEveryOutcomeToShapeStacksOnly() {
         NBTTagCompound unchanged = stack(SHAPE_ITEM_ID, 0);
@@ -44,13 +57,30 @@ class PosteaMigrationTest {
         NBTTagCompound foreign = stack(7, 1);
 
         for (NBTTagCompound stack : new NBTTagCompound[] { unchanged, moved, deleted, foreign }) {
-            PosteaMigration.remapStack(stack, remap(), SHAPE_ITEMS);
+            PosteaMigration.remapStack(stack, remap(), SHAPE_ITEMS, SHAPE_ITEM_NAMES);
         }
 
         assertEquals(0, unchanged.getShort("Damage"));
         assertEquals(5, moved.getShort("Damage"));
         assertFalse(deleted.hasKey("id"));
         assertFalse(deleted.hasKey("idExt"));
+        assertEquals(1, foreign.getShort("Damage"));
+        assertTrue(foreign.hasKey("id"));
+    }
+
+    // Custom storage (quest databases) keeps stacks under registry names; matching goes by the shape item's name.
+    @Test
+    void remapStackMatchesStringIdStacksByShapeItemName() {
+        NBTTagCompound moved = stringStack(SHAPE_ITEM_NAME, 1);
+        NBTTagCompound deleted = stringStack(SHAPE_ITEM_NAME, 2);
+        NBTTagCompound foreign = stringStack("minecraft:stone", 1);
+
+        for (NBTTagCompound stack : new NBTTagCompound[] { moved, deleted, foreign }) {
+            PosteaMigration.remapStack(stack, remap(), SHAPE_ITEMS, SHAPE_ITEM_NAMES);
+        }
+
+        assertEquals(5, moved.getShort("Damage"));
+        assertFalse(deleted.hasKey("id"));
         assertEquals(1, foreign.getShort("Damage"));
         assertTrue(foreign.hasKey("id"));
     }
