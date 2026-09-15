@@ -148,8 +148,8 @@ public class ShapeFluidInContainer extends ShapeItem {
 
     /// White for the container base's first pass, the fill tint (see the class doc) for the pass over it, and each
     /// later fill layer's own color (see [ShapeItem#getColorFromItemStack]) for the passes after that. The fill's
-    /// first pass is white for a damage value carrying no live material and for an override-bound fill icon; see
-    /// [ShapeItem#hasOverrideIcon].
+    /// first pass is white for a damage value carrying no live material, for an override-bound fill icon, and for a
+    /// palette-baked one; see [ShapeItem#hasOverrideIcon] and [ShapeItem#hasPaletteBakedIcon].
     @Override
     @SideOnly(Side.CLIENT)
     public int getColorFromItemStack(ItemStack stack, int renderPass) {
@@ -157,6 +157,7 @@ public class ShapeFluidInContainer extends ShapeItem {
         if (renderPass > 1) return super.getColorFromItemStack(stack, renderPass - 1);
         Material material = ShapeText.materialFor(stack);
         if (material == null || hasOverrideIcon(material)) return 0xFFFFFFFF;
+        if (hasPaletteBakedIcon(material)) return 0xFFFFFFFF;
         if (material.getProperty(StandardProperties.CELL_TINT) == null) return ShapeFluid.tintOf(material);
         return MaterialTints.color(material, StandardProperties.CELL_TINT);
     }

@@ -53,6 +53,12 @@ public final class MaterialBuilder {
         return setProperty(StandardProperties.FLUID_TINT, fluidTint);
     }
 
+    /// Sets [StandardProperties#PALETTE], baking the material's shape art through column `column` of the palette
+    /// png `assets/<modid>/textures/palettes/<name>.png` in place of the tint path; see [PaletteRef].
+    public MaterialBuilder usePalette(String modid, String name, int column) {
+        return setProperty(StandardProperties.PALETTE, new PaletteRef(modid, name, column));
+    }
+
     /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
     public <T> MaterialBuilder setProperty(Property<T> property, T value) {
         StandardProperties.requireSettable(property, value);

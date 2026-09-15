@@ -32,7 +32,7 @@ public class ShapeItem extends Item implements BackedShape {
 
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeProperties props = new ShapeProperties();
-    private final ShapeIcons icons = new ShapeIcons(true);
+    private final ShapeIcons icons = new ShapeIcons(true, true);
     private String iconNameOverride;
 
     /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
@@ -174,8 +174,8 @@ public class ShapeItem extends Item implements BackedShape {
 
     /// The ARGB tint `material`'s layer `layer` takes on this shape: [StandardProperties#TINT] for layer 0 and the
     /// [StandardProperties#LAYER_TINTS] element for a later one. White for the trailing `_OVERLAY` layer, for a
-    /// layer the list codes no element for, and for an override-bound stack. A caller compositing the icon itself
-    /// applies this per layer.
+    /// layer the list codes no element for, for an override-bound stack, and for a palette-baked one (see
+    /// [#hasPaletteBakedIcon]). A caller compositing the icon itself applies this per layer.
     @SideOnly(Side.CLIENT)
     public int getMaterialLayerColor(Material material, int layer) {
         return icons.layerColor(material, layer);
@@ -187,6 +187,14 @@ public class ShapeItem extends Item implements BackedShape {
     @SideOnly(Side.CLIENT)
     public boolean hasOverrideIcon(Material material) {
         return icons.isOverride(material.getIndex());
+    }
+
+    /// Whether `material`'s icon was baked through its [PaletteRef], flattening the whole stack into one already
+    /// colored layer. A caller compositing the icon itself skips its own tint the same way it does for
+    /// [#hasOverrideIcon].
+    @SideOnly(Side.CLIENT)
+    public boolean hasPaletteBakedIcon(Material material) {
+        return icons.isPaletteBaked(material.getIndex());
     }
 
     /// The color of the stack's material at layer `renderPass`; see [#getMaterialLayerColor]. White for a damage
