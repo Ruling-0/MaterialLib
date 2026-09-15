@@ -10,10 +10,11 @@ import com.ruling_0.materiallib.MaterialLib;
 /// single sprite. [StandardProperties#TINT] and its siblings stay settable and readable -- fluids and external
 /// consumers still apply them -- but they no longer color the material's baked shape art.
 ///
-/// A palette png holds one palette per column, its entries running top to bottom. Trailing fully-transparent
-/// pixels are ignored; interior transparent entries are not. No maximum height is assumed.
-/// Baking sorts the base texture's distinct shades (its grayscale values, lightest first) and maps them onto the column's entries in that order, clamping to the
-/// last entry where the art carries more shades than the palette. Alpha is kept from the base art and layers.
+/// A palette png holds one palette per column, its entries running top to bottom. Trailing fully-transparent pixels are
+/// ignored; interior transparent entries are not. No maximum height is assumed. Baking sorts the base texture's
+/// distinct shades (its grayscale values, lightest first) and maps them onto the column's entries in that order,
+/// clamping to the last entry where the art carries more shades than the palette. Alpha is kept from the base art and
+/// layers.
 ///
 /// Only texture set art bakes. Overrides under `mloverrides/`, [IconPather] paths, and fluid still/flowing textures
 /// are used without coloring. A missing palette png causes materials to fall back to tinting. A palette that cannot
