@@ -108,6 +108,19 @@ def stack(item, damage, slot_tag):
 def quest_db(world):
     return os.path.join(world, 'betterquesting', 'QuestDatabase.json')
 
+def find_seed_entry(db):
+    # The first requiredItems slot of any quest; the seeded witness replaces it. Within one gate run the
+    # jars never change between boots, so dreamcraft does not reimport the defaults over the seeded file;
+    # if it ever did, the shift assertion would find no witness and fail loudly.
+    for quest in db.get('questDatabase:9', {}).values():
+        if not isinstance(quest, dict): continue
+        for task in quest.get('tasks:9', {}).values():
+            if not isinstance(task, dict): continue
+            req = task.get('requiredItems:9')
+            if isinstance(req, dict) and '0:10' in req:
+                return req
+    raise SystemExit('no requiredItems entry found in the quest database')
+
 def witness_damages(db, item):
     # Every stack of the witness item, wherever the quest sits: dreamcraft reimports the default database
     # whenever it decides the modpack changed, discarding seeded entries and quest order.
@@ -176,15 +189,16 @@ def seed(world, item_name):
 
     with open(quest_db(world), encoding='utf8') as fh:
         db = json.load(fh)
-    damages = witness_damages(db, item_name)
-    if not damages:
-        raise SystemExit('no %s entries in the quest database to witness' % item_name)
+    req = find_seed_entry(db)
+    req['0:10'] = {'Damage:2': old_index, 'Count:3': 1, 'id:8': item_name, 'OreDict:8': ''}
+    with open(quest_db(world), 'w', encoding='utf8') as fh:
+        json.dump(db, fh, indent='	')
     json.dump(
         {'item': item_name, 'numericId': numeric, 'oldIndex': old_index},
         open(expect_file(world), 'w'),
         indent=2)
-    print('seeded: %s (%s) id=%d oldIndex=%d; %d quest entries witness the shift'
-          % (WITNESS, item_name, numeric, old_index, len(damages)))
+    print('seeded: %s (%s) id=%d oldIndex=%d; quest witness entry planted'
+          % (WITNESS, item_name, numeric, old_index))
 
 def assert_shift(world):
     exp = json.load(open(expect_file(world)))
