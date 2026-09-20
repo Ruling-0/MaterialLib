@@ -35,7 +35,7 @@ class MaterialIdStoreTest {
         indices.put("Iron", 0);
         indices.put("Gold", 1);
 
-        MaterialIdStore.write(file(), 4, MaterialRegistry.contentHash(List.of("Iron", "Gold")), indices);
+        MaterialIdStore.write(file(), 4, MaterialRegistry.contentHash(List.of("Iron", "Gold")), "", indices);
 
         MaterialIdStore.WorldIds stored = MaterialIdStore.read(file());
         assertEquals(4, stored.listVersion());
@@ -50,7 +50,7 @@ class MaterialIdStoreTest {
         indices.put("First", 0);
         indices.put("Middle", 1);
 
-        MaterialIdStore.write(file(), 1, MaterialRegistry.contentHash(List.of("First", "Middle", "Last")), indices);
+        MaterialIdStore.write(file(), 1, MaterialRegistry.contentHash(List.of("First", "Middle", "Last")), "", indices);
 
         assertEquals(
             List.of("First", "Middle", "Last"),

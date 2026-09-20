@@ -9,8 +9,9 @@ import java.util.Map;
 import com.ruling_0.materiallib.MaterialLib;
 
 /// Maintains the per-world material id list: the [MaterialIdStore] file and the [MaterialIdTransitions] chain
-/// beside it, advanced whenever the registry's deterministic assignment differs from the one the world last
-/// ran with.
+/// beside it, advanced whenever the registry's deterministic assignment or the set of shape overrides differs
+/// from the one the world last ran with. An override change moves no index, but saved data only passes through
+/// MaterialLib's Postea transformer again when the list version advances.
 public final class WorldMaterialIds {
 
     private static volatile int currentListVersion = 1;
@@ -31,19 +32,23 @@ public final class WorldMaterialIds {
 
     /// Reconciles the world's stored id list under `dir` (the world's `materiallib` directory) with the
     /// registry's assignment, and loads the world's transition chain into [#transitions]. A world with no store
-    /// adopts the current assignment at list version 1. A matching hash leaves everything untouched. A mismatch
-    /// saves the transition from the stored version and advances the store. Throws [IllegalStateException] on a corrupt
-    /// store or transition file, or when either cannot be written.
-    public static void check(MaterialRegistry registry, File dir) {
+    /// adopts the current assignment at list version 1. A matching hash and override digest leave everything
+    /// untouched. A mismatch saves the transition from the stored version and advances the store. Throws
+    /// [IllegalStateException] on a corrupt store or transition file, or when either cannot be written.
+    public static void check(MaterialRegistry registry, ShapeRegistry shapes, File dir) {
+        check(registry, shapes.getOverrideDigest(), dir);
+    }
+
+    static void check(MaterialRegistry registry, String overrides, File dir) {
         Map<String, Integer> current = registry.getAssignedIndices();
         String hash = registry.getContentHash();
         File storeFile = new File(dir, MaterialIdStore.FILE_NAME);
         MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile);
         if (stored == null) {
-            MaterialIdStore.write(storeFile, 1, hash, current);
+            MaterialIdStore.write(storeFile, 1, hash, overrides, current);
             currentListVersion = 1;
         }
-        else if (hash.equals(stored.hash())) {
+        else if (hash.equals(stored.hash()) && overrides.equals(stored.overrides())) {
             currentListVersion = stored.listVersion();
         }
         else {
@@ -52,9 +57,15 @@ public final class WorldMaterialIds {
             MaterialIdTransitions
                 .write(new File(dir, MaterialIdTransitions.DIRECTORY), stored.listVersion(), to, diff.movedIndices(),
                     diff.removedIndices());
-            MaterialIdStore.write(storeFile, to, hash, current);
+            MaterialIdStore.write(storeFile, to, hash, overrides, current);
             currentListVersion = to;
-            if (!diff.isMismatch()) {
+            if (hash.equals(stored.hash())) {
+                MaterialLib.LOG.info(
+                    "Shape overrides changed since this world last ran; advancing its material id list to version " +
+                        "{} so saved stacks and blocks of the overridden pairs are rewritten as they are read.",
+                    to);
+            }
+            else if (!diff.isMismatch()) {
                 MaterialLib.LOG.info(
                     "Materials were added since this world last ran; advancing its material id list to version {} " +
                         "with no index changes.",

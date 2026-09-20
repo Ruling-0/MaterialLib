@@ -60,6 +60,8 @@ public final class StackResolver {
             MaterialLib.LOG.error("Cannot resolve {}:{}: no such item or block shape", materialName, shapeToken);
             return null;
         }
+        ItemStack overridden = ShapeRegistry.instance().overrideStack(material, shape, amount);
+        if (overridden != null) return overridden;
         if (!shape.serves(material)) {
             MaterialLib.LOG
                 .error("Cannot resolve {}:{}: that material does not generate that shape", materialName, shapeToken);

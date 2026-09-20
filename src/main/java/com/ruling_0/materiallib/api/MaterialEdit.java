@@ -3,6 +3,10 @@ package com.ruling_0.materiallib.api;
 import java.util.Arrays;
 import java.util.Objects;
 
+import net.minecraft.block.Block;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+
 /// Queued cross-mod changes to a [Material] identified by key, obtained from [MaterialLibAPI#editMaterial].
 ///
 /// Operations queue immediately as the methods are called (varargs methods queue one operation per element);
@@ -91,6 +95,37 @@ public final class MaterialEdit {
         for (Shape shape : shapes) {
             removeShape(shape);
         }
+        return this;
+    }
+
+    /// Overrides the material's item in `shape`, as [MaterialBuilder#addShapeOverride(Shape, Item, int)]. An
+    /// edit's override beats every declaration's, and the last edit for a shape wins.
+    public MaterialEdit addShapeOverride(Shape shape, Item item, int meta) {
+        Objects.requireNonNull(item, "item must not be null");
+        return addShapeOverride(shape, new ShapeOverride.Eager(new ItemStack(item, 1, meta)));
+    }
+
+    /// [#addShapeOverride(Shape, Item, int)] for a block's item form.
+    public MaterialEdit addShapeOverride(Shape shape, Block block, int meta) {
+        Objects.requireNonNull(block, "block must not be null");
+        return addShapeOverride(shape, new ShapeOverride.Eager(new ItemStack(block, 1, meta)));
+    }
+
+    /// [#addShapeOverride(Shape, Item, int)] for another mod's item or block, as
+    /// [MaterialBuilder#addShapeOverride(Shape, String, String, int)].
+    public MaterialEdit addShapeOverride(Shape shape, String itemModid, String itemName, int meta) {
+        Names.validate("override item modid", itemModid);
+        Objects.requireNonNull(itemName, "itemName must not be null");
+        return addShapeOverride(shape, new ShapeOverride.Named(itemModid, itemName, meta));
+    }
+
+    private MaterialEdit addShapeOverride(Shape shape, ShapeOverride override) {
+        Names.validate(shape);
+        registry.enqueueMaterialOp(
+            modid,
+            name,
+            "override shape " + shape + " with " + override.describe() + " on material",
+            material -> material.setEditedOverride(shape, override));
         return this;
     }
 
