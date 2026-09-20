@@ -33,8 +33,8 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 ///
 /// A (material, shape) pair served by a shape override (see [Material]) keeps the shape in
 /// [Material#getShapes] but leaves the shape's served materials: the shape's own item or block never carries
-/// that material, so nothing that walks served materials lists, renders, or dispatches it, while [#getStack]
-/// answers with the overriding item.
+/// that material, so nothing that walks served materials lists or renders it, while [#getStack] answers with
+/// the overriding item and shape consumers still receive the pair.
 public final class ShapeRegistry {
 
     private static final ShapeRegistry INSTANCE = new ShapeRegistry();
@@ -430,14 +430,14 @@ public final class ShapeRegistry {
     /// Invoked once by MaterialLib's init handler; other mods must not call this.
     public void runInitConsumers() {
         requireResolved("run shape consumers");
-        consumers.run(ShapeConsumers.Phase.INIT, servedByName);
+        consumers.run(ShapeConsumers.Phase.INIT, servedByName, this::generatingMaterials);
     }
 
     /// Runs every postInit-phase shape consumer once per (shape, material) pair for the shape it targets.
     /// Invoked once by MaterialLib's postInit handler; other mods must not call this.
     public void runPostInitConsumers() {
         requireResolved("run shape consumers");
-        consumers.run(ShapeConsumers.Phase.POST_INIT, servedByName);
+        consumers.run(ShapeConsumers.Phase.POST_INIT, servedByName, this::generatingMaterials);
     }
 
     /// Sorts every canonical shape into its type and registers each backing item or block with FML under
@@ -565,6 +565,17 @@ public final class ShapeRegistry {
             Arrays.sort(materials, byIndex);
             entry.getKey().bindServedMaterials(materials);
         }
+    }
+
+    /// The materials generating `shape` in index order: the ones it serves plus the ones a shape override
+    /// stands in for.
+    private Material[] generatingMaterials(ServedShape shape) {
+        Map<Material, ShapeOverride> overridden = overrides.get(shape);
+        if (overridden == null) return shape.getServedMaterials();
+        List<Material> materials = new ObjectArrayList<>(shape.getServedMaterials());
+        materials.addAll(overridden.keySet());
+        materials.sort(Comparator.comparingInt(Material::getIndex));
+        return materials.toArray(new Material[0]);
     }
 
     private static boolean isOverridable(Shape canonical) {
