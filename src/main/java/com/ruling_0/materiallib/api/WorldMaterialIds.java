@@ -14,6 +14,7 @@ import com.ruling_0.materiallib.MaterialLib;
 public final class WorldMaterialIds {
 
     private static volatile int currentListVersion = 1;
+    private static volatile MaterialIdTransitions transitions = MaterialIdTransitions.empty();
 
     private WorldMaterialIds() {}
 
@@ -23,13 +24,16 @@ public final class WorldMaterialIds {
         return currentListVersion;
     }
 
+    /// The transition chain of the running world, loaded by [#check].
+    public static MaterialIdTransitions transitions() {
+        return transitions;
+    }
+
     /// Reconciles the world's stored id list under `dir` (the world's `materiallib` directory) with the
-    /// registry's assignment, and returns the migration to apply to the world's stored stacks and placed
-    /// blocks, or null when none is needed. A world with no store adopts the current assignment at list version
-    /// 1. A matching hash leaves everything untouched. A mismatch saves the transition from the stored version,
-    /// advances the store, and returns the migration for that step; a mismatch that moves or removes no index
-    /// advances the store and returns null.
-    public static MaterialMigration check(MaterialRegistry registry, File dir) {
+    /// registry's assignment, and loads the world's transition chain into [#transitions]. A world with no store
+    /// adopts the current assignment at list version 1. A matching hash leaves everything untouched. A mismatch
+    /// saves the transition from the stored version and advances the store.
+    public static void check(MaterialRegistry registry, File dir) {
         Map<String, Integer> current = registry.getAssignedIndices();
         String hash = registry.getContentHash();
         File storeFile = new File(dir, MaterialIdStore.FILE_NAME);
@@ -37,35 +41,36 @@ public final class WorldMaterialIds {
         if (stored == null) {
             MaterialIdStore.write(storeFile, 1, hash, current);
             currentListVersion = 1;
-            return null;
         }
-        if (hash.equals(stored.hash())) {
+        else if (hash.equals(stored.hash())) {
             currentListVersion = stored.listVersion();
-            return null;
         }
-        Diff diff = diff(stored.materials(), current);
-        int to = stored.listVersion() + 1;
-        MaterialIdTransitions
-            .write(new File(dir, MaterialIdTransitions.DIRECTORY), stored.listVersion(), to, diff.movedIndices(),
-                diff.removedIndices());
-        MaterialIdStore.write(storeFile, to, hash, current);
-        currentListVersion = to;
-        if (!diff.isMismatch()) {
-            MaterialLib.LOG.info(
-                "Materials were added since this world last ran; advancing its material id list to version {} " +
-                    "with no index changes.",
-                to);
-            return null;
+        else {
+            Diff diff = diff(stored.materials(), current);
+            int to = stored.listVersion() + 1;
+            MaterialIdTransitions
+                .write(new File(dir, MaterialIdTransitions.DIRECTORY), stored.listVersion(), to, diff.movedIndices(),
+                    diff.removedIndices());
+            MaterialIdStore.write(storeFile, to, hash, current);
+            currentListVersion = to;
+            if (!diff.isMismatch()) {
+                MaterialLib.LOG.info(
+                    "Materials were added since this world last ran; advancing its material id list to version {} " +
+                        "with no index changes.",
+                    to);
+            }
+            else {
+                MaterialLib.LOG.warn(
+                    "This world was saved under a different material id assignment; advancing it to list version {}. " +
+                        "Chunks and player data are remapped as they are read, from whichever version they were saved " +
+                        "under. Moved: {}. Deleted: {} -- placed blocks of these become air. Stacks kept outside chunks " +
+                        "and player data are not remapped.",
+                    to,
+                    diff.describeMoved(),
+                    diff.describeRemoved());
+            }
         }
-        MaterialLib.LOG.warn(
-            "This world was saved under a different material id assignment; advancing it to list version {} " +
-                "and migrating stored items and placed blocks to the current assignment as they are read from " +
-                "disk. Moved: {}. Deleted: {} -- placed blocks of these become air. Items and placed blocks in " +
-                "chunks or containers not loaded this session keep the outdated ids.",
-            to,
-            diff.describeMoved(),
-            diff.describeRemoved());
-        return new MaterialMigration(diff.movedIndices(), diff.removedIndices());
+        transitions = MaterialIdTransitions.load(new File(dir, MaterialIdTransitions.DIRECTORY));
     }
 
     /// Compares the stored assignment against the current one by material name: a name now at a different

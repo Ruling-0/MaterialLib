@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -26,7 +27,7 @@ class MaterialIdTransitionsTest {
         Int2IntMap composed = MaterialIdTransitions.load(dir).compose(1, 2);
 
         assertEquals(5, composed.get(0));
-        assertEquals(MaterialMigration.DELETE, composed.get(3));
+        assertEquals(MaterialIdTransitions.DELETE, composed.get(3));
         assertEquals(2, composed.size());
     }
 
@@ -38,7 +39,7 @@ class MaterialIdTransitionsTest {
 
         Int2IntMap composed = MaterialIdTransitions.load(dir).compose(1, 4);
 
-        assertEquals(MaterialMigration.DELETE, composed.get(0));
+        assertEquals(MaterialIdTransitions.DELETE, composed.get(0));
         assertEquals(0, composed.get(1));
         assertEquals(1, composed.get(2));
         assertEquals(3, composed.size());
@@ -70,6 +71,17 @@ class MaterialIdTransitionsTest {
         MaterialIdTransitions transitions = MaterialIdTransitions.load(dir);
 
         assertThrows(IllegalStateException.class, () -> transitions.compose(1, 3));
+    }
+
+    @Test
+    void remapMemoizesAndReturnsAnUnmodifiableMap() {
+        MaterialIdTransitions.write(dir, 1, 2, Map.of(0, 5), List.of());
+        MaterialIdTransitions transitions = MaterialIdTransitions.load(dir);
+
+        Int2IntMap first = transitions.remap(1, 2);
+
+        assertSame(first, transitions.remap(1, 2));
+        assertThrows(UnsupportedOperationException.class, () -> first.put(9, 9));
     }
 
     @Test
