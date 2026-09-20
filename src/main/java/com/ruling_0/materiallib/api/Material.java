@@ -7,6 +7,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 
 import net.minecraft.util.StatCollector;
 
@@ -31,6 +33,12 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// when it declares the name this session, else the alphabetically-first declaring modid; it supplies the
 /// modid, key, texture set, and lang key. A reference to a non-owning declaration reads through to the unified
 /// material.
+///
+/// A shape override ([MaterialBuilder#addShapeOverride(Shape, net.minecraft.item.Item)]) replaces the item
+/// MaterialLib would mint for one shape with a foreign one. It stands only where the declaring mod's own version
+/// of that shape would have stood: the owner's override always applies, a non-owning declaration's applies only
+/// for a shape the owner's declaration does not generate itself, and an override for a shape the unified
+/// material does not generate is ignored. A [MaterialEdit] override beats every declaration.
 public final class Material {
 
     private static final Comparator<Family> FAMILY_KEY_ORDER = Comparator.comparing(Family::getKey);
@@ -47,6 +55,8 @@ public final class Material {
     private final Set<Family> families = new ReferenceOpenHashSet<>(4);
     private final List<String> tooltipLines = new ArrayList<>(2);
     private final Set<Material> alternatives = new ReferenceOpenHashSet<>(4);
+    private final MaterialDeclaration declaration;
+    private final Map<Shape, ShapeOverride> editedOverrides = new Reference2ObjectLinkedOpenHashMap<>();
 
     private Family[] sortedFamilies;
     private Set<Family> familiesView;
@@ -57,6 +67,12 @@ public final class Material {
 
     Material(MaterialRegistry registry, String modid, String name, Map<Property<?>, Object> properties,
              Set<Shape> ownShapes, List<String> tooltipLines) {
+        this(registry, modid, name, properties, ownShapes, tooltipLines, MaterialDeclaration.EMPTY);
+    }
+
+    Material(MaterialRegistry registry, String modid, String name, Map<Property<?>, Object> properties,
+             Set<Shape> ownShapes, List<String> tooltipLines, MaterialDeclaration declaration) {
+        this.declaration = declaration;
         this.registry = registry;
         this.modid = modid;
         this.name = name;
@@ -196,6 +212,49 @@ public final class Material {
 
     void addTooltip(String... lines) {
         tooltipLines.addAll(Arrays.asList(lines));
+    }
+
+    void setEditedOverride(Shape shape, ShapeOverride override) {
+        requireMutable();
+        editedOverrides.put(shape, override);
+    }
+
+    /// The override standing for `canonicalShape`, which this unified material generates, or null when
+    /// MaterialLib mints the pair itself; the class documentation states the precedence. `canonical` maps a
+    /// declared shape onto the elected shape of its name.
+    ShapeOverride chooseOverride(Shape canonicalShape, UnaryOperator<Shape> canonical, Predicate<String> modLoaded) {
+        ShapeOverride edited = null;
+        for (Map.Entry<Shape, ShapeOverride> entry : editedOverrides.entrySet()) {
+            if (canonical.apply(entry.getKey()) == canonicalShape && entry.getValue().isAvailable(modLoaded)) {
+                edited = entry.getValue();
+            }
+        }
+        if (edited != null) return edited;
+
+        ShapeOverride owned = declaration.overrideFor(canonicalShape, canonical);
+        if (owned != null && owned.isAvailable(modLoaded)) return owned;
+        if (declaration.generates(canonicalShape, canonical, registry)) return null;
+
+        List<Material> losers = new ArrayList<>(alternatives);
+        losers.sort(Comparator.comparing(loser -> loser.modid));
+        for (Material loser : losers) {
+            ShapeOverride declared = loser.declaration.overrideFor(canonicalShape, canonical);
+            if (declared != null && declared.isAvailable(modLoaded) &&
+                loser.declaration.generates(canonicalShape, canonical, registry)) {
+                return declared;
+            }
+        }
+        return null;
+    }
+
+    /// Every shape some declaration or edit of this unified material names an override for.
+    Set<Shape> overriddenShapeDeclarations() {
+        Set<Shape> declared = new ReferenceLinkedOpenHashSet<>(editedOverrides.keySet());
+        declared.addAll(declaration.overrides().keySet());
+        for (Material loser : alternatives) {
+            declared.addAll(loser.declaration.overrides().keySet());
+        }
+        return declared;
     }
 
     void clearTooltip() {

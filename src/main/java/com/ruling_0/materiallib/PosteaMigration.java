@@ -16,6 +16,7 @@ import com.gtnewhorizons.postea.api.IVersionedTransformer;
 import com.gtnewhorizons.postea.api.PlayerDataTransformContext;
 import com.gtnewhorizons.postea.api.VersionedReplacementManager;
 import com.ruling_0.materiallib.api.MaterialIdTransitions;
+import com.ruling_0.materiallib.api.OverrideSubstitutions;
 import com.ruling_0.materiallib.api.ShapeBlock;
 import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.ShapeRegistry;
@@ -27,8 +28,9 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 /// Remaps shape block metadata and shape stack damage in saved data from the material id list version it was saved
-/// under to the current one, through the world's [MaterialIdTransitions] chain. Covers chunks, player data and mods'
-/// own world storage.
+/// under to the current one, through the world's [MaterialIdTransitions] chain, then turns blocks and stacks of a
+/// pair served by a shape override into the overriding item through [OverrideSubstitutions]. Covers chunks, player
+/// data and mods' own world storage.
 ///
 /// Data Postea never stamped is treated as list version 1. Loading data the chain cannot bring to the current version
 /// fails.
@@ -54,6 +56,7 @@ public final class PosteaMigration implements IVersionedTransformer {
         blockIds = null;
         itemIds = null;
         itemNames = null;
+        ShapeRegistry.instance().invalidateOverrideSubstitutions();
     }
 
     @Override
@@ -72,22 +75,32 @@ public final class PosteaMigration implements IVersionedTransformer {
             WorldMaterialIds.transitions(),
             storedOrBaseline(ctx.storedVersion()),
             ctx.currentVersion());
-        if (remap.isEmpty()) return;
+        OverrideSubstitutions substitutions = ShapeRegistry.instance().overrideSubstitutions();
+        if (remap.isEmpty() && substitutions.isEmpty()) return;
         IntSet blocks = blockIds();
         ctx.forEachBlock((x, y, z, id, meta) -> {
             if (!blocks.contains(id)) return;
             int result = remap.getOrDefault(meta, meta);
-            if (result == meta) return;
             if (result == MaterialIdTransitions.DELETE) {
                 ctx.setBlock(x, y, z, 0, 0);
+                return;
             }
-            else {
+            long substituted = substitutions.substituteBlock(id, result);
+            if (substituted >= 0) {
+                ctx.setBlock(
+                    x,
+                    y,
+                    z,
+                    OverrideSubstitutions.blockId(substituted),
+                    OverrideSubstitutions.metadata(substituted));
+            }
+            else if (result != meta) {
                 ctx.setBlock(x, y, z, id, result);
             }
         });
         IntSet items = itemIds();
         Set<String> names = itemNames();
-        ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items, names));
+        ctx.forEachItemStackTag(stack -> migrateStack(stack, remap, substitutions, items, names));
     }
 
     @Override
@@ -96,10 +109,11 @@ public final class PosteaMigration implements IVersionedTransformer {
             WorldMaterialIds.transitions(),
             storedOrBaseline(ctx.storedVersion()),
             ctx.currentVersion());
-        if (remap.isEmpty()) return;
+        OverrideSubstitutions substitutions = ShapeRegistry.instance().overrideSubstitutions();
+        if (remap.isEmpty() && substitutions.isEmpty()) return;
         IntSet items = itemIds();
         Set<String> names = itemNames();
-        ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items, names));
+        ctx.forEachItemStackTag(stack -> migrateStack(stack, remap, substitutions, items, names));
     }
 
     @Override
@@ -108,10 +122,17 @@ public final class PosteaMigration implements IVersionedTransformer {
             WorldMaterialIds.transitions(),
             storedOrBaseline(ctx.storedVersion()),
             ctx.currentVersion());
-        if (remap.isEmpty()) return;
+        OverrideSubstitutions substitutions = ShapeRegistry.instance().overrideSubstitutions();
+        if (remap.isEmpty() && substitutions.isEmpty()) return;
         IntSet items = itemIds();
         Set<String> names = itemNames();
-        ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items, names));
+        ctx.forEachItemStackTag(stack -> migrateStack(stack, remap, substitutions, items, names));
+    }
+
+    private static void migrateStack(NBTTagCompound stack, Int2IntMap remap, OverrideSubstitutions substitutions,
+                                     IntSet shapeItems, Set<String> shapeItemNames) {
+        remapStack(stack, remap, shapeItems, shapeItemNames);
+        substitutions.substituteStack(stack);
     }
 
     /// Returns the list version to migrate from: `stored`, or 1 when it is [ChunkTransformContext#UNSTAMPED].

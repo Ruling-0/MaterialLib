@@ -66,7 +66,7 @@ class WorldMaterialIdsTest {
     void checkStampsAFreshWorldAtListVersionOne() {
         MaterialRegistry resolved = resolvedWith("Gold", "Iron");
 
-        WorldMaterialIds.check(resolved, dir);
+        WorldMaterialIds.check(resolved, "", dir);
 
         MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile());
         assertEquals(1, stored.listVersion());
@@ -79,9 +79,9 @@ class WorldMaterialIdsTest {
     @Test
     void checkLeavesAMatchingWorldUntouched() {
         MaterialRegistry resolved = resolvedWith("Gold", "Iron");
-        MaterialIdStore.write(storeFile(), 3, resolved.getContentHash(), resolved.getAssignedIndices());
+        MaterialIdStore.write(storeFile(), 3, resolved.getContentHash(), "", resolved.getAssignedIndices());
 
-        WorldMaterialIds.check(resolved, dir);
+        WorldMaterialIds.check(resolved, "", dir);
 
         assertEquals(3, MaterialIdStore.read(storeFile()).listVersion());
         assertEquals(3, WorldMaterialIds.currentListVersion());
@@ -89,12 +89,29 @@ class WorldMaterialIdsTest {
     }
 
     @Test
+    void aChangedOverrideDigestAdvancesTheListVersionWithoutMovingAnIndex() {
+        MaterialRegistry resolved = resolvedWith("Gold", "Iron");
+        MaterialIdStore.write(storeFile(), 3, resolved.getContentHash(), "", resolved.getAssignedIndices());
+
+        WorldMaterialIds.check(resolved, "digest", dir);
+
+        MaterialIdStore.WorldIds stored = MaterialIdStore.read(storeFile());
+        assertEquals(4, stored.listVersion());
+        assertEquals("digest", stored.overrides());
+        assertTrue(
+            WorldMaterialIds.transitions()
+                .remap(3, 4)
+                .isEmpty());
+    }
+
+    @Test
     void checkWritesATransitionAndAdvancesTheStoreOnMismatch() {
         MaterialRegistry resolved = resolvedWith("Iron");
         MaterialIdStore
-            .write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Gone", "Iron")), Map.of("Gone", 0, "Iron", 1));
+            .write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Gone", "Iron")), "",
+                Map.of("Gone", 0, "Iron", 1));
 
-        WorldMaterialIds.check(resolved, dir);
+        WorldMaterialIds.check(resolved, "", dir);
 
         Int2IntMap remap = WorldMaterialIds.transitions()
             .remap(1, 2);
@@ -113,9 +130,10 @@ class WorldMaterialIdsTest {
     void checkKeepsTheTransitionChainContiguousAcrossRepeatedMismatches() {
         MaterialRegistry resolved = resolvedWith("Iron");
         MaterialIdStore
-            .write(storeFile(), 4, MaterialRegistry.contentHash(List.of("Gone", "Iron")), Map.of("Gone", 0, "Iron", 1));
+            .write(storeFile(), 4, MaterialRegistry.contentHash(List.of("Gone", "Iron")), "",
+                Map.of("Gone", 0, "Iron", 1));
 
-        WorldMaterialIds.check(resolved, dir);
+        WorldMaterialIds.check(resolved, "", dir);
 
         assertEquals(5, MaterialIdStore.read(storeFile()).listVersion());
         assertEquals(0, MaterialIdTransitions.load(transitionsDir()).compose(4, 5).get(1));
@@ -124,9 +142,9 @@ class WorldMaterialIdsTest {
     @Test
     void aPureAdditionAdvancesTheVersionWithoutAMigration() {
         MaterialRegistry resolved = resolvedWith("Iron", "Zinc");
-        MaterialIdStore.write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Iron")), Map.of("Iron", 0));
+        MaterialIdStore.write(storeFile(), 1, MaterialRegistry.contentHash(List.of("Iron")), "", Map.of("Iron", 0));
 
-        WorldMaterialIds.check(resolved, dir);
+        WorldMaterialIds.check(resolved, "", dir);
 
         assertEquals(2, MaterialIdStore.read(storeFile()).listVersion());
         assertTrue(WorldMaterialIds.transitions()

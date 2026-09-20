@@ -47,6 +47,7 @@ public class CommonProxy {
     }
 
     public void init(FMLInitializationEvent event) {
+        ShapeRegistry.instance().bindNamedOverrides();
         ShapeRegistry.instance().runInitConsumers();
     }
 
@@ -62,7 +63,8 @@ public class CommonProxy {
     // data is read.
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {
         File worldDir = new File(FMLCommonHandler.instance().getSavesDirectory(), event.getServer().getFolderName());
-        WorldMaterialIds.check(MaterialRegistry.instance(), new File(worldDir, MaterialLib.MODID));
+        WorldMaterialIds
+            .check(MaterialRegistry.instance(), ShapeRegistry.instance(), new File(worldDir, MaterialLib.MODID));
     }
 
     public void serverStarting(FMLServerStartingEvent event) {

@@ -10,7 +10,8 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 /// The per-world store of the material id list: the name -> index assignment the world last ran with, its
-/// content hash, and the list version counting how many assignments the world has seen.
+/// content hash, the digest of the shape overrides it ran with, and the list version counting how many
+/// assignments and override sets the world has seen.
 ///
 /// Lives at `<worldDir>/materiallib/material-ids.json`. [WorldMaterialIds] compares the stored hash against
 /// the registry's at server start and advances the list version through a saved transition when they differ.
@@ -21,9 +22,9 @@ public final class MaterialIdStore {
 
     private MaterialIdStore() {}
 
-    /// The stored id list: the list version the world is on, the content hash of its assignment, and the
-    /// name -> index map itself.
-    public record WorldIds(int listVersion, String hash, Map<String, Integer> materials) {}
+    /// The stored id list: the list version the world is on, the content hash of its assignment, the
+    /// [ShapeRegistry#getOverrideDigest] it last ran with (empty for none), and the name -> index map itself.
+    public record WorldIds(int listVersion, String hash, String overrides, Map<String, Integer> materials) {}
 
     /// Reads the store, or returns null when no file exists. Throws [IllegalStateException] on a corrupt or
     /// malformed file.
@@ -38,15 +39,17 @@ public final class MaterialIdStore {
             !data.hash.equals(hashOf(data.materials))) {
             throw new IllegalStateException(corrupt(file));
         }
-        return new WorldIds(data.listVersion, data.hash, data.materials);
+        return new WorldIds(data.listVersion, data.hash, data.overrides == null ? "" : data.overrides, data.materials);
     }
 
     /// Writes the store atomically, or throws [IllegalStateException] on IO failure.
-    public static void write(File file, int listVersion, String hash, Map<String, Integer> materials) {
+    public static void write(File file, int listVersion, String hash, String overrides,
+                             Map<String, Integer> materials) {
         Data data = new Data();
         data.version = FORMAT_VERSION;
         data.listVersion = listVersion;
         data.hash = hash;
+        data.overrides = overrides.isEmpty() ? null : overrides;
         data.materials = JsonStore.sorted(materials, Map.Entry.comparingByValue());
         JsonStore.write(file, data, "Could not write the material id list to " + file + "; refusing to continue.");
     }
@@ -95,6 +98,7 @@ public final class MaterialIdStore {
         int version;
         Integer listVersion;
         String hash;
+        String overrides;
         LinkedHashMap<String, Integer> materials;
     }
 }
