@@ -43,6 +43,8 @@ set_examples() {
 boot() {
     local log="$LOGS/boot-$1.log"
     mkdir -p "$LOGS"
+    # A crashed boot writes no report; a leftover one from an earlier run must not pass for it.
+    rm -f "$SERVER/horizonqa-result.json"
     (
         cd "$SERVER"
         timeout 2400 java -Xms6G -Xmx6G -Dfml.readTimeout=180 -Dfml.queryResult=confirm @java9args.txt \
@@ -52,6 +54,10 @@ boot() {
     echo "boot $1: server exited $code ($log)"
     # The report path travels as an argument: Git Bash converts argument paths for a native python, but
     # never paths embedded in the -c string.
+    [[ -f "$SERVER/horizonqa-result.json" ]] || {
+        echo "boot $1: no HorizonQA report (server crashed?); see $log" >&2
+        return 1
+    }
     python -c "
 import json, sys
 d = json.load(open(sys.argv[1]))
