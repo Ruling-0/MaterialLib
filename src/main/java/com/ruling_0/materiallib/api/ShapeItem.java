@@ -1,13 +1,16 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
+import net.minecraft.world.World;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.relauncher.Side;
@@ -34,6 +37,8 @@ public class ShapeItem extends Item implements BackedShape {
     private final ShapeProperties props = new ShapeProperties();
     private final ShapeIcons icons = new ShapeIcons(true, true);
     private String iconNameOverride;
+    private final List<ItemUseCallback> useCallbacks = new ArrayList<>();
+    private final List<EntityItemCallback> entityItemCallbacks = new ArrayList<>();
 
     /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
     /// appended (e.g. `gear` -> `gearIron`); `displayNameFormat` is applied to the material name to build the
@@ -104,6 +109,41 @@ public class ShapeItem extends Item implements BackedShape {
         for (Material material : served.get()) {
             list.add(getStack(material, 1));
         }
+    }
+
+    void addUseCallback(ItemUseCallback callback) {
+        useCallbacks.add(callback);
+    }
+
+    void addEntityItemCallback(EntityItemCallback callback) {
+        entityItemCallbacks.add(callback);
+    }
+
+    /// Runs the attached [ItemUseCallback]s in attachment order until one acts. A subclass overriding this calls
+    /// `super` to keep them.
+    @Override
+    public boolean onItemUse(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side,
+                             float hitX, float hitY, float hitZ) {
+        if (useCallbacks.isEmpty()) return false;
+        Material material = ShapeText.materialFor(stack);
+        if (material == null) return false;
+        for (ItemUseCallback callback : useCallbacks) {
+            if (callback.onItemUse(material, stack, player, world, x, y, z, side, hitX, hitY, hitZ)) return true;
+        }
+        return false;
+    }
+
+    /// Runs the attached [EntityItemCallback]s in attachment order until one acts. A subclass overriding this
+    /// calls `super` to keep them.
+    @Override
+    public boolean onEntityItemUpdate(EntityItem entity) {
+        if (entityItemCallbacks.isEmpty()) return false;
+        Material material = ShapeText.materialFor(entity.getEntityItem());
+        if (material == null) return false;
+        for (EntityItemCallback callback : entityItemCallbacks) {
+            if (callback.onEntityItemUpdate(material, entity)) return true;
+        }
+        return false;
     }
 
     /// The name this shape's textures are filed under inside each texture set, defaulting to the shape name. A
