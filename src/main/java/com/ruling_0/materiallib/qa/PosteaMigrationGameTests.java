@@ -37,9 +37,8 @@ import openblocks.common.PlayerInventoryStore;
 /// In-world checks that Postea's custom world data transform reaches mod-private storage. The verification
 /// harness (working/postea-migration-verify) seeds each storage before boot with a witness stack written under an
 /// older material id list version; each test reads the storage through the owning mod's own load path and asserts
-/// the stack now denotes the witness material at the current list version. A test whose seed is absent passes
-/// vacuously and says so, so the batch stays green in unseeded CI runs; the harness greps the log for the
-/// "verified" lines to reject a vacuous pass.
+/// the stack now denotes the witness material at the current list version. A test whose seed is absent is skipped,
+/// so an unseeded run reports it as untested; the harness greps the log for the "verified" lines.
 @GameTestHolder(
                 value = MaterialLib.MODID,
                 requiredMods = { "postea", "EnderStorage", "OpenBlocks", "Backpack", "gregtech" })
@@ -68,9 +67,8 @@ public class PosteaMigrationGameTests {
             .worldServerForDimension(0);
     }
 
-    private static void vacuous(GameTestHelper helper, String storage) {
-        MaterialLib.LOG.info("[{}] no seed for {}; vacuous pass", BATCH, storage);
-        helper.succeed();
+    private static void unseeded(GameTestHelper helper, String storage) {
+        helper.assumeTrue(false, "no seed for " + storage);
     }
 
     private static void verified(GameTestHelper helper, String storage) {
@@ -92,7 +90,7 @@ public class PosteaMigrationGameTests {
             .getStorage("global", 0, "item");
         ItemStack actual = storage.getStackInSlot(0);
         if (actual == null) {
-            vacuous(helper, "enderstorage:global");
+            unseeded(helper, "enderstorage:global");
             return;
         }
         assertWitnessStack(helper, actual, "enderstorage:global");
@@ -106,7 +104,7 @@ public class PosteaMigrationGameTests {
         PlayerInventoryStore.LoadedInventories loaded = PlayerInventoryStore.instance
             .loadInventories(overworld(), "qa-postea-death-0");
         if (loaded == null || loaded.mainInventory == null) {
-            vacuous(helper, "openblocks:inventory");
+            unseeded(helper, "openblocks:inventory");
             return;
         }
         IInventory inventory = loaded.mainInventory;
@@ -127,7 +125,7 @@ public class PosteaMigrationGameTests {
             .getMethod("loadBackpack", String.class)
             .invoke(handler, "11111111-2222-3333-4444-555555555555");
         if (data == null || !data.hasKey("Items")) {
-            vacuous(helper, "backpack");
+            unseeded(helper, "backpack");
             return;
         }
         NBTTagCompound tag = data.getTagList("Items", 10)
@@ -150,14 +148,14 @@ public class PosteaMigrationGameTests {
             worldSave.asSubclass(WorldSavedData.class),
             "LinkedInputBusses");
         if (save == null) {
-            vacuous(helper, "gregtech:linkedInputBusses");
+            unseeded(helper, "gregtech:linkedInputBusses");
             return;
         }
         Field dataField = worldSave.getDeclaredField("data");
         dataField.setAccessible(true);
         Object shared = ((Map<?, ?>) dataField.get(save)).get("qa");
         if (shared == null) {
-            vacuous(helper, "gregtech:linkedInputBusses");
+            unseeded(helper, "gregtech:linkedInputBusses");
             return;
         }
         Field stacksField = shared.getClass()
@@ -212,7 +210,7 @@ public class PosteaMigrationGameTests {
                 .getWorldDirectory(),
             "qa-postea-player.dat");
         if (!file.isFile()) {
-            vacuous(helper, "player");
+            unseeded(helper, "player");
             return;
         }
         NBTTagCompound tag;
