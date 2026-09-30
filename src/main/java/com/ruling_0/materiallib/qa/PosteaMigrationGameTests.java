@@ -186,7 +186,7 @@ public class PosteaMigrationGameTests {
             chest.setInventorySlotContents(0, witness(helper));
             MaterialLib.LOG
                 .info("[{}] seeded chunk witnesses at {},{},{}", BATCH, CHUNK_X, CHUNK_Y, CHUNK_Z);
-            helper.succeed();
+            helper.assumeTrue(false, "seeded the chunk witnesses; the next boot verifies them");
             return;
         }
         helper.assertEquals(
