@@ -35,7 +35,7 @@ import codechicken.enderstorage.storage.item.EnderItemStorage;
 import openblocks.common.PlayerInventoryStore;
 
 /// In-world checks that Postea's custom world data transform reaches mod-private storage. The verification
-/// harness (working/postea-migration-verify) seeds each storage before boot with a witness stack written under an
+/// harness (`qa/postea-migration/run.sh`) seeds each storage before boot with a witness stack written under an
 /// older material id list version; each test reads the storage through the owning mod's own load path and asserts
 /// the stack now denotes the witness material at the current list version. A test whose seed is absent is skipped,
 /// so an unseeded run reports it as untested; the harness greps the log for the "verified" lines.
@@ -168,9 +168,9 @@ public class PosteaMigrationGameTests {
     }
 
     /// The chunk pass has no external seeder: on its first run this test places a witness shape block and a chest
-    /// holding a witness stack near spawn, so they are saved with the chunk under the session's list version. On
-    /// every later run the chunk was already read (and, after a shift, remapped) before tests start, and both
-    /// witnesses must still denote the witness material at the current version.
+    /// holding a witness stack near spawn, so they are saved with the chunk under the session's list version, and
+    /// reports itself skipped. On every later run the chunk was already read (and, after a shift, remapped) before
+    /// tests start, and both witnesses must still denote the witness material at the current version.
     @GameTest(batch = BATCH)
     public static void worldChunkKeepsTheWitnessMaterial(GameTestHelper helper) {
         WorldServer world = overworld();
@@ -201,7 +201,7 @@ public class PosteaMigrationGameTests {
         verified(helper, "chunk");
     }
 
-    /// Runs the harness-seeded player tag through {@code Entity.readFromNBT} on a fake player, which is the hook
+    /// Runs the harness-seeded player tag through `Entity.readFromNBT` on a fake player, which is the hook
     /// real player files take, then writes the player back out and checks the stamp both hooks maintain.
     @GameTest(batch = BATCH)
     public static void seededPlayerDataHoldsTheWitnessMaterial(GameTestHelper helper) throws Exception {
