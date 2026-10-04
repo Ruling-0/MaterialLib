@@ -1,21 +1,36 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
 import java.util.IllegalFormatException;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /// Builds the translation keys and display strings for a [Shape] rendered for a particular [Material].
 ///
-/// Three keys are involved. The material name key names the material on its own, so one translation serves every
-/// shape. A shape's [StandardProperties#DISPLAY_NAME_FORMAT_KEY] translates the format that combines it with a
-/// material name, so one translation serves every material. The override key names a specific shape-and-material
-/// pair, letting a lang file replace an irregular name that the format cannot produce. Callers look the override
-/// key up first; otherwise [#format] applies the translated format, else the declared one, to the material name,
-/// itself the translation of the material name key or else [Material#getName]. Keeping the key construction here,
-/// free of any game lookup, lets it be covered by tests; the [Shape] and [Material] argument order keeps the keys
-/// stable across shapes that unify.
+/// Three kinds of key are involved. The material name key names the material on its own, so one translation serves
+/// every shape. The format keys ([#formatKeys]) translate the format that combines a shape with a material name:
+/// the shape's own serves every material, and a material may name its own for an irregular name such as `%s Pane`.
+/// The override key names a specific shape-and-material pair, letting a lang file replace a name outright. Callers
+/// look the override key up first; otherwise [#format] applies the first translated format, else the declared one,
+/// to the material name, itself the translation of the material name key or else [Material#getName]. Keeping the
+/// key construction here, free of any game lookup, lets it be covered by tests; the [Shape] and [Material] argument
+/// order keeps the keys stable across shapes that unify.
 final class ShapeNaming {
 
     private ShapeNaming() {}
+
+    /// The translation keys of a shape's display-name format for `material`, most specific first: the material's
+    /// [StandardProperties#DISPLAY_NAME_FORMAT_KEYS] entry for `shapeName`, then the shape's
+    /// [StandardProperties#DISPLAY_NAME_FORMAT_KEY]. Unset keys are left out.
+    static List<String> formatKeys(Shape shape, String shapeName, Material material) {
+        List<String> keys = new ArrayList<>(2);
+        Map<String, String> materialKeys = material.getProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEYS);
+        if (materialKeys != null && materialKeys.containsKey(shapeName)) keys.add(materialKeys.get(shapeName));
+        String shapeKey = shape.getProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEY);
+        if (shapeKey != null) keys.add(shapeKey);
+        return keys;
+    }
 
     /// The translation key for a material's own display name: its [StandardProperties#DISPLAY_NAME_KEY], else
     /// `material.<modid>.<name>`, e.g. `material.examplemod.TestIron`. One entry localizes the material across
