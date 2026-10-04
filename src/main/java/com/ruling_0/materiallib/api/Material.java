@@ -92,8 +92,7 @@ public final class Material {
         return name;
     }
 
-    /// The display name from the material's lang-file override, or the registry name when none is present; see
-    /// [ShapeNaming#materialNameKey].
+    /// The translation of [ShapeNaming#materialNameKey], or the registry name when the lang files have none.
     public String getLocalizedName() {
         if (canonical != this) return canonical.getLocalizedName();
         String key = ShapeNaming.materialNameKey(this);

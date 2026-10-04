@@ -17,8 +17,25 @@ class ShapeNamingTest {
     @Test
     void materialNameKeyIsModidAndName() {
         Material iron = material("examplemod", "TestIron");
+        registry.resolve();
 
         assertEquals("material.examplemod.TestIron", ShapeNaming.materialNameKey(iron));
+    }
+
+    @Test
+    void aDeclaredDisplayNameKeyReplacesTheMaterialNameKey() {
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
+            .setProperty(StandardProperties.DISPLAY_NAME_KEY, "Material.testiron")
+            .build();
+        registry.resolve();
+
+        assertEquals("Material.testiron", ShapeNaming.materialNameKey(iron));
+    }
+
+    @Test
+    void aTranslatedFormatThatIsInvalidFallsBackToTheDeclaredFormat() {
+        assertEquals("Iron Gear", ShapeNaming.format("%s Zahnrad %d", "%s Gear", "Iron"));
+        assertEquals("Iron Zahnrad", ShapeNaming.format("%s Zahnrad", "%s Gear", "Iron"));
     }
 
     @Test
