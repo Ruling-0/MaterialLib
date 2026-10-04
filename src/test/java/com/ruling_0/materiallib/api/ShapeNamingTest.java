@@ -3,6 +3,9 @@ package com.ruling_0.materiallib.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 class ShapeNamingTest {
@@ -30,6 +33,21 @@ class ShapeNamingTest {
         registry.resolve();
 
         assertEquals("Material.testiron", ShapeNaming.materialNameKey(iron));
+    }
+
+    @Test
+    void aMaterialFormatKeyPrecedesTheShapeFormatKeyForItsShapeOnly() {
+        Material glass = registry.newMaterial("examplemod", "TestGlass", texture)
+            .setProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEYS, Map.of("plate", "format.pane"))
+            .build();
+        registry.resolve();
+        TestShape plate = new TestShape("examplemod", "plate");
+        plate.setProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEY, "format.plate");
+        TestShape foil = new TestShape("examplemod", "foil");
+        foil.setProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEY, "format.foil");
+
+        assertEquals(List.of("format.pane", "format.plate"), ShapeNaming.formatKeys(plate, "plate", glass));
+        assertEquals(List.of("format.foil"), ShapeNaming.formatKeys(foil, "foil", glass));
     }
 
     @Test

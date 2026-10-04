@@ -31,7 +31,8 @@ final class ShapeText {
 
     /// The display name for a shape-and-material pair: a lang override for the exact pair if present -- for a
     /// variant's backing block, the per-variant key (`shape.<modid>.<shapeName>_<variant>...`) then the declared
-    /// shape name's key -- else the shape's translated format, or its declared one, applied to the material name.
+    /// shape name's key -- else the first translated format key ([ShapeNaming#formatKeys]), or the declared format,
+    /// applied to the material name.
     static String displayName(Shape shape, String displayNameFormat, Material material) {
         String overrideKey = ShapeNaming.overrideKey(shape, material);
         if (StatCollector.canTranslate(overrideKey)) return StatCollector.translateToLocal(overrideKey);
@@ -40,9 +41,14 @@ final class ShapeText {
             String groupKey = ShapeNaming.overrideKey(shape.getModId(), groupName, material);
             if (StatCollector.canTranslate(groupKey)) return StatCollector.translateToLocal(groupKey);
         }
-        String formatKey = shape.getProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEY);
-        String translatedFormat = formatKey != null && StatCollector.canTranslate(formatKey) ?
-            StatCollector.translateToLocal(formatKey) : null;
+        String translatedFormat = null;
+        for (String formatKey : ShapeNaming.formatKeys(shape, groupName != null ? groupName : shape.getName(),
+            material)) {
+            if (StatCollector.canTranslate(formatKey)) {
+                translatedFormat = StatCollector.translateToLocal(formatKey);
+                break;
+            }
+        }
         return ShapeNaming.format(translatedFormat, displayNameFormat, material.getLocalizedName());
     }
 
