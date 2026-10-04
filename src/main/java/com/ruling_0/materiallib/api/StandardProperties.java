@@ -45,6 +45,10 @@ public final class StandardProperties {
     public static final Property<Map<String, String>> DISPLAY_NAME_FORMAT_KEYS = Property.of(MaterialLib.MODID,
         "displayNameFormatKeys");
 
+    /// Read from a shape rather than a material: builds the shape's display names from their translation keys in
+    /// place of applying the translated format to the material name. Null when unset; see [ShapeNameFormatter].
+    public static final Property<ShapeNameFormatter> NAME_FORMATTER = Property.of(MaterialLib.MODID, "nameFormatter");
+
     /// The texture set shapes draw their textures from. Derived from the texture set passed to
     /// [MaterialLibAPI#newMaterial]; builders and edits reject attempts to set or remove it.
     public static final Property<TextureSet> TEXTURE_SET = Property.of(MaterialLib.MODID, "textureSet");
