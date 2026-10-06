@@ -11,9 +11,9 @@ import net.minecraft.item.ItemStack;
 @FunctionalInterface
 public interface BlockDropFunction {
 
-    /// The itemstacks to drop when a block of `material` in `variant` breaks. `isSilkTouch` is whether the
-    /// harvester's tool has silk touch. `harvester` is null when no player broke the block, and `variant` is null for
-    /// a variant-less block shape.
+    /// Returns the stacks to drop when a block of `material` in `variant` breaks. `isSilkTouch` is whether the
+    /// harvester's tool has silk touch. `harvester` is null when no player broke the block, and `variant` is null
+    /// for a variant-less block shape.
     List<ItemStack> drops(Material material, String variant, int fortune, boolean isSilkTouch,
                           EntityPlayer harvester);
 }
