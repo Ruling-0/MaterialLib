@@ -44,10 +44,9 @@ public final class ShapeEdit {
         return this;
     }
 
-    /// Attaches behavior the shape's items run when a player uses one on a block; see [ItemUseCallback]. Callbacks
-    /// run in the order attached. Items of a pair overridden by another mod's item (see
-    /// [MaterialBuilder#addShapeOverride]) are that mod's items and do not run them. Skipped with a warning when
-    /// the shape is not an item shape.
+    /// Attaches a callback the shape's items run when a player uses one on a block; see [ItemUseCallback]. Callbacks
+    /// run in the order attached. A pair served by an override item does not run them (see
+    /// [MaterialBuilder#addShapeOverride]). Skipped with a warning when the shape is not an item shape.
     public ShapeEdit onItemUse(ItemUseCallback callback) {
         Objects.requireNonNull(callback, "callback must not be null");
         registry.enqueueShapeOp(modid, name, "attach item use callback to shape", shape -> {
@@ -57,8 +56,8 @@ public final class ShapeEdit {
         return this;
     }
 
-    /// Attaches behavior the shape's items run every tick while dropped in the world; see [EntityItemCallback].
-    /// Ordering, overridden pairs and non-item shapes are as for [#onItemUse].
+    /// Attaches a callback the shape's items run every tick while dropped in the world; see [EntityItemCallback].
+    /// Ordering, overridden pairs and non-item shapes are as in [#onItemUse].
     public ShapeEdit onEntityItemUpdate(EntityItemCallback callback) {
         Objects.requireNonNull(callback, "callback must not be null");
         registry.enqueueShapeOp(modid, name, "attach dropped item callback to shape", shape -> {
