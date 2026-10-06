@@ -34,11 +34,13 @@ import codechicken.enderstorage.api.EnderStorageManager;
 import codechicken.enderstorage.storage.item.EnderItemStorage;
 import openblocks.common.PlayerInventoryStore;
 
-/// In-world checks that Postea's custom world data transform reaches mod-private storage. The verification
-/// harness (`qa/postea-migration/run.sh`) seeds each storage before boot with a witness stack written under an
-/// older material id list version; each test reads the storage through the owning mod's own load path and asserts
-/// the stack now denotes the witness material at the current list version. A test whose seed is absent is skipped,
-/// so an unseeded run reports it as untested; the harness greps the log for the "verified" lines.
+/// In-world checks that [com.ruling_0.materiallib.PosteaMigration] reaches chunks, player data and mod-private
+/// storage.
+///
+/// `qa/postea-migration/run.sh` seeds each storage before boot with a witness stack saved under an older material id
+/// list version. Each test reads the storage through the owning mod's load path and asserts the stack holds the
+/// witness material at the current list version. A test with no seed is skipped. The harness requires a "verified"
+/// log line from every test.
 @GameTestHolder(
                 value = MaterialLib.MODID,
                 requiredMods = { "postea", "EnderStorage", "OpenBlocks", "Backpack", "gregtech" })
@@ -49,8 +51,8 @@ public class PosteaMigrationGameTests {
     private static final String WITNESS_SHAPE = System.getProperty("materiallib.qa.witnessShape", "ingot");
     private static final String WITNESS_BLOCK_SHAPE = System.getProperty("materiallib.qa.witnessBlockShape", "frameGt");
 
-    /// A fixed spot inside the always-loaded spawn area, far below the test grid, where the chunk test keeps its
-    /// witness block and chest across boots.
+    /// Where the chunk test keeps its witness block and chest across boots: inside the always-loaded spawn area,
+    /// below the test grid.
     private static final int CHUNK_X = 40, CHUNK_Y = 5, CHUNK_Z = 40;
 
     /// The seeded slot's expected content: the witness material's shape stack at the current list version.
@@ -82,8 +84,8 @@ public class PosteaMigrationGameTests {
         helper.assertEquals(expected.getItemDamage(), actual.getItemDamage(), storage + " damage");
     }
 
-    /// EnderStorage reads its whole table before the id mappings apply, so its transform is deferred to the
-    /// first server world load; this asserts the deferred pass reached the seeded frequency.
+    /// EnderStorage defers its transform to the first server world load. Checks the deferred pass reached the
+    /// seeded frequency.
     @GameTest(batch = BATCH)
     public static void seededEnderChestHoldsTheWitnessMaterial(GameTestHelper helper) {
         EnderItemStorage storage = (EnderItemStorage) EnderStorageManager.instance(false)
@@ -97,8 +99,7 @@ public class PosteaMigrationGameTests {
         verified(helper, "enderstorage:global");
     }
 
-    /// OpenBlocks inventory dumps are read-only storage: the transform runs on every read and the file is never
-    /// rewritten.
+    /// OpenBlocks inventory dumps are read-only. The transform runs on every read and the file is never rewritten.
     @GameTest(batch = BATCH)
     public static void seededInventoryDumpRestoresTheWitnessMaterial(GameTestHelper helper) {
         PlayerInventoryStore.LoadedInventories loaded = PlayerInventoryStore.instance
@@ -114,7 +115,7 @@ public class PosteaMigrationGameTests {
         verified(helper, "openblocks:inventory");
     }
 
-    /// Backpack files load lazily through SaveFileHandler; reflection keeps MaterialLib free of a Backpack
+    /// Loads the seeded backpack file through Backpack's `SaveFileHandler`, by reflection to avoid a Backpack
     /// dependency.
     @GameTest(batch = BATCH)
     public static void seededBackpackFileHoldsTheWitnessMaterial(GameTestHelper helper) throws Exception {
@@ -167,10 +168,9 @@ public class PosteaMigrationGameTests {
         verified(helper, "gregtech:linkedInputBusses");
     }
 
-    /// The chunk pass has no external seeder: on its first run this test places a witness shape block and a chest
-    /// holding a witness stack near spawn, so they are saved with the chunk under the session's list version, and
-    /// reports itself skipped. On every later run the chunk was already read (and, after a shift, remapped) before
-    /// tests start, and both witnesses must still denote the witness material at the current version.
+    /// Seeds its own witnesses. The first run places a witness shape block and a chest holding a witness stack near
+    /// spawn, then reports itself skipped. Later runs read both back from the saved chunk and assert they hold the
+    /// witness material at the current list version.
     @GameTest(batch = BATCH)
     public static void worldChunkKeepsTheWitnessMaterial(GameTestHelper helper) {
         WorldServer world = overworld();
@@ -201,8 +201,8 @@ public class PosteaMigrationGameTests {
         verified(helper, "chunk");
     }
 
-    /// Runs the harness-seeded player tag through `Entity.readFromNBT` on a fake player, which is the hook
-    /// real player files take, then writes the player back out and checks the stamp both hooks maintain.
+    /// Loads the seeded player tag into a fake player through `Entity.readFromNBT`, the hook real player files take.
+    /// Then writes the player back out and checks its version stamp.
     @GameTest(batch = BATCH)
     public static void seededPlayerDataHoldsTheWitnessMaterial(GameTestHelper helper) throws Exception {
         File file = new File(

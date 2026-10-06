@@ -109,9 +109,7 @@ def quest_db(world):
     return os.path.join(world, 'betterquesting', 'QuestDatabase.json')
 
 def find_seed_entry(db):
-    # The first requiredItems slot of any quest; the seeded witness replaces it. Within one gate run the
-    # jars never change between boots, so dreamcraft does not reimport the defaults over the seeded file;
-    # if it ever did, the shift assertion would find no witness and fail loudly.
+    # The first requiredItems slot of any quest, which the seeded witness replaces.
     for quest in db.get('questDatabase:9', {}).values():
         if not isinstance(quest, dict): continue
         for task in quest.get('tasks:9', {}).values():
@@ -122,8 +120,8 @@ def find_seed_entry(db):
     raise SystemExit('no requiredItems entry found in the quest database')
 
 def witness_damages(db, item):
-    # Every stack of the witness item, wherever the quest sits: dreamcraft reimports the default database
-    # whenever it decides the modpack changed, discarding seeded entries and quest order.
+    # Every stack of the witness item anywhere in the quest database. Quest order is not stable, since dreamcraft
+    # reimports the default database whenever it decides the modpack changed.
     out = []
     def walk(node):
         if isinstance(node, dict):

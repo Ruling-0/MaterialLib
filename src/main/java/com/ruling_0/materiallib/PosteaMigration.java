@@ -27,15 +27,14 @@ import it.unimi.dsi.fastutil.ints.Int2IntMaps;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
-/// MaterialLib's Postea transformer: rewrites every shape block's metadata and every shape stack's damage in a
-/// chunk, a player's data, or a mod's own world storage from the material id list version the data was saved under
-/// to the current one, through the world's [MaterialIdTransitions] chain. Data Postea never stamped reads as list
-/// version 1, the adopted baseline. Data stamped ahead of the world's store, or across a span the store has no
-/// transition for, is left untouched: it stays recoverable once the matching store is back. Custom storage may
-/// hold stacks under registry names instead of numeric ids; those match against the shape items' names.
+/// Remaps shape block metadata and shape stack damage in saved data from the material id list version it was saved
+/// under to the current one, through the world's [MaterialIdTransitions] chain. Covers chunks, player data and mods'
+/// own world storage.
 ///
-/// Shape ids are derived from the registries on first use after each id remap, since FML rewrites numeric ids to the
-/// world's map after the server starts.
+/// Data Postea never stamped is treated as list version 1. Data the chain cannot bring to the current version is
+/// left untouched, so it stays recoverable once the matching store is restored.
+///
+/// Shape ids are cached until the next FML id remap ([#invalidateIds]), which rewrites them to the world's map.
 public final class PosteaMigration implements IVersionedTransformer {
 
     static final String KEY = MaterialLib.MODID + ":idList";
@@ -142,8 +141,8 @@ public final class PosteaMigration implements IVersionedTransformer {
         }
     }
 
-    /// Rewrites `stack`'s damage through `remap` when its item is one of `shapeItems` (numeric id) or
-    /// `shapeItemNames` (string id); a deleted index strips the item id so the stack loads as empty.
+    /// Rewrites `stack`'s damage through `remap` when its item is in `shapeItems` (numeric id) or `shapeItemNames`
+    /// (registry name). A deleted index strips the item id, so the stack loads as empty.
     static void remapStack(NBTTagCompound stack, Int2IntMap remap, IntSet shapeItems, Set<String> shapeItemNames) {
         boolean shape = stack.hasKey("id", TAG_STRING) ? shapeItemNames.contains(stack.getString("id")) :
             shapeItems.contains(IDExtenderCompat.getItemStackID(stack));

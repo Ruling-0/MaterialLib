@@ -1,8 +1,7 @@
 name: Postea migration gate
 
-# The gate boots a full GTNH pack server three times (qa/postea-migration/run.sh), so it needs a
-# self-hosted runner that carries a prepared pack server directory and exposes its path as the
-# POSTEA_QA_SERVER repository variable. GitHub-hosted runners cannot run it.
+# The gate boots a full GTNH pack server three times (qa/postea-migration/run.sh). It needs a self-hosted runner
+# with a prepared pack server directory, whose path is the POSTEA_QA_SERVER repository variable.
 on:
   workflow_dispatch:
 

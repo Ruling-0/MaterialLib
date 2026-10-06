@@ -44,7 +44,7 @@ public final class MaterialIdTransitions {
         return new MaterialIdTransitions(new Int2ObjectOpenHashMap<>());
     }
 
-    /// [#compose], memoized per span and unmodifiable.
+    /// [#compose], memoized per span. The returned map is unmodifiable.
     public Int2IntMap remap(int fromVersion, int toVersion) {
         long span = ((long) fromVersion << 32) | (toVersion & 0xFFFFFFFFL);
         return remaps.computeIfAbsent(span, key -> Int2IntMaps.unmodifiable(compose(fromVersion, toVersion)));
@@ -67,9 +67,8 @@ public final class MaterialIdTransitions {
     }
 
     /// The single remap taking indices stamped at `fromVersion` to `toVersion`: an entry per index that
-    /// changes, mapped to its final index, or to [#DELETE] when its material was removed
-    /// along the way. Indices absent from the map are unchanged. Throws [IllegalStateException] when a step
-    /// in the span is missing.
+    /// changes, mapped to its final index, or to [#DELETE] when its material was removed along the way. Indices
+    /// absent from the map are unchanged. Throws [IllegalStateException] when a step in the span is missing.
     public Int2IntMap compose(int fromVersion, int toVersion) {
         if (fromVersion > toVersion) {
             throw new IllegalArgumentException(

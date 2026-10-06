@@ -68,7 +68,6 @@ class PosteaMigrationTest {
         assertTrue(foreign.hasKey("id"));
     }
 
-    // Custom storage (quest databases) keeps stacks under registry names; matching goes by the shape item's name.
     @Test
     void remapStackMatchesStringIdStacksByShapeItemName() {
         NBTTagCompound moved = stringStack(SHAPE_ITEM_NAME, 1);
@@ -85,15 +84,13 @@ class PosteaMigrationTest {
         assertTrue(foreign.hasKey("id"));
     }
 
-    // Pins the adopted baseline: data Postea never stamped is list version 1.
     @Test
     void unstampedDataIsListVersionOne() {
         assertEquals(1, PosteaMigration.storedOrBaseline(ChunkTransformContext.UNSTAMPED));
         assertEquals(4, PosteaMigration.storedOrBaseline(4));
     }
 
-    // A stamp ahead of the world's store (a restored store, copied region files) must not crash the chunk
-    // load; leaving the data untouched keeps it recoverable once the right store is back.
+    // A stamp ahead of the world's store leaves the data untouched instead of failing the chunk load.
     @Test
     void remapSkipsAStampNewerThanTheStore() {
         assertTrue(
