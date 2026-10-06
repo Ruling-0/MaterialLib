@@ -399,7 +399,8 @@ public class ShapeBlock extends Block implements BackedShape {
         return material != null ? behavior.harvestLevel().apply(material, variant) : super.getHarvestLevel(metadata);
     }
 
-    /// The drops for a break; see [BlockShapeBuilder#drops]. Silk touch reaches the drop function as a flag.
+    /// Returns the stacks from the shape's [BlockDropFunction], silk-touch breaks included, or the default drops for
+    /// a shape without one.
     @Override
     public ArrayList<ItemStack> getDrops(World world, int x, int y, int z, int metadata, int fortune) {
         Material material = behavior.drops() != null ? materialFor(metadata) : null;
