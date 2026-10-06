@@ -218,7 +218,8 @@ public final class ShapeRegistry {
         return backed.getStack(material, amount);
     }
 
-    /// The overriding stack of `material` in the canonical `shape`, or null when MaterialLib mints the pair.
+    /// The overriding stack of `material` in the canonical `shape` with size `amount`, or null when MaterialLib mints
+    /// the pair.
     ItemStack overrideStack(Material material, BackedShape shape, int amount) {
         Map<Material, ShapeOverride> byMaterial = overrides.get(shape);
         ShapeOverride override = byMaterial == null ? null : byMaterial.get(material);
@@ -228,8 +229,8 @@ public final class ShapeRegistry {
         return stack;
     }
 
-    /// Binds every override naming another mod's item and registers it in the oredict. Throws for a name matching
-    /// no item. Invoked once by MaterialLib's init handler; other mods must not call this.
+    /// Binds every override naming another mod's item and registers it in the oredict. Throws [IllegalStateException]
+    /// for a name matching no item or block. Invoked once by MaterialLib's init handler; other mods must not call this.
     public void bindNamedOverrides() {
         requireResolved("bind shape overrides");
         forEachOverride((shape, material, override) -> {
@@ -253,8 +254,7 @@ public final class ShapeRegistry {
         overrideSubstitutions = null;
     }
 
-    /// The fingerprint of every standing override, or empty when nothing is overridden. Sorted `material\tshape\titem`
-    /// lines are hashed as in [MaterialRegistry#contentHash].
+    /// The fingerprint of every standing override, or empty when nothing is overridden.
     String getOverrideDigest() {
         requireResolved("fingerprint shape overrides");
         List<String> lines = new ObjectArrayList<>();

@@ -60,7 +60,7 @@ public final class OverrideSubstitutions {
 
     public boolean isEmpty() { return stacksById.isEmpty(); }
 
-    /// Rewrites the id and damage of a saved stack of an overridden pair; leaves any other stack untouched.
+    /// Rewrites the id and damage of a saved stack of an overridden pair. Any other stack is left untouched.
     public void substituteStack(NBTTagCompound stack) {
         int damage = stack.getShort("Damage");
         if (stack.hasKey("id", TAG_STRING)) {
@@ -76,7 +76,8 @@ public final class OverrideSubstitutions {
         stack.setShort("Damage", (short) target.getItemDamage());
     }
 
-    /// The `blockId << 32 | metadata` a placed block of an overridden pair becomes, or -1 when it stays.
+    /// The `blockId << 32 | metadata` a placed block of an overridden pair becomes, or -1 when it stays. Unpack the
+    /// result with [#blockId] and [#metadata].
     public long substituteBlock(int blockId, int metadata) {
         return blocks.get(pack(blockId, metadata));
     }

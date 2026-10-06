@@ -15,13 +15,14 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// held as a [Named] registry name that binds at MaterialLib's init.
 sealed interface ShapeOverride {
 
-    /// Whether the item's mod is present this session. An absent override is treated as never declared.
+    /// Whether the item's mod is present this session.
     boolean isAvailable(Predicate<String> modLoaded);
 
-    /// The item stack with size 1, a fresh copy each call.
+    /// The item stack with size 1, a fresh copy each call. Throws [IllegalStateException] for a [Named] override whose
+    /// name matches no registered item or block.
     ItemStack resolve();
 
-    /// The stable `modid:name:meta` identity of the item, fingerprinted into the world's override digest.
+    /// The stable `modid:name:meta` identity of the item.
     String describe();
 
     /// An item stack already known.
