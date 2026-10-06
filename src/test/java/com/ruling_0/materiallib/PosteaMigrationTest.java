@@ -2,6 +2,7 @@ package com.ruling_0.materiallib;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collections;
@@ -90,18 +91,9 @@ class PosteaMigrationTest {
         assertEquals(4, PosteaMigration.storedOrBaseline(4));
     }
 
-    // A stamp ahead of the world's store leaves the data untouched instead of failing the chunk load.
     @Test
-    void remapSkipsAStampNewerThanTheStore() {
-        assertTrue(
-            PosteaMigration.remap(MaterialIdTransitions.empty(), 3, 2)
-                .isEmpty());
-    }
-
-    @Test
-    void remapSkipsASpanWhoseTransitionIsMissing() {
-        assertTrue(
-            PosteaMigration.remap(MaterialIdTransitions.empty(), 1, 3)
-                .isEmpty());
+    void remapFailsForASpanTheStoreCannotCompose() {
+        assertThrows(IllegalStateException.class, () -> PosteaMigration.remap(MaterialIdTransitions.empty(), 3, 2));
+        assertThrows(IllegalStateException.class, () -> PosteaMigration.remap(MaterialIdTransitions.empty(), 1, 3));
     }
 }

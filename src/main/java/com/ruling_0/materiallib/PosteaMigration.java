@@ -4,7 +4,6 @@ import static net.minecraftforge.common.util.Constants.NBT.TAG_STRING;
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -31,8 +30,8 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 /// under to the current one, through the world's [MaterialIdTransitions] chain. Covers chunks, player data and mods'
 /// own world storage.
 ///
-/// Data Postea never stamped is treated as list version 1. Data the chain cannot bring to the current version is
-/// left untouched, so it stays recoverable once the matching store is restored.
+/// Data Postea never stamped is treated as list version 1. Loading data the chain cannot bring to the current version
+/// fails.
 ///
 /// Shape ids are cached until the next FML id remap ([#invalidateIds]), which rewrites them to the world's map.
 public final class PosteaMigration implements IVersionedTransformer {
@@ -42,7 +41,6 @@ public final class PosteaMigration implements IVersionedTransformer {
     private static volatile IntSet blockIds;
     private static volatile IntSet itemIds;
     private static volatile Set<String> itemNames;
-    private static final Set<Long> REPORTED_SPANS = ConcurrentHashMap.newKeySet();
 
     private PosteaMigration() {}
 
@@ -121,23 +119,19 @@ public final class PosteaMigration implements IVersionedTransformer {
         return stored == ChunkTransformContext.UNSTAMPED ? 1 : stored;
     }
 
-    /// The remap from `from` to `to`, or an empty map when nothing changes or the span cannot be composed.
+    /// The remap from `from` to `to`. Throws [IllegalStateException] when the world's transition chain cannot
+    /// compose the span.
     static Int2IntMap remap(MaterialIdTransitions transitions, int from, int to) {
         if (from == to) return Int2IntMaps.EMPTY_MAP;
         try {
             return transitions.remap(from, to);
         }
         catch (IllegalArgumentException | IllegalStateException e) {
-            if (REPORTED_SPANS.add(((long) from << 32) | (to & 0xFFFFFFFFL))) {
-                MaterialLib.LOG.error(
-                    "Saved data stamped at material id list version {} cannot be brought to the world's version {}; " +
-                        "leaving its material ids untouched. Restore the world's materiallib directory that matches " +
-                        "its chunks and player data. Cause: {}",
-                    from,
-                    to,
-                    e.getMessage());
-            }
-            return Int2IntMaps.EMPTY_MAP;
+            throw new IllegalStateException(
+                "Saved data stamped at material id list version " + from +
+                    " cannot be brought to the world's version " +
+                    to + ". Restore the world's materiallib directory that matches its chunks and player data.",
+                e);
         }
     }
 
