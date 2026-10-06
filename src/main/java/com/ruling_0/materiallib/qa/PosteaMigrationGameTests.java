@@ -55,7 +55,7 @@ public class PosteaMigrationGameTests {
     /// below the test grid.
     private static final int CHUNK_X = 40, CHUNK_Y = 5, CHUNK_Z = 40;
 
-    /// The seeded slot's expected content: the witness material's shape stack at the current list version.
+    /// Returns the stack a seeded slot should hold: the witness material's shape stack at the current list version.
     private static ItemStack witness(GameTestHelper helper) {
         ItemStack expected = StackResolver.getStack(WITNESS_MATERIAL, WITNESS_SHAPE, 1);
         if (expected == null) {
@@ -84,8 +84,7 @@ public class PosteaMigrationGameTests {
         helper.assertEquals(expected.getItemDamage(), actual.getItemDamage(), storage + " damage");
     }
 
-    /// EnderStorage defers its transform to the first server world load. Checks the deferred pass reached the
-    /// seeded frequency.
+    /// Checks that EnderStorage's transform, deferred to the first server world load, reached the seeded frequency.
     @GameTest(batch = BATCH)
     public static void seededEnderChestHoldsTheWitnessMaterial(GameTestHelper helper) {
         EnderItemStorage storage = (EnderItemStorage) EnderStorageManager.instance(false)
@@ -99,7 +98,8 @@ public class PosteaMigrationGameTests {
         verified(helper, "enderstorage:global");
     }
 
-    /// OpenBlocks inventory dumps are read-only. The transform runs on every read and the file is never rewritten.
+    /// Checks that a seeded OpenBlocks inventory dump reads back with the witness material. Dumps are never rewritten,
+    /// and the transform runs on every read.
     @GameTest(batch = BATCH)
     public static void seededInventoryDumpRestoresTheWitnessMaterial(GameTestHelper helper) {
         PlayerInventoryStore.LoadedInventories loaded = PlayerInventoryStore.instance
@@ -115,8 +115,8 @@ public class PosteaMigrationGameTests {
         verified(helper, "openblocks:inventory");
     }
 
-    /// Loads the seeded backpack file through Backpack's `SaveFileHandler`, by reflection to avoid a Backpack
-    /// dependency.
+    /// Checks the seeded backpack file, loaded through Backpack's `SaveFileHandler` by reflection since Backpack is
+    /// not a compile dependency.
     @GameTest(batch = BATCH)
     public static void seededBackpackFileHoldsTheWitnessMaterial(GameTestHelper helper) throws Exception {
         Object handler = Class.forName("de.eydamos.backpack.Backpack")
@@ -140,8 +140,7 @@ public class PosteaMigrationGameTests {
         verified(helper, "backpack");
     }
 
-    /// The linked input bus table's inner inventory type is private, so the seeded channel is read back through
-    /// reflection.
+    /// Checks the seeded linked input bus channel, read by reflection since the bus table's inventory type is private.
     @GameTest(batch = BATCH)
     public static void seededLinkedInputBusHoldsTheWitnessMaterial(GameTestHelper helper) throws Exception {
         Class<?> worldSave = Class.forName("ggfab.mte.MTELinkedInputBus$WorldSave");
@@ -168,9 +167,9 @@ public class PosteaMigrationGameTests {
         verified(helper, "gregtech:linkedInputBusses");
     }
 
-    /// Seeds its own witnesses. The first run places a witness shape block and a chest holding a witness stack near
-    /// spawn, then reports itself skipped. Later runs read both back from the saved chunk and assert they hold the
-    /// witness material at the current list version.
+    /// Checks a witness shape block and chest stack saved in a chunk, seeding them itself. The first run places both
+    /// near spawn, then reports itself skipped. Later runs read both back from the saved chunk and assert they hold
+    /// the witness material at the current list version.
     @GameTest(batch = BATCH)
     public static void worldChunkKeepsTheWitnessMaterial(GameTestHelper helper) {
         WorldServer world = overworld();
@@ -201,8 +200,8 @@ public class PosteaMigrationGameTests {
         verified(helper, "chunk");
     }
 
-    /// Loads the seeded player tag into a fake player through `Entity.readFromNBT`, the hook real player files take.
-    /// Then writes the player back out and checks its version stamp.
+    /// Loads the seeded player tag into a fake player through `Entity.readFromNBT`, the hook real player files take,
+    /// and checks the witness stack. Then writes the player back out and checks its version stamp.
     @GameTest(batch = BATCH)
     public static void seededPlayerDataHoldsTheWitnessMaterial(GameTestHelper helper) throws Exception {
         File file = new File(

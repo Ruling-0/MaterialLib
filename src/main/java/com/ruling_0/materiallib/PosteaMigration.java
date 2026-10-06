@@ -114,13 +114,13 @@ public final class PosteaMigration implements IVersionedTransformer {
         ctx.forEachItemStackTag(stack -> remapStack(stack, remap, items, names));
     }
 
-    /// The list version to migrate from: Postea's stamp, or 1 for data that has none.
+    /// Returns the list version to migrate from: `stored`, or 1 when it is [ChunkTransformContext#UNSTAMPED].
     static int storedOrBaseline(int stored) {
         return stored == ChunkTransformContext.UNSTAMPED ? 1 : stored;
     }
 
-    /// The remap from `from` to `to`. Throws [IllegalStateException] when the world's transition chain cannot
-    /// compose the span.
+    /// Returns the remap from `from` to `to`, empty when they are equal. Throws [IllegalStateException] when
+    /// `transitions` cannot compose the span.
     static Int2IntMap remap(MaterialIdTransitions transitions, int from, int to) {
         if (from == to) return Int2IntMaps.EMPTY_MAP;
         try {
@@ -135,8 +135,8 @@ public final class PosteaMigration implements IVersionedTransformer {
         }
     }
 
-    /// Rewrites `stack`'s damage through `remap` when its item is in `shapeItems` (numeric id) or `shapeItemNames`
-    /// (registry name). A deleted index strips the item id, so the stack loads as empty.
+    /// Rewrites `stack`'s damage through `remap` when it is a shape stack. A string item id is looked up in
+    /// `shapeItemNames` and a numeric one in `shapeItems`. A deleted index strips the item id.
     static void remapStack(NBTTagCompound stack, Int2IntMap remap, IntSet shapeItems, Set<String> shapeItemNames) {
         boolean shape = stack.hasKey("id", TAG_STRING) ? shapeItemNames.contains(stack.getString("id")) :
             shapeItems.contains(IDExtenderCompat.getItemStackID(stack));

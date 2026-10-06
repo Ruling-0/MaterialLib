@@ -39,12 +39,12 @@ public final class MaterialIdTransitions {
         this.stepsByFromVersion = stepsByFromVersion;
     }
 
-    /// A chain with no steps, for a world whose transitions have not been loaded.
+    /// Returns a chain with no steps.
     public static MaterialIdTransitions empty() {
         return new MaterialIdTransitions(new Int2ObjectOpenHashMap<>());
     }
 
-    /// [#compose], memoized per span. The returned map is unmodifiable.
+    /// Same as [#compose], memoized per span. The returned map is unmodifiable.
     public Int2IntMap remap(int fromVersion, int toVersion) {
         long span = ((long) fromVersion << 32) | (toVersion & 0xFFFFFFFFL);
         return remaps.computeIfAbsent(span, key -> Int2IntMaps.unmodifiable(compose(fromVersion, toVersion)));
@@ -66,9 +66,10 @@ public final class MaterialIdTransitions {
         return new MaterialIdTransitions(steps);
     }
 
-    /// The single remap taking indices stamped at `fromVersion` to `toVersion`: an entry per index that
+    /// Returns the single remap taking indices stamped at `fromVersion` to `toVersion`: an entry per index that
     /// changes, mapped to its final index, or to [#DELETE] when its material was removed along the way. Indices
-    /// absent from the map are unchanged. Throws [IllegalStateException] when a step in the span is missing.
+    /// absent from the map are unchanged. Throws [IllegalArgumentException] when `fromVersion` is past `toVersion`, and
+    /// [IllegalStateException] when a step in the span is missing.
     public Int2IntMap compose(int fromVersion, int toVersion) {
         if (fromVersion > toVersion) {
             throw new IllegalArgumentException(
@@ -148,7 +149,7 @@ public final class MaterialIdTransitions {
 
     private record Step(int from, Int2IntMap moved, IntSet removed) {
 
-        /// The index an index at this step's `from` version holds at `from + 1`, or [MaterialIdTransitions#DELETE].
+        /// Returns the index `index` holds at `from + 1`, or [MaterialIdTransitions#DELETE].
         int apply(int index) {
             if (moved.containsKey(index)) return moved.get(index);
             return removed.contains(index) ? DELETE : index;
