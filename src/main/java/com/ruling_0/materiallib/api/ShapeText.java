@@ -29,11 +29,11 @@ final class ShapeText {
         return displayName(shape, displayNameFormat, material);
     }
 
-    /// The display name for a shape-and-material pair: a lang override for the exact pair if present -- for a
-    /// variant's backing block, the per-variant key (`shape.<modid>.<shapeName>_<variant>...`) then the declared
-    /// shape name's key. Otherwise the first translated format key ([ShapeNaming#formatKeys]) supplies the name,
-    /// through the shape's [StandardProperties#NAME_FORMATTER] if set, else as a format applied to the material name.
-    /// With no translated format key, the declared format applies.
+    /// The display name for a shape-and-material pair. A lang override for the exact pair wins, trying a variant
+    /// block's per-variant key (`shape.<modid>.<shapeName>_<variant>...`) before its declared shape name's key.
+    /// Otherwise the first translated key of [ShapeNaming#formatKeys] builds the name, through the shape's
+    /// [StandardProperties#NAME_FORMATTER] when set. The declared format applies when no format key translates or
+    /// its translation is not a valid format string.
     static String displayName(Shape shape, String displayNameFormat, Material material) {
         String overrideKey = ShapeNaming.overrideKey(shape, material);
         if (StatCollector.canTranslate(overrideKey)) return StatCollector.translateToLocal(overrideKey);
