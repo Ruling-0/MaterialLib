@@ -27,26 +27,25 @@ public final class StandardProperties {
     /// remove it. Conventionally, this should start with a capital letter.
     public static final Property<String> NAME = Property.of(MaterialLib.MODID, "name");
 
-    /// The translation key of the material's display name, for a mod whose lang files already name its materials
-    /// under its own keys. Null when unset, giving `material.<modid>.<name>`; see [Material#getLocalizedName]. Each
-    /// material names itself, so a family has no use for it.
+    /// The translation key of the material's display name. Null when unset, giving `material.<modid>.<name>`. Set it
+    /// on a material, not a family. See [Material#getLocalizedName].
     public static final Property<String> DISPLAY_NAME_KEY = Property.of(MaterialLib.MODID, "displayNameKey");
 
     /// Read from a shape rather than a material: the translation key of the shape's display-name format, such as
-    /// `%s Gear`, which then replaces the format the shape was declared with. Null when unset, leaving the declared
-    /// format untranslated. A translation that is not a valid format string is ignored.
+    /// `%s Gear`. Its translation replaces the declared format, unless it is missing or not a valid format string.
+    /// Null when unset.
     public static final Property<String> DISPLAY_NAME_FORMAT_KEY = Property.of(MaterialLib.MODID,
         "displayNameFormatKey");
 
     /// Translation keys of display-name formats for this material's irregular names, keyed by shape name, such as
-    /// `plate` to a key translating `%s Pane` for glass. Each replaces that shape's [#DISPLAY_NAME_FORMAT_KEY] for
-    /// this material; a key with no translation falls back to it. Null when unset. Store an immutable map; the
-    /// value is shared, never defensively copied.
+    /// glass mapping `plate` to a key translating `%s Pane`. Each takes precedence over that shape's
+    /// [#DISPLAY_NAME_FORMAT_KEY], which still applies when the key has no translation. Null when unset. Store an
+    /// immutable map: the value is shared, never defensively copied.
     public static final Property<Map<String, String>> DISPLAY_NAME_FORMAT_KEYS = Property.of(MaterialLib.MODID,
         "displayNameFormatKeys");
 
-    /// Read from a shape rather than a material: builds the shape's display names from their translation keys in
-    /// place of applying the translated format to the material name. Null when unset; see [ShapeNameFormatter].
+    /// Read from a shape rather than a material: builds the shape's display names in place of applying the
+    /// translated format to the material name. Null when unset. See [ShapeNameFormatter].
     public static final Property<ShapeNameFormatter> NAME_FORMATTER = Property.of(MaterialLib.MODID, "nameFormatter");
 
     /// The texture set shapes draw their textures from. Derived from the texture set passed to

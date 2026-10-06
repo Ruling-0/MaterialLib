@@ -8,14 +8,11 @@ import java.util.Objects;
 
 /// Builds the translation keys and display strings for a [Shape] rendered for a particular [Material].
 ///
-/// Three kinds of key are involved. The material name key names the material on its own, so one translation serves
-/// every shape. The format keys ([#formatKeys]) translate the format that combines a shape with a material name:
-/// the shape's own serves every material, and a material may name its own for an irregular name such as `%s Pane`.
-/// The override key names a specific shape-and-material pair, letting a lang file replace a name outright. Callers
-/// look the override key up first; otherwise [#format] applies the first translated format, else the declared one,
-/// to the material name, itself the translation of the material name key or else [Material#getName]. Keeping the
-/// key construction here, free of any game lookup, lets it be covered by tests; the [Shape] and [Material] argument
-/// order keeps the keys stable across shapes that unify.
+/// Three kinds of key name a shape stack. The override key replaces the name of one shape-and-material pair outright.
+/// Otherwise a format key ([#formatKeys]) translates the format, such as `%s Gear`, that combines the shape with the
+/// material name, and the shape's declared format applies when none translates. The material name key translates
+/// the material name, falling back to [Material#getName]. Key construction stays free of game lookups so tests can
+/// cover it. The [Shape] and [Material] argument order keeps the keys stable across shapes that unify.
 final class ShapeNaming {
 
     private ShapeNaming() {}
