@@ -6,8 +6,8 @@ Subcommands (all take the world directory as the first argument):
                         materiallib item names in the world's saved id map
   seed <itemName>       write old-version witness stacks into EnderStorage, a Backpack file, an
                         OpenBlocks death dump, the GT linked-input-bus table, a player tag, and
-                        the quest database, plus a quest entry for a shape-overridden pair; records
-                        expectations in <world>/postea-qa-expect.json
+                        the quest database, plus an EnderStorage stack of a shape-overridden pair;
+                        records expectations in <world>/postea-qa-expect.json
   assert-shift          after the examples-on boot: the store advanced one version and the quest
                         database's witness entries were remapped and stamped
   assert-idempotent     after an unchanged boot: nothing moved again
@@ -79,10 +79,9 @@ def read_nbt(buf):
 # ---------- helpers ----------
 
 WITNESS = os.environ.get('POSTEA_QA_MATERIAL', 'Tin')
-# A pair MaterialLib serves through a shape override: its stack must migrate into the overriding item.
+# A material whose witness-shape pair MaterialLib serves through a shape override; its seeded stack must migrate
+# into the overriding item. PosteaMigrationGameTests reads it with -Dmateriallib.qa.overrideMaterial.
 OVERRIDE_MATERIAL = os.environ.get('POSTEA_QA_OVERRIDE_MATERIAL', 'Iron')
-OVERRIDE_TARGET = os.environ.get('POSTEA_QA_OVERRIDE_TARGET', 'minecraft:iron_ingot@0')
-OVERRIDE_MARKER = 'postea-qa-override'
 UUID = '11111111-2222-3333-4444-555555555555'
 
 def expect_file(world):
@@ -112,25 +111,6 @@ def stack(item, damage, slot_tag):
 
 def quest_db(world):
     return os.path.join(world, 'betterquesting', 'QuestDatabase.json')
-
-def override_entry(db):
-    # The quest entry seeded for the overridden pair, found by its marker ore name.
-    found = []
-    def walk(node):
-        if isinstance(node, dict):
-            if node.get('OreDict:8') == OVERRIDE_MARKER:
-                found.append(node)
-            for v in node.values():
-                walk(v)
-    walk(db.get('questDatabase:9', {}))
-    assert len(found) == 1, '%d override witness entries in the quest database' % len(found)
-    return found[0]
-
-def assert_override(db):
-    entry = override_entry(db)
-    now = '%s@%d' % (entry['id:8'], entry['Damage:2'])
-    assert now == OVERRIDE_TARGET, 'override witness is %s, expected %s' % (now, OVERRIDE_TARGET)
-    return now
 
 def find_seed_entry(db):
     # The first requiredItems slot of any quest, which the seeded witness replaces.
@@ -177,8 +157,11 @@ def seed(world, item_name):
     es_dir = os.path.join(world, 'EnderStorage')
     os.makedirs(es_dir, exist_ok=True)
     open(os.path.join(es_dir, 'lock.dat'), 'wb').write(b'\x00')
+    override_index = store['materials'][OVERRIDE_MATERIAL]
     chest = t_comp([
-        ('Items', t_list(10, [stack(numeric, old_index, ('Slot', t_short(0)))[1]])),
+        ('Items', t_list(10, [
+            stack(numeric, old_index, ('Slot', t_short(0)))[1],
+            stack(numeric, override_index, ('Slot', t_short(1)))[1]])),
         ('size', t_byte(1))])
     open(os.path.join(es_dir, 'data1.dat'), 'wb').write(nbt_file([('0|global|item', chest)]))
 
@@ -213,8 +196,6 @@ def seed(world, item_name):
         db = json.load(fh)
     req = find_seed_entry(db)
     req['0:10'] = {'Damage:2': old_index, 'Count:3': 1, 'id:8': item_name, 'OreDict:8': ''}
-    override_index = store['materials'][OVERRIDE_MATERIAL]
-    req['1:10'] = {'Damage:2': override_index, 'Count:3': 1, 'id:8': 'materiallib:ingot', 'OreDict:8': OVERRIDE_MARKER}
     with open(quest_db(world), 'w', encoding='utf8') as fh:
         json.dump(db, fh, indent='	')
     json.dump(
@@ -247,12 +228,11 @@ def assert_shift(world):
         'quest entries do not match their v1-to-v2 remap: %d found, %d expected' % (len(damages), len(expected))
     stamps = db.get('POSTEA_VERSIONS:10', {})
     assert stamps.get('materiallib:idList:3') == 2, 'quest DB stamp: %r' % stamps
-    override_now = assert_override(db)
     exp['newIndex'] = new_index
     exp['after'] = sorted(damages)
     json.dump(exp, open(expect_file(world), 'w'), indent=2)
-    print('shift verified: %d quest entries remapped, witness at new index %d, DB stamped v2; override witness is %s'
-          % (len(damages), new_index, override_now))
+    print('shift verified: %d quest entries remapped, witness at new index %d, DB stamped v2'
+          % (len(damages), new_index))
 
 def assert_idempotent(world):
     exp = json.load(open(expect_file(world)))
@@ -262,7 +242,6 @@ def assert_idempotent(world):
     damages = witness_damages(db, exp['item'])
     assert sorted(damages) == exp['after'], 'quest entries moved again on the idempotence boot'
     assert db.get('POSTEA_VERSIONS:10', {}).get('materiallib:idList:3') == 2
-    assert_override(db)
     print('idempotence verified: %d quest entries unchanged, witness still at %d' % (len(damages), exp['newIndex']))
 
 if __name__ == '__main__':
