@@ -10,8 +10,8 @@ import com.ruling_0.materiallib.MaterialLib;
 
 /// Maintains the per-world material id list: the [MaterialIdStore] file and the [MaterialIdTransitions] chain
 /// beside it, advanced whenever the registry's deterministic assignment or the set of shape overrides differs
-/// from the one the world last ran with. An override change moves no index, but saved data only passes through
-/// MaterialLib's Postea transformer again when the list version advances.
+/// from the one the world last ran with. An override change moves no index but still advances the list version, so
+/// saved data passes through MaterialLib's Postea transformer again.
 public final class WorldMaterialIds {
 
     private static volatile int currentListVersion = 1;

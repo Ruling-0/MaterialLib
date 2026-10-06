@@ -8,10 +8,9 @@ import java.util.function.UnaryOperator;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
-/// What one mod's [MaterialBuilder] declared about shapes, kept apart from the unified [Material] it may fold
-/// into. Unification unions shapes and families onto the owner and so forgets which declaration contributed a
-/// shape; a [ShapeOverride] only stands when its own declaration would have produced the shape it replaces, so
-/// that origin has to survive the merge.
+/// The shapes, families and overrides one mod's [MaterialBuilder] declared, kept apart from the unified [Material]
+/// it folds into. Unification merges every declaration's shapes onto the owner, but which [ShapeOverride] stands
+/// depends on which declaration generates the shape.
 record MaterialDeclaration(Set<Shape> shapes, Set<Shape> removedShapes, List<String[]> familyKeys,
                            Map<Shape, ShapeOverride> overrides) {
 

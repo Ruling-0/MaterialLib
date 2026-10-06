@@ -17,12 +17,11 @@ import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-/// Rewrites saved shape stacks and placed shape blocks whose (material, shape) pair is served by a foreign item
-/// into that item. Such data exists in a world saved while MaterialLib still minted the pair; the shape's own
-/// item no longer carries the material, so without the rewrite it would load as a missing material.
+/// Rewrites saved shape stacks and placed shape blocks of a pair served by a shape override into the overriding item.
+/// Such data comes from a world saved before the override applied, when the shape's own item carried the material.
 ///
-/// Built from the numeric ids of one id mapping; [ShapeRegistry#overrideSubstitutions] rebuilds it when FML
-/// remaps ids.
+/// Holds the numeric ids of one id mapping. [ShapeRegistry#overrideSubstitutions] rebuilds it after
+/// [ShapeRegistry#invalidateOverrideSubstitutions].
 public final class OverrideSubstitutions {
 
     private static final long NONE = -1L;

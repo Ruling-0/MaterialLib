@@ -34,11 +34,11 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// modid, key, texture set, and lang key. A reference to a non-owning declaration reads through to the unified
 /// material.
 ///
-/// A shape override ([MaterialBuilder#addShapeOverride(Shape, net.minecraft.item.Item)]) replaces the item
-/// MaterialLib would mint for one shape with a foreign one. It stands only where the declaring mod's own version
-/// of that shape would have stood: the owner's override always applies, a non-owning declaration's applies only
-/// for a shape the owner's declaration does not generate itself, and an override for a shape the unified
-/// material does not generate is ignored. A [MaterialEdit] override beats every declaration.
+/// A shape override ([MaterialBuilder#addShapeOverride(Shape, net.minecraft.item.Item)]) serves one shape of the
+/// material with a foreign item instead of one MaterialLib mints. A [MaterialEdit] override wins over every
+/// declaration. Otherwise the owner's override applies. A non-owning declaration's override applies only to a shape
+/// that declaration generates and the owner's does not; among several, the alphabetically-first modid wins. An
+/// override for a shape the unified material does not generate is ignored.
 public final class Material {
 
     private static final Comparator<Family> FAMILY_KEY_ORDER = Comparator.comparing(Family::getKey);
@@ -219,9 +219,8 @@ public final class Material {
         editedOverrides.put(shape, override);
     }
 
-    /// The override standing for `canonicalShape`, which this unified material generates, or null when
-    /// MaterialLib mints the pair itself; the class documentation states the precedence. `canonical` maps a
-    /// declared shape onto the elected shape of its name.
+    /// The override serving `canonicalShape` of this unified material, or null when MaterialLib mints the pair. See
+    /// the class doc for the precedence. `canonical` maps a declared shape onto the elected shape of its name.
     ShapeOverride chooseOverride(Shape canonicalShape, UnaryOperator<Shape> canonical, Predicate<String> modLoaded) {
         ShapeOverride edited = null;
         for (Map.Entry<Shape, ShapeOverride> entry : editedOverrides.entrySet()) {
