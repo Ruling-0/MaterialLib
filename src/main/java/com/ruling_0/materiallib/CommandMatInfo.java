@@ -9,6 +9,7 @@ import net.minecraft.block.Block;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.MathHelper;
@@ -19,12 +20,12 @@ import com.ruling_0.materiallib.api.BlockMaterialInfo;
 import com.ruling_0.materiallib.api.Family;
 import com.ruling_0.materiallib.api.Material;
 import com.ruling_0.materiallib.api.MaterialLibAPI;
-import com.ruling_0.materiallib.api.MaterialRegistry;
 import com.ruling_0.materiallib.api.Property;
 import com.ruling_0.materiallib.api.Shape;
 import com.ruling_0.materiallib.api.ShapeBlock;
 import com.ruling_0.materiallib.api.ShapeFluidInContainer;
 import com.ruling_0.materiallib.api.ShapeItem;
+import com.ruling_0.materiallib.api.StackMaterialInfo;
 import com.ruling_0.materiallib.api.StandardProperties;
 
 /// The /matinfo debug command: prints the shape, variant, and material encoded by the held item, or otherwise the
@@ -62,17 +63,17 @@ public class CommandMatInfo extends CommandBase {
         send(sender, "Hold a MaterialLib shape item, or look at a MaterialLib shape block, to inspect it");
     }
 
-    /// Reports the held stack when it is a MaterialLib shape item or shape block item, returning whether it was.
-    /// A held variant block item reports its declared shape and variant.
+    /// Reports the held stack when [MaterialLibAPI#lookupStack] knows it, returning whether it did. A held override
+    /// item also names the pair it serves.
     private static boolean reportHeldItem(ICommandSender sender, ItemStack stack) {
-        if (stack == null) return false;
-        if (stack.getItem() instanceof ShapeItem item) {
-            report(sender, item, null, MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage()));
-            return true;
-        }
-        BlockMaterialInfo info = MaterialLibAPI
-            .lookupBlock(Block.getBlockFromItem(stack.getItem()), stack.getItemDamage());
+        StackMaterialInfo info = MaterialLibAPI.lookupStack(stack);
         if (info == null) return false;
+        boolean minted = stack.getItem() instanceof ShapeItem ||
+            MaterialLibAPI.lookupBlock(Block.getBlockFromItem(stack.getItem()), stack.getItemDamage()) != null;
+        if (!minted) {
+            send(sender, "Shape override item: " + Item.itemRegistry.getNameForObject(stack.getItem()) + ":" +
+                stack.getItemDamage());
+        }
         report(sender, info.shape(), info.variant(), info.material());
         return true;
     }

@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 
 import net.minecraftforge.fluids.Fluid;
@@ -22,6 +23,8 @@ import com.ruling_0.materiallib.MaterialLib;
 
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.registry.GameRegistry;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
@@ -59,6 +62,9 @@ public final class ShapeRegistry {
     private final PendingOps pendingOps = new PendingOps();
     private final Map<BackedShape, Map<Material, ShapeOverride>> overrides = new Reference2ObjectLinkedOpenHashMap<>();
     private volatile OverrideSubstitutions overrideSubstitutions;
+    private final Map<Fluid, FluidMaterialInfo> fluidMaterials = new Reference2ObjectOpenHashMap<>();
+    private volatile Map<Item, Int2ObjectMap<StackMaterialInfo>> overrideItems;
+    private volatile boolean namedOverridesBound;
     private boolean resolved;
 
     ShapeRegistry() {}
@@ -236,6 +242,8 @@ public final class ShapeRegistry {
         forEachOverride((shape, material, override) -> {
             if (override instanceof ShapeOverride.Named) registerOreDictionary(shape, material, override.resolve());
         });
+        namedOverridesBound = true;
+        overrideItems = null;
     }
 
     /// The saved-data rewrite for overridden pairs, rebuilt on first use after [#invalidateOverrideSubstitutions].
@@ -361,6 +369,64 @@ public final class ShapeRegistry {
         if (shape == null) return null;
         Material material = MaterialRegistry.instance().getMaterialByIndex(metadata);
         return new BlockMaterialInfo(shape, variantByBlock.get(block), material);
+    }
+
+    /// The shape, variant, and material `stack` stands for, or null when it is neither a MaterialLib item or block
+    /// nor an override's item; see [StackMaterialInfo] for the result's null fields.
+    StackMaterialInfo lookupStack(ItemStack stack) {
+        requireResolved("look up an item stack");
+        if (stack == null || stack.getItem() == null) return null;
+        Item item = stack.getItem();
+        if (item instanceof ShapeItem shape) {
+            return new StackMaterialInfo(shape, null,
+                MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage()));
+        }
+        if (item instanceof ItemBlock itemBlock) {
+            BlockMaterialInfo block = lookupBlock(itemBlock.field_150939_a, stack.getItemDamage());
+            if (block != null) return new StackMaterialInfo(block.shape(), block.variant(), block.material());
+        }
+        Int2ObjectMap<StackMaterialInfo> byMeta = overrideItems().get(item);
+        return byMeta == null ? null : byMeta.get(stack.getItemDamage());
+    }
+
+    /// The pair each override's item stands for, keyed by item and metadata. Named overrides join once
+    /// [#bindNamedOverrides] has run.
+    private Map<Item, Int2ObjectMap<StackMaterialInfo>> overrideItems() {
+        Map<Item, Int2ObjectMap<StackMaterialInfo>> items = overrideItems;
+        if (items == null) {
+            Map<Item, Int2ObjectMap<StackMaterialInfo>> built = new Reference2ObjectOpenHashMap<>();
+            boolean includeNamed = namedOverridesBound;
+            forEachOverride((shape, material, override) -> {
+                if (override instanceof ShapeOverride.Named && !includeNamed) return;
+                ItemStack stack = override.resolve();
+                built.computeIfAbsent(stack.getItem(), item -> new Int2ObjectOpenHashMap<>())
+                    .putIfAbsent(stack.getItemDamage(), new StackMaterialInfo(shape, null, material));
+            });
+            items = built;
+            overrideItems = items;
+        }
+        return items;
+    }
+
+    /// The overrides serving `material`'s shapes as sorted ';'-joined `shape=item` pairs, or empty before shapes
+    /// resolve.
+    String describeOverrides(Material material) {
+        if (!resolved) return "";
+        Material canonical = material.canonical();
+        List<String> pairs = new ObjectArrayList<>();
+        forEachOverride((shape, overridden, override) -> {
+            if (overridden == canonical) {
+                pairs.add(Names.key(shape.getModId(), shape.getName()) + "=" + override.describe());
+            }
+        });
+        pairs.sort(null);
+        return String.join(";", pairs);
+    }
+
+    /// The fluid shape and material `fluid` serves, or null when it serves none.
+    FluidMaterialInfo lookupFluid(Fluid fluid) {
+        requireResolved("look up a fluid");
+        return fluid == null ? null : fluidMaterials.get(fluid);
     }
 
     /// The fluid registered for `material` in `shape`, or null when the material does not generate it.
@@ -582,6 +648,9 @@ public final class ShapeRegistry {
         for (ShapeFluid fluid : fluidShapes) {
             logCandidateDivergence(fluid);
             fluid.registerFluids(usedFluidNames);
+            for (Material material : fluid.getServedMaterials()) {
+                fluidMaterials.putIfAbsent(fluid.fluid(material), new FluidMaterialInfo(fluid, material));
+            }
         }
     }
 

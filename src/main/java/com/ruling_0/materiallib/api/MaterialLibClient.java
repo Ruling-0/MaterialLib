@@ -51,7 +51,8 @@ public final class MaterialLibClient {
         itemRenderers.put(material, renderer);
     }
 
-    static IItemRenderer getItemRenderer(Material material) {
+    /// The renderer [#setItemRenderer] attached to `material`, or null when it has none.
+    public static IItemRenderer getItemRenderer(Material material) {
         return itemRenderers.get(material);
     }
 }
