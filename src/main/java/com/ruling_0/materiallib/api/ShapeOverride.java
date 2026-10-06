@@ -8,12 +8,11 @@ import net.minecraft.item.ItemStack;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 
-/// The foreign item standing in for a (material, shape) pair MaterialLib would otherwise mint itself, declared
-/// through [MaterialBuilder#addShapeOverride(Shape, Item)] and its overloads.
+/// The foreign item serving a (material, shape) pair in place of one MaterialLib mints, declared through
+/// [MaterialBuilder#addShapeOverride(Shape, Item)] and its overloads.
 ///
-/// Vanilla items exist while materials register, so they are held as an [Eager] stack. Another mod's item does
-/// not exist until that mod's own preInit, after MaterialLib has resolved, so it is held as a [Named] registry
-/// name that binds at MaterialLib's init.
+/// A vanilla item or block exists while materials register and is held as an [Eager] stack. Another mod's item is
+/// held as a [Named] registry name that binds at MaterialLib's init.
 sealed interface ShapeOverride {
 
     /// Whether the item's mod is present this session. An absent override is treated as never declared.

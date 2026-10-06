@@ -31,10 +31,8 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 /// Holds the item, block, or fluid backing every [Shape] and finishes their setup once the material registry has
 /// resolved.
 ///
-/// A (material, shape) pair served by a shape override (see [Material]) keeps the shape in
-/// [Material#getShapes] but leaves the shape's served materials: the shape's own item or block never carries
-/// that material, so nothing that walks served materials lists or renders it, while [#getStack] answers with
-/// the overriding item and shape consumers still receive the pair.
+/// A pair served by a shape override (see [Material]) keeps the shape in [Material#getShapes] but is not among the
+/// shape's served materials. [#getStack] returns the overriding item, and shape consumers still receive the pair.
 public final class ShapeRegistry {
 
     private static final ShapeRegistry INSTANCE = new ShapeRegistry();
@@ -230,9 +228,8 @@ public final class ShapeRegistry {
         return stack;
     }
 
-    /// Binds every override naming another mod's item and registers it in the ore dictionary; a name matching
-    /// no item fails here. Invoked once by MaterialLib's init handler, when every mod's preInit has run; other mods
-    /// must not call this.
+    /// Binds every override naming another mod's item and registers it in the oredict. Throws for a name matching
+    /// no item. Invoked once by MaterialLib's init handler; other mods must not call this.
     public void bindNamedOverrides() {
         requireResolved("bind shape overrides");
         forEachOverride((shape, material, override) -> {
@@ -240,8 +237,7 @@ public final class ShapeRegistry {
         });
     }
 
-    /// The saved-data rewrite for overridden pairs, for MaterialLib's Postea transformer. Rebuilt after
-    /// [#invalidateOverrideSubstitutions].
+    /// The saved-data rewrite for overridden pairs, rebuilt on first use after [#invalidateOverrideSubstitutions].
     public OverrideSubstitutions overrideSubstitutions() {
         requireResolved("read shape override substitutions");
         OverrideSubstitutions substitutions = overrideSubstitutions;
@@ -257,9 +253,8 @@ public final class ShapeRegistry {
         overrideSubstitutions = null;
     }
 
-    /// The fingerprint of every standing override: `material\tshape\titem` lines, sorted and hashed as
-    /// [MaterialRegistry#contentHash]; empty when nothing is overridden. A world records it so that a changed
-    /// override set advances the world's list version and saved data is rewritten.
+    /// The fingerprint of every standing override, or empty when nothing is overridden. Sorted `material\tshape\titem`
+    /// lines are hashed as in [MaterialRegistry#contentHash].
     String getOverrideDigest() {
         requireResolved("fingerprint shape overrides");
         List<String> lines = new ObjectArrayList<>();
@@ -567,8 +562,7 @@ public final class ShapeRegistry {
         }
     }
 
-    /// The materials generating `shape` in index order: the ones it serves plus the ones a shape override
-    /// stands in for.
+    /// The materials generating `shape` in index order, including pairs a shape override serves.
     private Material[] generatingMaterials(ServedShape shape) {
         Map<Material, ShapeOverride> overridden = overrides.get(shape);
         if (overridden == null) return shape.getServedMaterials();
@@ -637,7 +631,7 @@ public final class ShapeRegistry {
         });
     }
 
-    /// Registers an overriding stack under the shape's ore dictionary names, skipping a name it already carries.
+    /// Registers an overriding stack under the shape's oredict names, skipping a name it already carries.
     private static void registerOreDictionary(BackedShape shape, Material material, ItemStack stack) {
         for (String prefix : shape.getOreDicts()) {
             String name = prefix + material.getName();

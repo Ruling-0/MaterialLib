@@ -56,8 +56,7 @@ final class ShapeConsumers {
     }
 
     /// Invokes every `phase` consumer once per material generating its targeted shape, resolved through
-    /// `shapesByName`. `generating` lists a shape's materials, which is wider than its served materials by the
-    /// pairs a shape override stands in for.
+    /// `shapesByName`. `generating` lists the materials of a shape, including pairs a shape override serves.
     void run(Phase phase, Map<String, ServedShape> shapesByName, Function<ServedShape, Material[]> generating) {
         if (ran(phase)) {
             throw new IllegalStateException(
