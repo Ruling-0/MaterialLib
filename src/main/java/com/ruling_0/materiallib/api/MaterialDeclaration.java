@@ -23,8 +23,8 @@ record MaterialDeclaration(Set<Shape> shapes, Set<Shape> removedShapes, List<Str
         overrides = new Reference2ObjectLinkedOpenHashMap<>(overrides);
     }
 
-    /// Whether this declaration alone generates `canonicalShape`: through its own shapes or a family it joins,
-    /// and not removed by it. `canonical` maps a declared shape onto the elected shape of its name.
+    /// Whether this declaration alone generates `canonicalShape`, through its own shapes or a family it joins, without
+    /// removing it. `canonical` maps a declared shape onto the elected shape of its name.
     boolean generates(Shape canonicalShape, UnaryOperator<Shape> canonical, MaterialRegistry registry) {
         for (Shape removed : removedShapes) {
             if (canonical.apply(removed) == canonicalShape) return false;
