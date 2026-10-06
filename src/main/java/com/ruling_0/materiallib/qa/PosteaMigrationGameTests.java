@@ -50,6 +50,8 @@ public class PosteaMigrationGameTests {
     private static final String WITNESS_MATERIAL = System.getProperty("materiallib.qa.witnessMaterial", "Tin");
     private static final String WITNESS_SHAPE = System.getProperty("materiallib.qa.witnessShape", "ingot");
     private static final String WITNESS_BLOCK_SHAPE = System.getProperty("materiallib.qa.witnessBlockShape", "frameGt");
+    /// A material whose witness-shape pair is served by a shape override; the seeded EnderStorage slot 1 holds it.
+    private static final String OVERRIDE_MATERIAL = System.getProperty("materiallib.qa.overrideMaterial", "Iron");
 
     /// Where the chunk test keeps its witness block and chest across boots: inside the always-loaded spawn area,
     /// below the test grid.
@@ -95,6 +97,13 @@ public class PosteaMigrationGameTests {
             return;
         }
         assertWitnessStack(helper, actual, "enderstorage:global");
+        ItemStack overridden = storage.getStackInSlot(1);
+        helper.assertTrue(overridden != null, "seeded override slot 1 is empty");
+        ItemStack expected = StackResolver.getStack(OVERRIDE_MATERIAL, WITNESS_SHAPE, 1);
+        helper.assertTrue(expected != null, "override witness " + OVERRIDE_MATERIAL + " does not resolve");
+        helper.assertEquals(expected.getItem(), overridden.getItem(), "enderstorage:global override item");
+        helper.assertEquals(expected.getItemDamage(), overridden.getItemDamage(),
+            "enderstorage:global override damage");
         verified(helper, "enderstorage:global");
     }
 
