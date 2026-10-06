@@ -30,8 +30,7 @@ final class ShapeNaming {
     }
 
     /// The translation key for a material's own display name: its [StandardProperties#DISPLAY_NAME_KEY], else
-    /// `material.<modid>.<name>`, e.g. `material.examplemod.TestIron`. One entry localizes the material across
-    /// every shape it generates.
+    /// `material.<modid>.<name>`, e.g. `material.examplemod.TestIron`.
     static String materialNameKey(Material material) {
         String key = material.getProperty(StandardProperties.DISPLAY_NAME_KEY);
         return key != null ? key : "material." + material.getModId() + "." + material.getName();
