@@ -5,9 +5,9 @@ import com.ruling_0.materiallib.MaterialLib;
 /// A material's palette: column `column` of `assets/<modid>/textures/palettes/<name>.png`, counted from zero and
 /// set through [MaterialBuilder#usePalette] or [MaterialEdit#usePalette].
 ///
-/// A material carrying one has its shape art baked rather than tinted. The base texture, its `_LAYER<n>`s
-/// and its `_OVERLAY` are recolored through the palette when the texture atlas stitches and flattened into a
-/// single sprite. [StandardProperties#TINT] and its siblings stay settable and readable -- fluids and external
+/// A material carrying one has its shape art baked rather than tinted. The base texture and its `_LAYER<n>`s are
+/// recolored through the palette when the texture atlas stitches, then flattened with the uncolored `_OVERLAY` into
+/// a single sprite. [StandardProperties#TINT] and its siblings stay settable and readable -- fluids and external
 /// consumers still apply them -- but they no longer color the material's baked shape art.
 ///
 /// A palette png holds one palette per column, its entries running top to bottom. Trailing fully-transparent pixels are
