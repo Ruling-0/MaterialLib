@@ -18,7 +18,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 /// Rewrites saved shape stacks and placed shape blocks of a pair served by a shape override into the overriding item.
-/// Such data comes from a world saved before the override applied, when the shape's own item carried the material.
 ///
 /// Holds the numeric ids of one id mapping. [ShapeRegistry#overrideSubstitutions] rebuilds it after
 /// [ShapeRegistry#invalidateOverrideSubstitutions].
