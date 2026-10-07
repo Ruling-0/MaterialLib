@@ -17,8 +17,7 @@ import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-/// Rewrites saved shape stacks and placed shape blocks of a pair served by a shape override into the overriding item,
-/// for worlds saved before the override applied.
+/// Rewrites saved shape stacks and placed shape blocks of a pair served by a shape override into the overriding item.
 ///
 /// Holds the numeric ids of one FML id mapping. [ShapeRegistry#overrideSubstitutions] rebuilds it after
 /// [ShapeRegistry#invalidateOverrideSubstitutions].
