@@ -125,8 +125,7 @@ public final class MaterialLibAPI {
 
     /// Same as [#getStack(Material, Shape, int)], but null when `material` is null or does not generate `shape`.
     public static ItemStack findStack(Material material, Shape shape, int amount) {
-        if (material == null || !material.hasShape(shape)) return null;
-        return getStack(material, shape, amount);
+        return material == null ? null : ShapeRegistry.instance().findStack(material, shape, amount);
     }
 
     /// The itemstack of `material` in the given variant of `shape`, with the given stack size. The shape must be
