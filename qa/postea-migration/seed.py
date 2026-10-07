@@ -80,7 +80,8 @@ def read_nbt(buf):
 
 WITNESS = os.environ.get('POSTEA_QA_MATERIAL', 'Tin')
 # A material whose witness-shape pair MaterialLib serves through a shape override; its seeded stack must migrate
-# into the overriding item. PosteaMigrationGameTests reads it with -Dmateriallib.qa.overrideMaterial.
+# into the overriding item. PosteaMigrationGameTests reads it with -Dmateriallib.qa.overrideMaterial, and the item
+# with -Dmateriallib.qa.overrideItem.
 OVERRIDE_MATERIAL = os.environ.get('POSTEA_QA_OVERRIDE_MATERIAL', 'Iron')
 UUID = '11111111-2222-3333-4444-555555555555'
 
