@@ -316,7 +316,9 @@ final class ShapeIcons {
         return exists.test(path);
     }
 
-    private static boolean textureExists(String path, boolean isItem) {
+    /// Whether the texture file for icon `path` exists on the item atlas, or the block atlas when `isItem` is false.
+    static boolean textureExists(String path, boolean isItem) {
+        if (path.startsWith(OVERRIDE_ROOT) && !OverrideTextures.mayExist(isItem)) return false;
         if (isItem) return ResourceUtil.resourceExists(ResourceUtil.getCompleteItemTextureResourceLocation(path));
         else return ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(path));
     }
