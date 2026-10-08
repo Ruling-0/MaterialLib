@@ -222,6 +222,7 @@ public final class Material {
     /// The override serving `canonicalShape` of this unified material, or null when MaterialLib mints the pair. See
     /// the class doc for the precedence. `canonical` maps a declared shape onto the elected shape of its name.
     ShapeOverride chooseOverride(Shape canonicalShape, UnaryOperator<Shape> canonical, Predicate<String> modLoaded) {
+        if (!namesOverrides()) return null;
         ShapeOverride edited = null;
         for (Map.Entry<Shape, ShapeOverride> entry : editedOverrides.entrySet()) {
             if (canonical.apply(entry.getKey()) == canonicalShape && entry.getValue().isAvailable(modLoaded)) {
@@ -246,8 +247,18 @@ public final class Material {
         return null;
     }
 
+    /// Whether some declaration or edit of this unified material names an override.
+    private boolean namesOverrides() {
+        if (!editedOverrides.isEmpty() || !declaration.overrides().isEmpty()) return true;
+        for (Material loser : alternatives) {
+            if (!loser.declaration.overrides().isEmpty()) return true;
+        }
+        return false;
+    }
+
     /// Every shape some declaration or edit of this unified material names an override for.
     Set<Shape> overriddenShapeDeclarations() {
+        if (!namesOverrides()) return Set.of();
         Set<Shape> declared = new ReferenceLinkedOpenHashSet<>(editedOverrides.keySet());
         declared.addAll(declaration.overrides().keySet());
         for (Material loser : alternatives) {
