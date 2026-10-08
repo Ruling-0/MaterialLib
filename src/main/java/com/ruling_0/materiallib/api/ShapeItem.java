@@ -82,6 +82,11 @@ public class ShapeItem extends Item implements BackedShape {
     public Material[] getServedMaterials() { return served.get(); }
 
     @Override
+    public boolean serves(Material material) {
+        return served.contains(material);
+    }
+
+    @Override
     public ShapeProperties properties() {
         return props;
     }
