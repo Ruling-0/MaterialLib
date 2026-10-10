@@ -199,10 +199,10 @@ public final class MaterialRegistry {
     }
 
     /// The full index assignment rendered as a CSV table for debugging: one row per assigned index in
-    /// ascending order, with the assigned owner, shapes, and families. Only available after the registry has
-    /// resolved.
+    /// ascending order, with the assigned owner, shapes, families, and shape overrides. Only available after the
+    /// registry has resolved.
     public String dumpCsv() {
-        return MaterialCsv.dump(this);
+        return MaterialCsv.dump(this, ShapeRegistry.instance()::describeOverrides);
     }
 
     /// Assigns each material its global index and fingerprints the result as [#getContentHash].

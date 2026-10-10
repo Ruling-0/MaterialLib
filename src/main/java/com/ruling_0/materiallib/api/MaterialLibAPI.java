@@ -123,6 +123,12 @@ public final class MaterialLibAPI {
         return ShapeRegistry.instance().getStack(material, shape, amount);
     }
 
+    /// Same as [#getStack(Material, Shape, int)], but null when `material` is null or does not generate `shape`.
+    public static ItemStack findStack(Material material, Shape shape, int amount) {
+        if (material == null || !material.hasShape(shape)) return null;
+        return getStack(material, shape, amount);
+    }
+
     /// The itemstack of `material` in the given variant of `shape`, with the given stack size. The shape must be
     /// a block shape declared with [BlockShapeBuilder#variants] that the material generates. Only available after
     /// shapes have resolved.
@@ -147,6 +153,25 @@ public final class MaterialLibAPI {
     /// was not registered by MaterialLib. Only available after shapes have resolved.
     public static BlockMaterialInfo lookupBlock(Block block, int metadata) {
         return ShapeRegistry.instance().lookupBlock(block, metadata);
+    }
+
+    /// The shape, variant, and material `stack` stands for: a MaterialLib item, a MaterialLib block's item, or the
+    /// item a shape override declares. Null for any other stack. A named override's item is recognized from
+    /// MaterialLib's init on. Only available after shapes have resolved.
+    public static StackMaterialInfo lookupStack(ItemStack stack) {
+        return ShapeRegistry.instance().lookupStack(stack);
+    }
+
+    /// The fluid shape and material `fluid` serves, or null when it is no material's fluid. A fluid another mod
+    /// registered first under a material fluid's name counts as that material's. Only available after shapes have
+    /// resolved.
+    public static FluidMaterialInfo lookupFluid(Fluid fluid) {
+        return ShapeRegistry.instance().lookupFluid(fluid);
+    }
+
+    /// The ARGB [StandardProperties#TINT] of `material`, with a resource pack's override applied on the client.
+    public static int getTint(Material material) {
+        return MaterialTints.color(material, StandardProperties.TINT);
     }
 
     /// The Forge fluid MaterialLib registered for `material` in `shape`, or null when the material does not

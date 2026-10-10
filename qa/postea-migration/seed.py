@@ -6,7 +6,8 @@ Subcommands (all take the world directory as the first argument):
                         materiallib item names in the world's saved id map
   seed <itemName>       write old-version witness stacks into EnderStorage, a Backpack file, an
                         OpenBlocks death dump, the GT linked-input-bus table, a player tag, and
-                        the quest database; records expectations in <world>/postea-qa-expect.json
+                        the quest database, plus an EnderStorage stack of a shape-overridden pair;
+                        records expectations in <world>/postea-qa-expect.json
   assert-shift          after the examples-on boot: the store advanced one version and the quest
                         database's witness entries were remapped and stamped
   assert-idempotent     after an unchanged boot: nothing moved again
@@ -78,6 +79,10 @@ def read_nbt(buf):
 # ---------- helpers ----------
 
 WITNESS = os.environ.get('POSTEA_QA_MATERIAL', 'Tin')
+# A material whose witness-shape pair MaterialLib serves through a shape override; its seeded stack must migrate
+# into the overriding item. PosteaMigrationGameTests reads it with -Dmateriallib.qa.overrideMaterial, and the item
+# with -Dmateriallib.qa.overrideItem.
+OVERRIDE_MATERIAL = os.environ.get('POSTEA_QA_OVERRIDE_MATERIAL', 'Iron')
 UUID = '11111111-2222-3333-4444-555555555555'
 
 def expect_file(world):
@@ -153,8 +158,11 @@ def seed(world, item_name):
     es_dir = os.path.join(world, 'EnderStorage')
     os.makedirs(es_dir, exist_ok=True)
     open(os.path.join(es_dir, 'lock.dat'), 'wb').write(b'\x00')
+    override_index = store['materials'][OVERRIDE_MATERIAL]
     chest = t_comp([
-        ('Items', t_list(10, [stack(numeric, old_index, ('Slot', t_short(0)))[1]])),
+        ('Items', t_list(10, [
+            stack(numeric, old_index, ('Slot', t_short(0)))[1],
+            stack(numeric, override_index, ('Slot', t_short(1)))[1]])),
         ('size', t_byte(1))])
     open(os.path.join(es_dir, 'data1.dat'), 'wb').write(nbt_file([('0|global|item', chest)]))
 

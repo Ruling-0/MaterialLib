@@ -4,24 +4,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 /// Renders a resolved [MaterialRegistry]'s full index assignment as a CSV table.
 ///
-/// One row per assigned index in ascending order -- the data needed when debugging id issues. Columns are
-/// the index, the bare material name, the owning modid, and the generated shapes and family memberships as
-/// ';'-joined keys. Fields containing a comma, quote, or line break are quoted with doubled inner quotes
-/// (RFC 4180); rows end with '\n'.
+/// One row per assigned index in ascending order -- the data needed when debugging id issues. Columns are the index,
+/// the bare material name, the owning modid, the generated shapes and family memberships as ';'-joined keys, and the
+/// shape overrides as ';'-joined `shape=item` pairs. Fields containing a comma, quote, or line break are quoted with
+/// doubled inner quotes (RFC 4180); rows end with '\n'.
 final class MaterialCsv {
 
     private MaterialCsv() {}
 
-    static String dump(MaterialRegistry registry) {
+    static String dump(MaterialRegistry registry, Function<Material, String> overrides) {
         Map<Integer, String> namesByIndex = new TreeMap<>();
         for (Map.Entry<String, Integer> entry : registry.getAssignedIndices().entrySet()) {
             namesByIndex.put(entry.getValue(), entry.getKey());
         }
         Map<String, String> owners = registry.getAssignedOwners();
-        StringBuilder csv = new StringBuilder("index,name,owner,shapes,families\n");
+        StringBuilder csv = new StringBuilder("index,name,owner,shapes,families,overrides\n");
         for (Map.Entry<Integer, String> entry : namesByIndex.entrySet()) {
             int index = entry.getKey();
             String name = entry.getValue();
@@ -35,6 +36,8 @@ final class MaterialCsv {
                 .append(escape(shapeKeys(material)))
                 .append(',')
                 .append(escape(familyKeys(material)))
+                .append(',')
+                .append(escape(overrides.apply(material)))
                 .append('\n');
         }
         return csv.toString();

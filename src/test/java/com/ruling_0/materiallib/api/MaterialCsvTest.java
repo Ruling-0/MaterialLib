@@ -23,8 +23,8 @@ class MaterialCsvTest {
         registry.resolve();
 
         assertEquals(
-            "index,name,owner,shapes,families\n" + "0,Copper,testmod,,\n" +
-                "1,Iron,testmod,amod:gear;amod:plate,testmod:Metals\n",
+            "index,name,owner,shapes,families,overrides\n" + "0,Copper,testmod,,,\n" +
+                "1,Iron,testmod,amod:gear;amod:plate,testmod:Metals,\n",
             registry.dumpCsv());
     }
 
@@ -33,7 +33,8 @@ class MaterialCsvTest {
         registry.newMaterial("testmod", "Iron,\"Cast\"", texture).build();
         registry.resolve();
 
-        assertEquals("index,name,owner,shapes,families\n" + "0,\"Iron,\"\"Cast\"\"\",testmod,,\n", registry.dumpCsv());
+        assertEquals("index,name,owner,shapes,families,overrides\n" + "0,\"Iron,\"\"Cast\"\"\",testmod,,,\n",
+            registry.dumpCsv());
     }
 
     @Test
