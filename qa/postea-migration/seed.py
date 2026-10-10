@@ -192,7 +192,8 @@ def seed(world, item_name):
     with open(quest_db(world), 'w', encoding='utf8') as fh:
         json.dump(db, fh, indent='	')
     json.dump(
-        {'item': item_name, 'numericId': numeric, 'oldIndex': old_index},
+        {'item': item_name, 'numericId': numeric, 'oldIndex': old_index,
+         'before': sorted(witness_damages(db, item_name))},
         open(expect_file(world), 'w'),
         indent=2)
     print('seeded: %s (%s) id=%d oldIndex=%d; quest witness entry planted'
@@ -212,15 +213,19 @@ def assert_shift(world):
     assert new_index in damages, \
         'no quest entry holds the witness at its new index %d (old %d); found %r' \
         % (new_index, exp['oldIndex'], sorted(set(damages))[:10])
-    assert exp['oldIndex'] not in damages, \
-        'a quest entry still holds the old index %d: the remap missed it' % exp['oldIndex']
+    # The pack's own quest entries of the witness item move too, one possibly onto the witness's old index, so every
+    # entry is checked against the transition instead of the old index against absence.
+    moved = json.load(open(trans))['moved']
+    expected = sorted(moved.get(str(d), d) for d in exp['before'])
+    assert sorted(damages) == expected, \
+        'quest entries do not match their v1-to-v2 remap: %d found, %d expected' % (len(damages), len(expected))
     stamps = db.get('POSTEA_VERSIONS:10', {})
     assert stamps.get('materiallib:idList:3') == 2, 'quest DB stamp: %r' % stamps
     exp['newIndex'] = new_index
-    exp['witnessCount'] = damages.count(new_index)
+    exp['after'] = sorted(damages)
     json.dump(exp, open(expect_file(world), 'w'), indent=2)
-    print('shift verified: %d quest entries at new index %d, none at old %d, DB stamped v2'
-          % (exp['witnessCount'], new_index, exp['oldIndex']))
+    print('shift verified: %d quest entries remapped, witness at new index %d, DB stamped v2'
+          % (len(damages), new_index))
 
 def assert_idempotent(world):
     exp = json.load(open(expect_file(world)))
@@ -228,12 +233,9 @@ def assert_idempotent(world):
     assert store['listVersion'] == 2, 'listVersion %d, expected 2' % store['listVersion']
     db = json.load(open(quest_db(world), encoding='utf8'))
     damages = witness_damages(db, exp['item'])
-    assert exp['newIndex'] in damages and exp['oldIndex'] not in damages, \
-        'witness entries moved: %r' % sorted(set(damages))[:10]
-    assert damages.count(exp['newIndex']) == exp['witnessCount'], \
-        'witness entry count changed: %d -> %d' % (exp['witnessCount'], damages.count(exp['newIndex']))
+    assert sorted(damages) == exp['after'], 'quest entries moved again on the idempotence boot'
     assert db.get('POSTEA_VERSIONS:10', {}).get('materiallib:idList:3') == 2
-    print('idempotence verified: %d witness entries still at %d' % (exp['witnessCount'], exp['newIndex']))
+    print('idempotence verified: %d quest entries unchanged, witness still at %d' % (len(damages), exp['newIndex']))
 
 if __name__ == '__main__':
     cmd, world = sys.argv[1], sys.argv[2]
