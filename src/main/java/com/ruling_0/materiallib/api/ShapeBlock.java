@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -398,21 +399,21 @@ public class ShapeBlock extends Block implements BackedShape {
         return material != null ? behavior.harvestLevel().apply(material, variant) : super.getHarvestLevel(metadata);
     }
 
-    /// The drops for a normal (non-silk-touch) break; see [BlockShapeBuilder#drops].
+    /// Returns the stacks from the shape's [BlockDropFunction], silk-touch breaks included, or the default drops for
+    /// a shape without one.
     @Override
     public ArrayList<ItemStack> getDrops(World world, int x, int y, int z, int metadata, int fortune) {
         Material material = behavior.drops() != null ? materialFor(metadata) : null;
         if (material == null) return super.getDrops(world, x, y, z, metadata, fortune);
-        return new ArrayList<>(behavior.drops().drops(material, variant, fortune, false));
+        EntityPlayer harvester = harvesters.get();
+        boolean silkTouch = harvester != null && EnchantmentHelper.getSilkTouchModifier(harvester);
+        return new ArrayList<>(behavior.drops().drops(material, variant, fortune, silkTouch, harvester));
     }
 
-    /// The single stack a silk-touch break picks up; see [BlockShapeBuilder#drops].
+    /// False for a shape with a drop function, which decides silk-touch drops itself in [#getDrops].
     @Override
-    public ItemStack createStackedBlock(int metadata) {
-        Material material = behavior.drops() != null ? materialFor(metadata) : null;
-        if (material == null) return super.createStackedBlock(metadata);
-        List<ItemStack> drops = behavior.drops().drops(material, variant, 0, true);
-        return drops.isEmpty() ? null : drops.get(0);
+    public boolean canSilkHarvest(World world, EntityPlayer player, int x, int y, int z, int metadata) {
+        return behavior.drops() == null && super.canSilkHarvest(world, player, x, y, z, metadata);
     }
 
     private static Material materialAt(World world, int x, int y, int z) {
