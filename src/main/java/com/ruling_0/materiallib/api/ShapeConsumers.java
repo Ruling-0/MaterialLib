@@ -2,6 +2,7 @@ package com.ruling_0.materiallib.api;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import com.ruling_0.materiallib.MaterialLib;
 
@@ -49,9 +50,14 @@ final class ShapeConsumers {
         registrations(phase).add(new Registration(modid, shapeName, consumer));
     }
 
-    /// Invokes every `phase` consumer once per material generating its targeted shape, resolved through
-    /// `shapesByName`.
+    /// [#run(Phase, Map, Function)] over each shape's served materials.
     void run(Phase phase, Map<String, ServedShape> shapesByName) {
+        run(phase, shapesByName, ServedShape::getServedMaterials);
+    }
+
+    /// Invokes every `phase` consumer once per material generating its targeted shape, resolved through `shapesByName`.
+    /// `generating` lists the materials dispatched for each shape.
+    void run(Phase phase, Map<String, ServedShape> shapesByName, Function<ServedShape, Material[]> generating) {
         if (ran(phase)) {
             throw new IllegalStateException(
                 "Cannot run the " + phase.label + " shape consumers: they have already run");
@@ -74,7 +80,7 @@ final class ShapeConsumers {
                 continue;
             }
             dispatched++;
-            for (Material material : shape.getServedMaterials()) {
+            for (Material material : generating.apply(shape)) {
                 try {
                     registration.consumer().consume(shape, material);
                 }

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import net.minecraft.block.Block;
 import net.minecraft.item.Item;
@@ -19,6 +20,7 @@ import net.minecraftforge.oredict.OreDictionary;
 
 import com.ruling_0.materiallib.MaterialLib;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.registry.GameRegistry;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -28,6 +30,9 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 /// Holds the item, block, or fluid backing every [Shape] and finishes their setup once the material registry has
 /// resolved.
+///
+/// A pair served by a shape override (see [Material]) keeps the shape in [Material#getShapes] but is not among the
+/// shape's served materials. [#getStack] returns the overriding item, and shape consumers still receive the pair.
 public final class ShapeRegistry {
 
     private static final ShapeRegistry INSTANCE = new ShapeRegistry();
@@ -52,6 +57,8 @@ public final class ShapeRegistry {
     private Map<String, String> persistedOwners = new LinkedHashMap<>();
     private Map<String, String> assignedOwners = new LinkedHashMap<>();
     private final PendingOps pendingOps = new PendingOps();
+    private final Map<BackedShape, Map<Material, ShapeOverride>> overrides = new Reference2ObjectLinkedOpenHashMap<>();
+    private volatile OverrideSubstitutions overrideSubstitutions;
     private boolean resolved;
 
     ShapeRegistry() {}
@@ -205,8 +212,71 @@ public final class ShapeRegistry {
         if (!(canonical instanceof BackedShape backed)) {
             throw new IllegalArgumentException(canonical + " is not a backed item or block shape");
         }
+        ItemStack overridden = overrideStack(material, backed, amount);
+        if (overridden != null) return overridden;
         requireServes(backed, material);
         return backed.getStack(material, amount);
+    }
+
+    /// The overriding stack of `material` in the canonical `shape` with size `amount`, or null when MaterialLib mints
+    /// the pair.
+    ItemStack overrideStack(Material material, BackedShape shape, int amount) {
+        Map<Material, ShapeOverride> byMaterial = overrides.get(shape);
+        ShapeOverride override = byMaterial == null ? null : byMaterial.get(material);
+        if (override == null) return null;
+        ItemStack stack = override.resolve();
+        stack.stackSize = amount;
+        return stack;
+    }
+
+    /// Binds every override naming another mod's item and registers it in the oredict. Throws [IllegalStateException]
+    /// for a name matching no item or block. Invoked once by MaterialLib's init handler; other mods must not call this.
+    public void bindNamedOverrides() {
+        requireResolved("bind shape overrides");
+        forEachOverride((shape, material, override) -> {
+            if (override instanceof ShapeOverride.Named) registerOreDictionary(shape, material, override.resolve());
+        });
+    }
+
+    /// The saved-data rewrite for overridden pairs, rebuilt on first use after [#invalidateOverrideSubstitutions].
+    public OverrideSubstitutions overrideSubstitutions() {
+        requireResolved("read shape override substitutions");
+        OverrideSubstitutions substitutions = overrideSubstitutions;
+        if (substitutions == null) {
+            substitutions = new OverrideSubstitutions(overrides);
+            overrideSubstitutions = substitutions;
+        }
+        return substitutions;
+    }
+
+    /// Drops the substitutions built from the previous numeric id mapping.
+    public void invalidateOverrideSubstitutions() {
+        overrideSubstitutions = null;
+    }
+
+    /// The fingerprint of every standing override, or empty when nothing is overridden.
+    String getOverrideDigest() {
+        requireResolved("fingerprint shape overrides");
+        List<String> lines = new ObjectArrayList<>();
+        forEachOverride(
+            (shape, material, override) -> lines
+                .add(material.getName() + "\t" + shape.getName() + "\t" + override.describe()));
+        if (lines.isEmpty()) return "";
+        Collections.sort(lines);
+        return MaterialRegistry.contentHash(lines);
+    }
+
+    private void forEachOverride(OverrideVisitor visitor) {
+        for (Map.Entry<BackedShape, Map<Material, ShapeOverride>> shapeEntry : overrides.entrySet()) {
+            for (Map.Entry<Material, ShapeOverride> entry : shapeEntry.getValue().entrySet()) {
+                visitor.visit(shapeEntry.getKey(), entry.getKey(), entry.getValue());
+            }
+        }
+    }
+
+    private interface OverrideVisitor {
+
+        void visit(BackedShape shape, Material material, ShapeOverride override);
     }
 
     /// The itemstack of `material` in the given variant of `shape`, with the given stack size. The shape must be
@@ -355,14 +425,14 @@ public final class ShapeRegistry {
     /// Invoked once by MaterialLib's init handler; other mods must not call this.
     public void runInitConsumers() {
         requireResolved("run shape consumers");
-        consumers.run(ShapeConsumers.Phase.INIT, servedByName);
+        consumers.run(ShapeConsumers.Phase.INIT, servedByName, this::generatingMaterials);
     }
 
     /// Runs every postInit-phase shape consumer once per (shape, material) pair for the shape it targets.
     /// Invoked once by MaterialLib's postInit handler; other mods must not call this.
     public void runPostInitConsumers() {
         requireResolved("run shape consumers");
-        consumers.run(ShapeConsumers.Phase.POST_INIT, servedByName);
+        consumers.run(ShapeConsumers.Phase.POST_INIT, servedByName, this::generatingMaterials);
     }
 
     /// Sorts every canonical shape into its type and registers each backing item or block with FML under
@@ -447,15 +517,41 @@ public final class ShapeRegistry {
         for (ServedShape shape : servedShapes) {
             served.put(shape, new ObjectArrayList<>());
         }
+        Predicate<String> modLoaded = modid -> "minecraft".equals(modid) || Loader.isModLoaded(modid);
         for (Material material : MaterialRegistry.instance().getMaterials()) {
             for (Shape shape : material.getShapes()) {
-                List<Material> materials = served.get(unification.canonical(shape));
+                Shape canonical = unification.canonical(shape);
+                List<Material> materials = served.get(canonical);
                 if (materials == null) {
                     throw new IllegalStateException(
                         "Material " + material.getKey() + " generates shape " + shape +
                             " which was never registered through MaterialLibAPI");
                 }
-                materials.add(material);
+                ShapeOverride override = material.chooseOverride(canonical, unification::canonical, modLoaded);
+                if (override == null) {
+                    materials.add(material);
+                }
+                else if (isOverridable(canonical)) {
+                    overrides.computeIfAbsent((BackedShape) canonical, key -> new Reference2ObjectLinkedOpenHashMap<>())
+                        .put(material, override);
+                }
+                else {
+                    MaterialLib.LOG.warn(
+                        "Ignoring the override of {} in {}: only item shapes and variant-less block shapes can be " +
+                            "overridden",
+                        material.getKey(),
+                        canonical);
+                    materials.add(material);
+                }
+            }
+            for (Shape declared : material.overriddenShapeDeclarations()) {
+                if (!material.getShapes().contains(declared) &&
+                    !material.getShapes().contains(unification.canonical(declared))) {
+                    MaterialLib.LOG.info(
+                        "Ignoring the override of {} in {}: the material does not generate that shape",
+                        material.getKey(),
+                        declared);
+                }
             }
         }
         Comparator<Material> byIndex = Comparator.comparingInt(Material::getIndex);
@@ -464,6 +560,21 @@ public final class ShapeRegistry {
             Arrays.sort(materials, byIndex);
             entry.getKey().bindServedMaterials(materials);
         }
+    }
+
+    /// The materials generating `shape` in index order, including pairs a shape override serves.
+    private Material[] generatingMaterials(ServedShape shape) {
+        Map<Material, ShapeOverride> overridden = overrides.get(shape);
+        if (overridden == null) return shape.getServedMaterials();
+        List<Material> materials = new ObjectArrayList<>(shape.getServedMaterials());
+        materials.addAll(overridden.keySet());
+        materials.sort(Comparator.comparingInt(Material::getIndex));
+        return materials.toArray(new Material[0]);
+    }
+
+    private static boolean isOverridable(Shape canonical) {
+        return canonical instanceof ShapeBlock ||
+            (canonical instanceof ShapeItem && !(canonical instanceof ShapeFluidInContainer));
     }
 
     private void registerFluids() {
@@ -514,6 +625,21 @@ public final class ShapeRegistry {
                     OreDictionary.registerOre(prefix + material.getName(), stack);
                 }
             }
+        }
+        forEachOverride((shape, material, override) -> {
+            if (override instanceof ShapeOverride.Eager) registerOreDictionary(shape, material, override.resolve());
+        });
+    }
+
+    /// Registers an overriding stack under the shape's oredict names, skipping a name it already carries.
+    private static void registerOreDictionary(BackedShape shape, Material material, ItemStack stack) {
+        for (String prefix : shape.getOreDicts()) {
+            String name = prefix + material.getName();
+            boolean present = false;
+            for (ItemStack registered : OreDictionary.getOres(name)) {
+                if (OreDictionary.itemMatches(registered, stack, false)) present = true;
+            }
+            if (!present) OreDictionary.registerOre(name, stack);
         }
     }
 }

@@ -7,6 +7,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import net.minecraft.block.Block;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
@@ -23,6 +27,7 @@ public final class MaterialBuilder {
     private final Set<Shape> removedShapes = new ReferenceLinkedOpenHashSet<>();
     private final List<String[]> familyKeys = new ArrayList<>();
     private final List<String> tooltipLines = new ArrayList<>(2);
+    private final Map<Shape, ShapeOverride> shapeOverrides = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
 
     MaterialBuilder(MaterialRegistry registry, String modid, String name, TextureSet textureSet) {
@@ -97,6 +102,51 @@ public final class MaterialBuilder {
         return this;
     }
 
+    /// Serves this material's `shape` with `item` at metadata 0 instead of an item MaterialLib mints.
+    /// [MaterialLibAPI#getStack] returns it, it is registered under the shape's oredict names, and the shape's own
+    /// item or block does not carry this material. The material must still generate the shape. [Material] documents
+    /// which override stands when several mods declare the material. Only block shapes without variants and item
+    /// shapes other than fluid containers can be overridden. Any other override is ignored with a warning.
+    ///
+    /// During the registration event only vanilla items are guaranteed to exist. Another mod's item is named through
+    /// [#addShapeOverride(Shape, String, String, int)].
+    public MaterialBuilder addShapeOverride(Shape shape, Item item) {
+        return addShapeOverride(shape, item, 0);
+    }
+
+    /// [#addShapeOverride(Shape, Item)] with an explicit item metadata.
+    public MaterialBuilder addShapeOverride(Shape shape, Item item, int meta) {
+        Objects.requireNonNull(item, "item must not be null");
+        return addShapeOverride(shape, new ShapeOverride.Eager(new ItemStack(item, 1, meta)));
+    }
+
+    /// [#addShapeOverride(Shape, Item)] for a block's item form, at metadata 0.
+    public MaterialBuilder addShapeOverride(Shape shape, Block block) {
+        return addShapeOverride(shape, block, 0);
+    }
+
+    /// [#addShapeOverride(Shape, Item)] for a block's item form with an explicit metadata.
+    public MaterialBuilder addShapeOverride(Shape shape, Block block, int meta) {
+        Objects.requireNonNull(block, "block must not be null");
+        return addShapeOverride(shape, new ShapeOverride.Eager(new ItemStack(block, 1, meta)));
+    }
+
+    /// [#addShapeOverride(Shape, Item)] for another mod's item or block, named by registry name. The override is
+    /// ignored when `itemModid` is not loaded. The name binds at MaterialLib's init, which throws
+    /// [IllegalStateException] when no item or block registered during preInit matches it. [MaterialLibAPI#getStack]
+    /// serves the pair from MaterialLib's init on.
+    public MaterialBuilder addShapeOverride(Shape shape, String itemModid, String itemName, int meta) {
+        Names.validate("override item modid", itemModid);
+        Objects.requireNonNull(itemName, "itemName must not be null");
+        return addShapeOverride(shape, new ShapeOverride.Named(itemModid, itemName, meta));
+    }
+
+    private MaterialBuilder addShapeOverride(Shape shape, ShapeOverride override) {
+        Names.validate(shape);
+        shapeOverrides.put(shape, override);
+        return this;
+    }
+
     /// Adds the material to a family.
     public MaterialBuilder addToFamily(Family family) {
         Objects.requireNonNull(family, "family must not be null");
@@ -126,7 +176,8 @@ public final class MaterialBuilder {
         }
         properties.put(StandardProperties.NAME, name);
         properties.put(StandardProperties.TEXTURE_SET, textureSet);
-        Material material = new Material(registry, modid, name, properties, shapes, tooltipLines);
+        MaterialDeclaration declaration = new MaterialDeclaration(shapes, removedShapes, familyKeys, shapeOverrides);
+        Material material = new Material(registry, modid, name, properties, shapes, tooltipLines, declaration);
         registry.register(material);
         for (String[] familyKey : familyKeys) {
             registry.enqueueAddToFamily(modid, name, familyKey[0], familyKey[1]);
