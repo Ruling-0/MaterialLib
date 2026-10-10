@@ -79,10 +79,20 @@ require_verified() {
 
 case "${1:?usage: run.sh [--server <dir>] <all|world|examples|boot|discover|seed|assert-shift|assert-idempotent>}" in
     all)
+        # A default quest database reload overwrites the seeded quest witness. BetterQuesting reloads on every world
+        # load when configured to, and dreamcraft does on every boot while its modpack-update marker exists.
+        if grep -q 'B:"Load the default quest DB on world startup."=true' "$SERVER/config/betterquesting.cfg"; then
+            echo "BetterQuesting reloads its default quest database on world load; turn that off first" >&2
+            exit 1
+        fi
+        update_marker="$SERVER/config/modpack-update"
+        [[ -f "$update_marker" ]] && mv "$update_marker" "$update_marker.postea-qa"
+
         original_world="$(grep '^level-name=' "$SERVER/server.properties" | cut -d= -f2)"
         restore() {
             set_world "$original_world"
             set_examples false
+            [[ -f "$update_marker.postea-qa" ]] && mv "$update_marker.postea-qa" "$update_marker"
         }
         trap restore EXIT
 
