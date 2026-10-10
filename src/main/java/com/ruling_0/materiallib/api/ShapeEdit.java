@@ -2,6 +2,8 @@ package com.ruling_0.materiallib.api;
 
 import java.util.Objects;
 
+import com.ruling_0.materiallib.MaterialLib;
+
 /// Queued cross-mod changes to a [Shape] identified by name, obtained from [MaterialLibAPI#editShape].
 /// Queuing, ordering, and skip behavior are as in [MaterialEdit]; an edit addressed to any declaration of a
 /// unified name applies to the shape that owns the name.
@@ -40,5 +42,34 @@ public final class ShapeEdit {
             "remove " + property + " from shape",
             shape -> shape.properties().remove(shape, property));
         return this;
+    }
+
+    /// Attaches a callback the shape's items run when a player uses one on a block. See [ItemUseCallback] for the
+    /// callback contract. Callbacks run in the order attached. A pair served by an override item from
+    /// [MaterialBuilder#addShapeOverride] does not run them. Skipped with a warning for a non-item shape.
+    public ShapeEdit onItemUse(ItemUseCallback callback) {
+        Objects.requireNonNull(callback, "callback must not be null");
+        registry.enqueueShapeOp(modid, name, "attach item use callback to shape", shape -> {
+            ShapeItem item = asItem(shape);
+            if (item != null) item.addUseCallback(callback);
+        });
+        return this;
+    }
+
+    /// Attaches a callback the shape's items run every tick while dropped in the world. See [EntityItemCallback] for
+    /// the callback contract. Ordering, overridden pairs and non-item shapes are as in [#onItemUse].
+    public ShapeEdit onEntityItemUpdate(EntityItemCallback callback) {
+        Objects.requireNonNull(callback, "callback must not be null");
+        registry.enqueueShapeOp(modid, name, "attach dropped item callback to shape", shape -> {
+            ShapeItem item = asItem(shape);
+            if (item != null) item.addEntityItemCallback(callback);
+        });
+        return this;
+    }
+
+    private ShapeItem asItem(ServedShape shape) {
+        if (shape instanceof ShapeItem item) return item;
+        MaterialLib.LOG.warn("Skipping item callback from {}: shape {} is not an item shape", modid, name);
+        return null;
     }
 }
