@@ -1,6 +1,7 @@
 package com.ruling_0.materiallib.api;
 
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 
 import net.minecraft.block.Block;
@@ -43,8 +44,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// it replaces.
 ///
 /// [ShapeBlockRenderingHandler] also composites a material whose art binds more than one icon layer (see
-/// [TextureSet]). A stack's depth is known only once the atlas stitches, so [#registerBlockIcons] switches such a
-/// block to that handler's render type there and never switches back.
+/// [TextureSet]) or glows (see [StandardProperties#EMISSIVE_LAYERS]). A stack's depth is known only once the atlas
+/// stitches, so [#registerBlockIcons] switches such a block to that handler's render type there and never switches
+/// back.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;
@@ -62,6 +64,7 @@ public class ShapeBlock extends Block implements BackedShape {
     private final ShapeIcons icons = new ShapeIcons(false, true);
     private String iconNameOverride;
     private IIcon baseIcon;
+    private volatile BitSet emissive = new BitSet();
     private boolean warnedMissingBaseTexture;
     private int renderType = 0;
 
@@ -204,9 +207,21 @@ public class ShapeBlock extends Block implements BackedShape {
         if (baseTexture != null) {
             baseIcon = registerBaseIcon(register);
         }
-        if (renderType == 0 && hasLayeredMaterial()) {
+        emissive = emissiveIndices(this, served.get());
+        if (renderType == 0 && (hasLayeredMaterial() || !emissive.isEmpty())) {
             setRenderType(ShapeBlockRenderingHandler.RENDER_ID);
         }
+    }
+
+    /// The indices of the `served` materials whose icon layers `shape` draws full-bright; see
+    /// [StandardProperties#EMISSIVE_LAYERS].
+    static BitSet emissiveIndices(Shape shape, Material[] served) {
+        BitSet indices = new BitSet();
+        if (!shape.getProperty(StandardProperties.EMISSIVE_LAYERS)) return indices;
+        for (Material material : served) {
+            if (material.getProperty(StandardProperties.EMISSIVE)) indices.set(material.getIndex());
+        }
+        return indices;
     }
 
     /// Whether any served material bound more than one icon layer.
@@ -258,6 +273,12 @@ public class ShapeBlock extends Block implements BackedShape {
     @SideOnly(Side.CLIENT)
     int materialLayerCount(int meta) {
         return icons.layerCount(meta);
+    }
+
+    /// Whether the material at the given metadata draws its icon layers full-bright on this shape.
+    @SideOnly(Side.CLIENT)
+    boolean emissive(int meta) {
+        return emissive.get(meta);
     }
 
     /// The material icon layer bound at the given metadata; see [ShapeIcons#layer].
