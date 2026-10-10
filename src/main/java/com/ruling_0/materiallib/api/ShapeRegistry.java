@@ -212,6 +212,17 @@ public final class ShapeRegistry {
     /// The itemstack of `material` in `shape`, with the given stack size, routed to the shape's canonical backing
     /// object. The shape must be a backed shape that `material` generates.
     ItemStack getStack(Material material, Shape shape, int amount) {
+        ItemStack stack = findStack(material, shape, amount);
+        if (stack == null) {
+            throw new IllegalArgumentException(
+                "Material " + material.canonical().getKey() + " does not generate shape " +
+                    unification.canonical(shape));
+        }
+        return stack;
+    }
+
+    /// Same as [#getStack(Material, Shape, int)], but null when `material` does not generate `shape`.
+    ItemStack findStack(Material material, Shape shape, int amount) {
         requireResolved("build an itemstack");
         material = material.canonical();
         Shape canonical = unification.canonical(shape);
@@ -220,8 +231,7 @@ public final class ShapeRegistry {
         }
         ItemStack overridden = overrideStack(material, backed, amount);
         if (overridden != null) return overridden;
-        requireServes(backed, material);
-        return backed.getStack(material, amount);
+        return backed.serves(material) ? backed.getStack(material, amount) : null;
     }
 
     /// The overriding stack of `material` in the canonical `shape` with size `amount`, or null when MaterialLib mints
