@@ -8,6 +8,7 @@ import com.ruling_0.materiallib.api.Family;
 import com.ruling_0.materiallib.api.MaterialLibAPI;
 import com.ruling_0.materiallib.api.MaterialRegistrationEvent;
 import com.ruling_0.materiallib.api.Shape;
+import com.ruling_0.materiallib.api.StandardProperties;
 import com.ruling_0.materiallib.api.TextureSet;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -26,7 +27,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// and a cobblestone variant, each with its own untinted vanilla base texture under the tinted material
 /// icon. testOre and testFluid override their icon paths, and testBucket its untinted base icon. A consumer on
 /// testGear adds a shapeless recipe per material crafting its ingot into its gear, and lang overrides on
-/// TestGold show per-pair display names.
+/// TestGold show per-pair display names. TestGold's testOre overlay glows, through testOre's emissive layers.
 ///
 /// TestPalette draws column 1 of the `test` palette, a four-entry column short enough to merge the art's darker
 /// shades. Its ingot2 shape shows the composite: the numbered layers baked through the same column and the
@@ -71,6 +72,7 @@ public final class ExampleContent {
             .variants("stone", "cobblestone").variantBase("stone", TEST_ORE_STONE_BASE_TEXTURE)
             .variantBase("cobblestone", TEST_ORE_COBBLESTONE_BASE_TEXTURE)
             .iconPath((shape, material) -> "TestGold".equals(material.getName()) ? "minecraft:gold_block" : null)
+            .property(StandardProperties.EMISSIVE_LAYERS, true)
             .build();
 
         Shape testFluid = MaterialLibAPI.newFluidShape(MaterialLib.MODID, "test").displayName("Molten %s")
@@ -94,6 +96,7 @@ public final class ExampleContent {
         MaterialLibAPI.newMaterial(MaterialLib.MODID, "TestGold", test)
             .addToFamily(testFamily)
             .setTint(0xFFFFD700).setLayerTints(0xFF00D0D3, 0xFF6F00D1)
+            .setProperty(StandardProperties.EMISSIVE, true)
             .generateShapes(testGear, ingot, block, testFluid, testBucket, testOre, ingot2)
             .addTooltip("Shiny gold", "so shiny")
             .build();
