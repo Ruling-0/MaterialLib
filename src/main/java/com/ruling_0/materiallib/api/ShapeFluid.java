@@ -11,7 +11,6 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 
-import com.gtnewhorizon.gtnhlib.util.ResourceUtil;
 import com.ruling_0.materiallib.MaterialLib;
 
 import cpw.mods.fml.relauncher.Side;
@@ -250,7 +249,7 @@ public class ShapeFluid implements ServedShape {
     }
 
     private static boolean blockTextureExists(String path) {
-        return ResourceUtil.resourceExists(ResourceUtil.getCompleteBlockTextureResourceLocation(path));
+        return ShapeIcons.textureExists(path, false);
     }
 
     /// A material's fluid, serving the display name and fill tint the class doc describes through overrides.
