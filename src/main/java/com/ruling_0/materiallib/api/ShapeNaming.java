@@ -1,23 +1,39 @@
 package com.ruling_0.materiallib.api;
 
+import java.util.ArrayList;
+import java.util.IllegalFormatException;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /// Builds the translation keys and display strings for a [Shape] rendered for a particular [Material].
 ///
-/// Two keys are involved. The material name key names the material on its own, so one translation serves every
-/// shape. The override key names a specific shape-and-material pair, letting a lang file replace an irregular
-/// name that the shape's format string cannot produce. Callers look the override key up first, fall back to the
-/// material name key, and finally to [Material#getName]; [#format] then applies the shape's display format to
-/// whichever material name was found. Keeping the key construction here, free of any game lookup, lets it be
-/// covered by tests; the [Shape] and [Material] argument order keeps the keys stable across shapes that unify.
+/// Three kinds of key name a shape stack. The override key replaces the name of one shape-and-material pair outright.
+/// Otherwise a format key ([#formatKeys]) translates the format, such as `%s Gear`, that combines the shape with the
+/// material name, and the shape's declared format applies when none translates. The material name key translates
+/// the material name, falling back to [Material#getName]. Key construction stays free of game lookups so tests can
+/// cover it. The [Shape] and [Material] argument order keeps the keys stable across shapes that unify.
 final class ShapeNaming {
 
     private ShapeNaming() {}
 
-    /// The translation key for a material's own display name, e.g. `material.examplemod.TestIron`. One entry
-    /// localizes the material across every shape it generates.
+    /// The translation keys of a shape's display-name format for `material`, most specific first: the material's
+    /// [StandardProperties#DISPLAY_NAME_FORMAT_KEYS] entry for `shapeName`, then the shape's
+    /// [StandardProperties#DISPLAY_NAME_FORMAT_KEY]. Unset keys are left out.
+    static List<String> formatKeys(Shape shape, String shapeName, Material material) {
+        List<String> keys = new ArrayList<>(2);
+        Map<String, String> materialKeys = material.getProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEYS);
+        if (materialKeys != null && materialKeys.containsKey(shapeName)) keys.add(materialKeys.get(shapeName));
+        String shapeKey = shape.getProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEY);
+        if (shapeKey != null) keys.add(shapeKey);
+        return keys;
+    }
+
+    /// The translation key for a material's own display name: its [StandardProperties#DISPLAY_NAME_KEY], else
+    /// `material.<modid>.<name>`, e.g. `material.examplemod.TestIron`.
     static String materialNameKey(Material material) {
-        return "material." + material.getModId() + "." + material.getName();
+        String key = material.getProperty(StandardProperties.DISPLAY_NAME_KEY);
+        return key != null ? key : "material." + material.getModId() + "." + material.getName();
     }
 
     /// The translation key overriding the display name of one shape-and-material pair, e.g.
@@ -35,6 +51,18 @@ final class ShapeNaming {
     /// Applies a shape's display format to a material name, e.g. `("%s Gear", "Iron")` to `Iron Gear`.
     static String format(String displayFormat, String materialName) {
         return String.format(displayFormat, materialName);
+    }
+
+    /// Applies `translatedFormat` to a material name, or `declaredFormat` when the translation is null or not a
+    /// valid format string.
+    static String format(String translatedFormat, String declaredFormat, String materialName) {
+        if (translatedFormat != null) {
+            try {
+                return format(translatedFormat, materialName);
+            }
+            catch (IllegalFormatException ignored) {}
+        }
+        return format(declaredFormat, materialName);
     }
 
     /// Validates a shape's display-name format by applying it to an empty material name, and returns it. Rejects a

@@ -3,6 +3,9 @@ package com.ruling_0.materiallib.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import java.util.List;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
 
 class ShapeNamingTest {
@@ -17,8 +20,40 @@ class ShapeNamingTest {
     @Test
     void materialNameKeyIsModidAndName() {
         Material iron = material("examplemod", "TestIron");
+        registry.resolve();
 
         assertEquals("material.examplemod.TestIron", ShapeNaming.materialNameKey(iron));
+    }
+
+    @Test
+    void aDeclaredDisplayNameKeyReplacesTheMaterialNameKey() {
+        Material iron = registry.newMaterial("examplemod", "TestIron", texture)
+            .setProperty(StandardProperties.DISPLAY_NAME_KEY, "Material.testiron")
+            .build();
+        registry.resolve();
+
+        assertEquals("Material.testiron", ShapeNaming.materialNameKey(iron));
+    }
+
+    @Test
+    void aMaterialFormatKeyPrecedesTheShapeFormatKeyForItsShapeOnly() {
+        Material glass = registry.newMaterial("examplemod", "TestGlass", texture)
+            .setProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEYS, Map.of("plate", "format.pane"))
+            .build();
+        registry.resolve();
+        TestShape plate = new TestShape("examplemod", "plate");
+        plate.setProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEY, "format.plate");
+        TestShape foil = new TestShape("examplemod", "foil");
+        foil.setProperty(StandardProperties.DISPLAY_NAME_FORMAT_KEY, "format.foil");
+
+        assertEquals(List.of("format.pane", "format.plate"), ShapeNaming.formatKeys(plate, "plate", glass));
+        assertEquals(List.of("format.foil"), ShapeNaming.formatKeys(foil, "foil", glass));
+    }
+
+    @Test
+    void aTranslatedFormatThatIsInvalidFallsBackToTheDeclaredFormat() {
+        assertEquals("Iron Gear", ShapeNaming.format("%s Zahnrad %d", "%s Gear", "Iron"));
+        assertEquals("Iron Zahnrad", ShapeNaming.format("%s Zahnrad", "%s Gear", "Iron"));
     }
 
     @Test
