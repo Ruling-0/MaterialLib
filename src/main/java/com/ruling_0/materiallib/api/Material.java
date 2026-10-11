@@ -86,6 +86,8 @@ public final class Material {
         return modid;
     }
 
+    /// The material's registry name, used in translation keys and oredict entries. Conventionally starts with a
+    /// capital letter.
     public String getName() {
         if (canonical != this) return canonical.getName();
         return name;
@@ -190,14 +192,15 @@ public final class Material {
 
     public boolean hasCustomTooltip() {
         if (canonical != this) return canonical.hasCustomTooltip();
+        registry.requireResolved("query the tooltip of ", key);
         return !tooltipLines.isEmpty();
     }
 
-    /// The added tooltip lines of this material.
+    /// The added tooltip lines of this material, as an unmodifiable view.
     public List<String> getTooltip() {
         if (canonical != this) return canonical.getTooltip();
         registry.requireResolved("query the tooltip of ", key);
-        return tooltipLines;
+        return Collections.unmodifiableList(tooltipLines);
     }
 
     void setPropertyValue(Property<?> property, Object value) {
@@ -223,6 +226,7 @@ public final class Material {
     }
 
     void addTooltip(String... lines) {
+        requireMutable();
         tooltipLines.addAll(Arrays.asList(lines));
     }
 
@@ -280,6 +284,7 @@ public final class Material {
     }
 
     void clearTooltip() {
+        requireMutable();
         tooltipLines.clear();
     }
 

@@ -37,7 +37,7 @@ class ShapeIconsTest {
     /// [Material] is constructed directly because [MaterialBuilder] rejects a missing texture set.
     @Test
     void materialWithoutTextureSetBindsPlaceholderInsteadOfCrashing() {
-        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
+        Map<Property<?>, Object> properties = Map.of();
         Material material = new Material(registry, "testmod", "Broken", properties, Set.of(), List.of());
         registry.register(material);
         registry.resolve();
@@ -56,8 +56,7 @@ class ShapeIconsTest {
     /// placeholder.
     @Test
     void anEmptyFallbackListBindsThePlaceholderWithoutCrashing() {
-        Map<Property<?>, Object> properties = Map
-            .of(StandardProperties.NAME, "Broken", StandardProperties.FALLBACK_TEXTURE_SETS, List.of());
+        Map<Property<?>, Object> properties = Map.of(StandardProperties.FALLBACK_TEXTURE_SETS, List.of());
         Material material = new Material(registry, "testmod", "Broken", properties, Set.of(), List.of());
         registry.register(material);
         registry.resolve();
@@ -265,9 +264,8 @@ class ShapeIconsTest {
     /// its index, while a numbered layer takes its coded element and layer 0 takes [StandardProperties#TINT].
     @Test
     void anOverlayLayerReportsWhiteWhileANumberedLayerReportsItsCodedTint() {
-        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Testlayered",
-            StandardProperties.TEXTURE_SET, setA, StandardProperties.TINT, 0xFFFFCC00,
-            StandardProperties.LAYER_TINTS, List.of(0xFF00FF00, 0xFF0000FF));
+        Map<Property<?>, Object> properties = Map.of(StandardProperties.TEXTURE_SET, setA,
+            StandardProperties.TINT, 0xFFFFCC00, StandardProperties.LAYER_TINTS, List.of(0xFF00FF00, 0xFF0000FF));
         Material material = new Material(registry, "testmod", "Testlayered", properties, Set.of(), List.of());
         registry.register(material);
         registry.resolve();
@@ -284,8 +282,8 @@ class ShapeIconsTest {
     }
 
     private Material declareMaterial(String modid, String name, TextureSet textureSet, List<TextureSet> fallbacks) {
-        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET,
-            textureSet, StandardProperties.FALLBACK_TEXTURE_SETS, fallbacks);
+        Map<Property<?>, Object> properties = Map.of(StandardProperties.TEXTURE_SET, textureSet,
+            StandardProperties.FALLBACK_TEXTURE_SETS, fallbacks);
         Material material = new Material(registry, modid, name, properties, Set.of(), List.of());
         registry.register(material);
         return material;

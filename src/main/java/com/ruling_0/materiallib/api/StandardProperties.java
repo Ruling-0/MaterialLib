@@ -22,11 +22,6 @@ public final class StandardProperties {
 
     private StandardProperties() {}
 
-    /// The material's registry name, used in translation keys and oredict entries.
-    /// Derived from the name passed to [MaterialLibAPI#newMaterial]; builders and edits reject attempts to set or
-    /// remove it. Conventionally, this should start with a capital letter.
-    public static final Property<String> NAME = Property.of(MaterialLib.MODID, "name");
-
     /// The translation key of the material's display name. Null when unset, giving `material.<modid>.<name>`. Set it
     /// on a material, not a family. See [Material#getLocalizedName].
     public static final Property<String> DISPLAY_NAME_KEY = Property.of(MaterialLib.MODID, "displayNameKey");
@@ -102,15 +97,16 @@ public final class StandardProperties {
     /// material full-bright. A variant's base texture never glows.
     public static final Property<Boolean> EMISSIVE_LAYERS = Property.of(MaterialLib.MODID, "emissiveLayers", false);
 
-    /// Rejects the properties derived from builder arguments, which can never be set or removed directly.
+    /// Rejects [#TEXTURE_SET], which is derived from the arguments of [MaterialLibAPI#newMaterial] and can never be
+    /// set or removed directly.
     static void requireSettable(Property<?> property) {
-        if (property == NAME || property == TEXTURE_SET) {
+        if (property == TEXTURE_SET) {
             throw new IllegalArgumentException(
                 property + " is derived from the arguments of newMaterial and cannot be set or removed");
         }
     }
 
-    /// Rejects a null property, a null value, or a property derived from builder arguments.
+    /// Rejects a null property, a null value, or [#TEXTURE_SET].
     static void requireSettable(Property<?> property, Object value) {
         Objects.requireNonNull(property, "property must not be null");
         Objects.requireNonNull(value, "value must not be null");

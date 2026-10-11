@@ -553,7 +553,7 @@ public final class ShapeRegistry {
             }
             else {
                 throw new IllegalStateException(
-                    served + " is a served shape but neither backed nor a fluid, so it would never be registered");
+                    served + " is a served shape but neither backed nor a fluid.");
             }
         }
     }

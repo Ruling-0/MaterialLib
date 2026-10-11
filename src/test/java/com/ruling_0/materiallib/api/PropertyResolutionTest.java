@@ -112,9 +112,8 @@ class PropertyResolutionTest {
     }
 
     @Test
-    void identityPropertiesCannotBeSetOrRemoved() {
+    void theTextureSetCannotBeSetOrRemoved() {
         MaterialBuilder builder = registry.newMaterial("testmod", "TestIron", texture);
-        assertThrows(IllegalArgumentException.class, () -> builder.setProperty(StandardProperties.NAME, "Imposter"));
         assertThrows(
             IllegalArgumentException.class,
             () -> builder.setProperty(StandardProperties.TEXTURE_SET, texture));
@@ -122,19 +121,16 @@ class PropertyResolutionTest {
         FamilyBuilder familyBuilder = registry.newFamily("testmod", "Alloys");
         assertThrows(
             IllegalArgumentException.class,
-            () -> familyBuilder.setProperty(StandardProperties.NAME, "Imposter"));
+            () -> familyBuilder.setProperty(StandardProperties.TEXTURE_SET, texture));
 
         MaterialEdit materialEdit = registry.editMaterial("testmod", "TestIron");
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> materialEdit.setProperty(StandardProperties.NAME, "Imposter"));
         assertThrows(IllegalArgumentException.class, () -> materialEdit.removeProperty(StandardProperties.TEXTURE_SET));
 
         FamilyEdit familyEdit = registry.editFamily("testmod", "Alloys");
         assertThrows(
             IllegalArgumentException.class,
             () -> familyEdit.setProperty(StandardProperties.TEXTURE_SET, texture));
-        assertThrows(IllegalArgumentException.class, () -> familyEdit.removeProperty(StandardProperties.NAME));
+        assertThrows(IllegalArgumentException.class, () -> familyEdit.removeProperty(StandardProperties.TEXTURE_SET));
     }
 
     @Test

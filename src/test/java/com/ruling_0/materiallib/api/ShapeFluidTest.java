@@ -39,7 +39,7 @@ class ShapeFluidTest {
     /// to pin that a fluid resolving no icon registers the placeholder.
     @Test
     void aMaterialWithNoTextureSetResolvesThePlaceholderIconPath() {
-        Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");
+        Map<Property<?>, Object> properties = Map.of();
         Material broken = new Material(registry, "examplemod", "Broken", properties, Set.of(), List.of());
         registry.register(broken);
         registry.resolve();

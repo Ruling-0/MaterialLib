@@ -21,7 +21,6 @@ class MaterialRegistryTest {
         assertEquals("testmod", material.getModId());
         assertEquals("TestIron", material.getName());
         assertEquals("testmod:TestIron", material.getKey());
-        assertEquals("TestIron", material.getProperty(StandardProperties.NAME));
         assertEquals(texture, material.getProperty(StandardProperties.TEXTURE_SET));
         assertTrue(material.getFamilies().isEmpty());
         assertTrue(material.getShapes().isEmpty());

@@ -46,8 +46,7 @@ final class LateHandlerCheck {
         for (IEventListener listener : listeners.getListeners(busId)) {
             if (!contains(subscribed, listener)) {
                 MaterialLib.LOG.error(
-                    "{} subscribed to MaterialRegistrationEvent after it fired, so its registrations were " +
-                        "never collected. Subscribe during FMLConstructionEvent",
+                    "{} subscribed to MaterialRegistrationEvent after it fired. Subscribe during FMLConstructionEvent",
                     listener);
             }
         }

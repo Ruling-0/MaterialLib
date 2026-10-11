@@ -170,13 +170,13 @@ class PaletteBindingTest {
     }
 
     private Material declareMaterial(String name, PaletteRef palette) {
-        return declare(name, Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET, setA,
-            StandardProperties.TINT, TINT, StandardProperties.PALETTE, palette));
+        return declare(name, Map.of(StandardProperties.TEXTURE_SET, setA, StandardProperties.TINT, TINT,
+            StandardProperties.PALETTE, palette));
     }
 
     private Material declareMaterialWithoutPalette(String name) {
         return declare(name,
-            Map.of(StandardProperties.NAME, name, StandardProperties.TEXTURE_SET, setA, StandardProperties.TINT, TINT));
+            Map.of(StandardProperties.TEXTURE_SET, setA, StandardProperties.TINT, TINT));
     }
 
     private Material declare(String name, Map<Property<?>, Object> properties) {

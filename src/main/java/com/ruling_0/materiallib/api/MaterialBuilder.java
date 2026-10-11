@@ -64,7 +64,7 @@ public final class MaterialBuilder {
         return setProperty(StandardProperties.PALETTE, new PaletteRef(modid, name, column));
     }
 
-    /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
+    /// Sets a property value. Rejects [StandardProperties#TEXTURE_SET].
     public <T> MaterialBuilder setProperty(Property<T> property, T value) {
         StandardProperties.requireSettable(property, value);
         properties.put(property, value);
@@ -174,7 +174,6 @@ public final class MaterialBuilder {
         if (built) {
             throw new IllegalStateException("Material " + Names.key(modid, name) + " was already built");
         }
-        properties.put(StandardProperties.NAME, name);
         properties.put(StandardProperties.TEXTURE_SET, textureSet);
         MaterialDeclaration declaration = new MaterialDeclaration(shapes, removedShapes, familyKeys, shapeOverrides);
         Material material = new Material(registry, modid, name, properties, shapes, tooltipLines, declaration);

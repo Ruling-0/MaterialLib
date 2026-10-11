@@ -44,7 +44,7 @@ public final class MaterialEdit {
         return setProperty(StandardProperties.PALETTE, new PaletteRef(modid, name, column));
     }
 
-    /// Sets a property value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
+    /// Sets a property value. Rejects [StandardProperties#TEXTURE_SET].
     public <T> MaterialEdit setProperty(Property<T> property, T value) {
         StandardProperties.requireSettable(property, value);
         registry.enqueueMaterialOp(
@@ -56,8 +56,7 @@ public final class MaterialEdit {
     }
 
     /// Clears the material's own value for a property, letting the value from the alphabetically-first family
-    /// that sets it, or the property default, show again. Rejects [StandardProperties#NAME] and
-    /// [StandardProperties#TEXTURE_SET].
+    /// that sets it, or the property default, show again. Rejects [StandardProperties#TEXTURE_SET].
     public MaterialEdit removeProperty(Property<?> property) {
         Objects.requireNonNull(property, "property must not be null");
         StandardProperties.requireSettable(property);

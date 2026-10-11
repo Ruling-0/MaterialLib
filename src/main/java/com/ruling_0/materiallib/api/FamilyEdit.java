@@ -22,8 +22,7 @@ public final class FamilyEdit {
         return setProperty(StandardProperties.TINT, tint);
     }
 
-    /// Sets a property value for all members that do not set their own. Rejects [StandardProperties#NAME] and
-    /// [StandardProperties#TEXTURE_SET].
+    /// Sets a property value for all members that do not set their own. Rejects [StandardProperties#TEXTURE_SET].
     public <T> FamilyEdit setProperty(Property<T> property, T value) {
         StandardProperties.requireSettable(property, value);
         registry.enqueueFamilyOp(
@@ -35,8 +34,7 @@ public final class FamilyEdit {
     }
 
     /// Clears the family's value for a property. Members without their own value fall back to another family's value
-    /// or the property default, as [Material#getProperty] resolves it. Rejects [StandardProperties#NAME] and
-    /// [StandardProperties#TEXTURE_SET].
+    /// or the property default, as [Material#getProperty] resolves it. Rejects [StandardProperties#TEXTURE_SET].
     public FamilyEdit removeProperty(Property<?> property) {
         Objects.requireNonNull(property, "property must not be null");
         StandardProperties.requireSettable(property);

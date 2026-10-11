@@ -10,8 +10,7 @@ import java.util.Map;
 /// A shape stack's name comes from three kinds of key. The override key replaces the name of one shape-and-material
 /// pair outright. Otherwise a format key ([#formatKeys]) translates the format, such as `%s Gear`, that combines the
 /// shape with the material name. Without one, the name is the material name followed by the capitalized shape
-/// name. The material name key translates the material name, falling back to [Material#getName]. The [Shape] and
-/// [Material] argument order keeps the keys stable across shapes that unify.
+/// name. The material name key translates the material name, falling back to [Material#getName].
 final class ShapeNaming {
 
     private ShapeNaming() {}

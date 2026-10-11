@@ -86,13 +86,14 @@ public final class Family {
     }
 
     public boolean hasCustomTooltip() {
+        registry.requireResolved("query the tooltip of ", key);
         return !tooltipLines.isEmpty();
     }
 
-    /// The tooltip lines this family adds to its members' shapes.
+    /// The tooltip lines this family adds to its members' shapes, as an unmodifiable view.
     public List<String> getTooltip() {
         registry.requireResolved("query the tooltip of ", key);
-        return tooltipLines;
+        return Collections.unmodifiableList(tooltipLines);
     }
 
     void setPropertyValue(Property<?> property, Object value) {
@@ -116,10 +117,12 @@ public final class Family {
     }
 
     void addTooltip(String... lines) {
+        requireMutable();
         tooltipLines.addAll(Arrays.asList(lines));
     }
 
     void clearTooltip() {
+        requireMutable();
         tooltipLines.clear();
     }
 

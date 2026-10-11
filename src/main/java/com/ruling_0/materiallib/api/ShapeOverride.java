@@ -78,8 +78,7 @@ sealed interface ShapeOverride {
                 }
                 if (item == null) {
                     throw new IllegalStateException(
-                        "Shape override " + describe() + " names no registered item or block. Named overrides " +
-                            "bind at MaterialLib's init, so the item has to be registered during its mod's preInit");
+                        "Shape override " + describe() + " names no item or block registered during preInit.");
                 }
                 stack = new ItemStack(item, 1, meta);
             }
