@@ -15,10 +15,10 @@ import com.ruling_0.materiallib.MaterialLib;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-/// Whether any resource pack serving the MaterialLib domain carries resource-pack override textures (see
+/// Tracks whether any resource pack serving the MaterialLib domain carries override textures (see
 /// [ShapeIcons#overridePath]), so the per-material override lookups can be skipped when none does. A pack that is
-/// neither a folder nor a zip file is assumed to carry some. The packs are scanned again whenever the resource manager
-/// rebuilds them.
+/// neither a folder nor a readable zip file is assumed to carry some. The packs are scanned again whenever the
+/// resource manager rebuilds them.
 @SideOnly(Side.CLIENT)
 final class OverrideTextures {
 
