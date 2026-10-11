@@ -8,11 +8,12 @@ import java.util.Objects;
 
 /// Builds the translation keys and display strings for a [Shape] rendered for a particular [Material].
 ///
-/// Three kinds of key name a shape stack. The override key replaces the name of one shape-and-material pair outright.
-/// Otherwise a format key ([#formatKeys]) translates the format, such as `%s Gear`, that combines the shape with the
-/// material name, and the shape's declared format applies when none translates. The material name key translates
-/// the material name, falling back to [Material#getName]. Key construction stays free of game lookups so tests can
-/// cover it. The [Shape] and [Material] argument order keeps the keys stable across shapes that unify.
+/// A shape stack's name comes from three kinds of key. The override key replaces the name of one shape-and-material
+/// pair outright. Otherwise a format key ([#formatKeys]) translates the format, such as `%s Gear`, that combines the
+/// shape with the material name. The shape's declared format applies when no format key translates. The material
+/// name key translates the material name, falling back to [Material#getName]. Key construction stays free of game
+/// lookups so tests can cover it. The [Shape] and [Material] argument order keeps the keys stable across shapes that
+/// unify.
 final class ShapeNaming {
 
     private ShapeNaming() {}
