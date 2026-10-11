@@ -8,15 +8,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 
-/// The public entry point of MaterialLib, wrapping the game's [MaterialRegistry] instance.
+/// The public entry point of MaterialLib, a static facade over the game's [MaterialRegistry] and [ShapeRegistry].
 ///
 /// All registration happens inside a handler for [MaterialRegistrationEvent], which MaterialLib fires during
 /// its preInit: declaring shapes through the shape builders and register methods, creating materials and
 /// families through [#newMaterial] and [#newFamily], altering ones belonging to other mods through
-/// [#editMaterial] and [#editFamily], and registering shape consumers through [#registerShapeConsumer] and
-/// [#registerPostInitShapeConsumer]. The registries then resolve, still within MaterialLib's preInit, so mods
-/// depending on materiallib read the contents from their own preInit onwards. Consumers run during
-/// MaterialLib's init and postInit; see [ShapeConsumer].
+/// [#editMaterial], [#editFamily] and [#editShape], and registering shape consumers through
+/// [#registerShapeConsumer] and [#registerPostInitShapeConsumer]. The registries then resolve, still within
+/// MaterialLib's preInit, so mods depending on materiallib read the contents from their own preInit onwards.
+/// Every lookup apart from [#getMaterial] and [#getFamily] throws before the registries resolve. Consumers run
+/// during MaterialLib's init and postInit; see [ShapeConsumer].
 public final class MaterialLibAPI {
 
     private MaterialLibAPI() {}
@@ -117,8 +118,7 @@ public final class MaterialLibAPI {
     }
 
     /// The itemstack of `material` in `shape`, with the given stack size. The shape must be a backed (item or
-    /// block) shape that the material generates. Only available after shapes have resolved, at the end of
-    /// MaterialLib's preInit.
+    /// block) shape that the material generates.
     public static ItemStack getStack(Material material, Shape shape, int amount) {
         return ShapeRegistry.instance().getStack(material, shape, amount);
     }
@@ -129,41 +129,39 @@ public final class MaterialLibAPI {
     }
 
     /// The itemstack of `material` in the given variant of `shape`, with the given stack size. The shape must be
-    /// a block shape declared with [BlockShapeBuilder#variants] that the material generates. Only available after
-    /// shapes have resolved.
+    /// a block shape declared with [BlockShapeBuilder#variants] that the material generates.
     public static ItemStack getStack(Material material, Shape shape, String variant, int amount) {
         return ShapeRegistry.instance().getStack(material, shape, variant, amount);
     }
 
     /// The backing block of a variant-less block shape, for a consumer (e.g. worldgen) to place directly at a
     /// material's index (see [Material#getIndex]) as the block metadata. The shape must be a block shape declared
-    /// with no variants. Only available after shapes have resolved.
+    /// with no variants.
     public static Block getBlock(Shape shape) {
         return ShapeRegistry.instance().getBlock(shape);
     }
 
     /// As [#getBlock(Shape)], but for one variant of a block shape declared with [BlockShapeBuilder#variants].
-    /// Fails when `variant` was not declared. Only available after shapes have resolved.
+    /// Fails when `variant` was not declared.
     public static Block getBlock(Shape shape, String variant) {
         return ShapeRegistry.instance().getBlock(shape, variant);
     }
 
     /// The shape, variant, and material a MaterialLib block encodes at the given metadata, or null when `block`
-    /// was not registered by MaterialLib. Only available after shapes have resolved.
+    /// was not registered by MaterialLib.
     public static BlockMaterialInfo lookupBlock(Block block, int metadata) {
         return ShapeRegistry.instance().lookupBlock(block, metadata);
     }
 
     /// The shape, variant, and material `stack` stands for: a MaterialLib item, a MaterialLib block's item, or the
     /// item a shape override declares. Null for any other stack. A named override's item is recognized from
-    /// MaterialLib's init on. Only available after shapes have resolved.
+    /// MaterialLib's init on.
     public static StackMaterialInfo lookupStack(ItemStack stack) {
         return ShapeRegistry.instance().lookupStack(stack);
     }
 
     /// The fluid shape and material `fluid` serves, or null when it is no material's fluid. A fluid another mod
-    /// registered first under a material fluid's name counts as that material's. Only available after shapes have
-    /// resolved.
+    /// registered first under a material fluid's name counts as that material's.
     public static FluidMaterialInfo lookupFluid(Fluid fluid) {
         return ShapeRegistry.instance().lookupFluid(fluid);
     }
@@ -174,14 +172,13 @@ public final class MaterialLibAPI {
     }
 
     /// The Forge fluid MaterialLib registered for `material` in `shape`, or null when the material does not
-    /// generate that fluid shape. `shape` must still be a fluid shape. Only available after shapes have resolved.
+    /// generate that fluid shape. `shape` must still be a fluid shape.
     public static Fluid getFluid(Material material, Shape shape) {
         return ShapeRegistry.instance().getFluid(material, shape);
     }
 
     /// The fluid stack of `material` in `shape`, with the given volume in millibuckets. The shape must be a fluid
-    /// shape that the material generates. Only available after shapes have resolved, at the end of MaterialLib's
-    /// preInit.
+    /// shape that the material generates.
     public static FluidStack getFluidStack(Material material, Shape shape, int amount) {
         return ShapeRegistry.instance().getFluidStack(material, shape, amount);
     }
@@ -214,15 +211,14 @@ public final class MaterialLibAPI {
     }
 
     /// The material assigned the given global metadata index (see [Material#getIndex]), or null if none has it.
-    /// Lets worldgen and other consumers map an item damage value back to its material. Only available after the
-    /// registry has resolved.
+    /// Lets worldgen and other consumers map an item damage value back to its material.
     public static Material getMaterialByIndex(int index) {
         return MaterialRegistry.instance().getMaterialByIndex(index);
     }
 
-    /// All registered materials; only available after the registry has resolved.
+    /// An unmodifiable view of all registered materials.
     public static Collection<Material> getMaterials() { return MaterialRegistry.instance().getMaterials(); }
 
-    /// All registered families; only available after the registry has resolved.
+    /// An unmodifiable view of all registered families.
     public static Collection<Family> getFamilies() { return MaterialRegistry.instance().getFamilies(); }
 }

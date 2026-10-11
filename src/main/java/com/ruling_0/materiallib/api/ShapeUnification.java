@@ -17,8 +17,8 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 /// Collapses shapes that share a name down to a single canonical shape with one owning mod.
 ///
 /// Two mods may each declare a shape called `gear` without knowing about each other; their gears should end up
-/// as one item. Every shape registered for a name is a candidate to own it. The owner is chosen once, at [#resolve],
-/// preferring the owner stored in the instance's [ShapeOwnerStore] else the first candidate by alphabetical modid.
+/// as one item. Every shape registered for a name is a candidate to own it. The owner is elected once, at
+/// [#resolve], through [OwnerElection] with the owners persisted in the instance's [ShapeOwnerStore].
 /// [#canonical] maps any candidate back to the canonical shape, so a material that generated a non-owning shape still
 /// resolves to the one backing item.
 final class ShapeUnification {
@@ -46,7 +46,8 @@ final class ShapeUnification {
 
     /// Chooses the owner of every registered name and returns the full `name -> ownerModid` assignment to persist,
     /// keeping a persisted name's owner even when it has no candidate this session. Records the canonical shape and
-    /// the alias mappings, and logs a name whose candidates declare differing oredict prefixes.
+    /// the alias mappings, and logs a name whose candidates declare differing oredict prefixes. Throws for a name
+    /// whose candidates declare different variants.
     Map<String, String> resolve(Map<String, String> persistedOwners) {
         requireRegistration("resolve shape unification");
         Map<String, String> owners = new LinkedHashMap<>(persistedOwners);
@@ -71,7 +72,7 @@ final class ShapeUnification {
         return owners;
     }
 
-    /// The shape owning `name`, or null when nothing registered it. Only available after [#resolve].
+    /// The shape owning `name`, or null when nothing registered it or before [#resolve].
     ServedShape ownerOf(String name) {
         return canonicalByName.get(name);
     }
@@ -108,8 +109,7 @@ final class ShapeUnification {
         }
     }
 
-    /// Rejects a name whose candidates declare different variant lists. Unlike oredict divergence, a mismatch is
-    /// fatal: the non-owning candidates' materials would generate variants the owner's backing blocks do not have.
+    /// Rejects a name whose candidates declare different variant lists.
     private void requireIdenticalVariants(String name, List<? extends Shape> candidates, Shape canonical) {
         List<String> ownerVariants = canonical.getVariants();
         for (Shape candidate : candidates) {

@@ -10,8 +10,8 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 /// Collapses empty container registrations that share a name down to a single owning mod, electing the owner the
 /// same way [ShapeUnification] elects a shape's.
 ///
-/// Unlike for shapes, no owner is persisted: the item registers as `materiallib:<name>` regardless of owner, so
-/// its identity is already stable across sessions, and the owner decides only the icon and the lang key.
+/// Unlike for shapes, no owner is persisted. The item always registers as `materiallib:<name>`, so its identity is
+/// stable across sessions. The owner decides only the icon and the lang key.
 final class EmptyContainers {
 
     private final Object2ObjectLinkedOpenHashMap<String, List<EmptyContainerHandle>> candidatesByName = new Object2ObjectLinkedOpenHashMap<>();

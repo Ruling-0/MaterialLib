@@ -19,20 +19,18 @@ import it.unimi.dsi.fastutil.objects.ReferenceArraySet;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
-/// A registered material: a named member of the registry that generates a set of [Shape]s and carries
-/// [Property] values.
+/// A named material, such as iron, that generates a set of [Shape]s and carries [Property] values.
 ///
 /// Materials are created through [MaterialLibAPI#newMaterial] inside a [MaterialRegistrationEvent] handler and
 /// become read-only once the registry resolves at the end of MaterialLib's preInit. A material may belong to
-/// any number of [Family]s; membership, properties, and the effective shape set are only available after
+/// any number of [Family]s. Membership, properties, and the effective shape set are only available after
 /// resolution.
 ///
-/// Two mods may declare a material with the same name without coordinating; at resolve such declarations unify
-/// into one material carrying the union of both -- shapes, families, tooltip lines, and properties, with the
-/// owner's value kept for a property both declare. The owner is the mod recorded in the persisted owner store
-/// when it declares the name this session, else the alphabetically-first declaring modid; it supplies the
-/// modid, key, texture set, and lang key. A reference to a non-owning declaration reads through to the unified
-/// material.
+/// Two mods may declare a material with the same name without coordinating. At resolve, such declarations unify
+/// into one material carrying the union of their shapes, families, tooltip lines, and properties, keeping the
+/// owner's value for a property both declare. The owner is the mod recorded in the persisted owner store when it
+/// declares the name this session, else the alphabetically-first declaring modid. It supplies the modid, key,
+/// texture set, and lang key. A reference to a non-owning declaration reads through to the unified material.
 ///
 /// A shape override ([MaterialBuilder#addShapeOverride(Shape, net.minecraft.item.Item)]) serves one shape of the
 /// material with a foreign item instead of one MaterialLib mints. A [MaterialEdit] override wins over every
@@ -107,8 +105,8 @@ public final class Material {
         return key;
     }
 
-    /// The material's global metadata index: the per-material number used as the item damage in every shape
-    /// and as the worldgen/ore id. Only available after the registry has resolved.
+    /// The material's global index, used as the item damage in every item and block shape. Only available after the
+    /// registry has resolved.
     public int getIndex() {
         if (canonical != this) return canonical.getIndex();
         registry.requireResolved("query the index of ", key);
@@ -190,7 +188,6 @@ public final class Material {
         return propertiesView;
     }
 
-    /// True if this material has a custom tooltip.
     public boolean hasCustomTooltip() {
         if (canonical != this) return canonical.hasCustomTooltip();
         return !tooltipLines.isEmpty();
@@ -334,7 +331,7 @@ public final class Material {
         return canonical;
     }
 
-    /// The set of materials unified onto this canonical one
+    /// The set of materials unified onto this canonical one.
     Set<Material> getAlternatives() { return alternatives; }
 
     void resolveIndex(int index) {

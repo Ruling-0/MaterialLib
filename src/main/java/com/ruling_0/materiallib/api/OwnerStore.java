@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /// The file format shared by the owner-assignment stores: `{"version": N, "owners": {name: modid}}`, written
-/// with names sorted and each owner validated as a plausible modid.
+/// with names sorted. Reading rejects an owner that is not a valid modid.
 final class OwnerStore {
 
     private OwnerStore() {}

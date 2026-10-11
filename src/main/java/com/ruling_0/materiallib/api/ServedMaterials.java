@@ -6,8 +6,8 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 /// The materials that generate a shape, bound once by the registry at resolve.
 ///
-/// Each shape type ([ShapeItem], [ShapeBlock], [ShapeFluid]) holds one of these by composition, since they extend
-/// unrelated Minecraft types and cannot share a supertype.
+/// Each shape type ([ShapeItem], [ShapeBlock], [ShapeBlockVariants], [ShapeFluid]) holds one of these by
+/// composition, since they extend unrelated types and cannot share a supertype.
 final class ServedMaterials {
 
     private Material[] materials = new Material[0];

@@ -10,11 +10,11 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 
 /// The property values attached to a shape.
 ///
-/// Each shape type ([ShapeItem], [ShapeBlock], [ShapeFluid]) holds one of these by composition, for the same reason
-/// [ServedMaterials] is held that way.
+/// Each shape type ([ShapeItem], [ShapeBlock], [ShapeBlockVariants], [ShapeFluid]) holds one of these by composition,
+/// for the same reason [ServedMaterials] is held that way.
 ///
 /// A shape that loses unification points its holder at the winner's through [#redirectTo], so a stale reference kept
-/// by the mod that declared it still reads the canonical values.
+/// by the mod that declared it still reads and writes the canonical values.
 final class ShapeProperties {
 
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
@@ -35,7 +35,7 @@ final class ShapeProperties {
         return properties.containsKey(property);
     }
 
-    /// The values set on this shape, unmodifiable once the registry has resolved.
+    /// An unmodifiable view of the values set on this shape.
     Map<Property<?>, Object> view() {
         if (canonical != this) return canonical.view();
         return propertiesView != null ? propertiesView : Collections.unmodifiableMap(properties);
@@ -89,7 +89,7 @@ final class ShapeProperties {
         }
     }
 
-    /// Routes every read to `winner`, for a shape that lost unification.
+    /// Routes every read and write to `winner`, for a shape that lost unification.
     void redirectTo(ShapeProperties winner) {
         canonical = winner;
     }

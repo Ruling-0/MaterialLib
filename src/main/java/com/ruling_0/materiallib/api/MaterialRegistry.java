@@ -192,15 +192,14 @@ public final class MaterialRegistry {
     }
 
     /// The full owner assignment after resolve: every persisted entry (including names with no declaration this
-    /// session) plus the owners chosen this session. Written back to the store.
+    /// session) plus the owners chosen this session.
     Map<String, String> getAssignedOwners() {
         requireResolved("read assigned material owners", "");
         return Collections.unmodifiableMap(assignedOwners);
     }
 
-    /// The full index assignment rendered as a CSV table for debugging: one row per assigned index in
-    /// ascending order, with the assigned owner, shapes, families, and shape overrides. Only available after the
-    /// registry has resolved.
+    /// The full index assignment as a CSV table for debugging, with the columns [MaterialCsv] lists. Only
+    /// available after the registry has resolved.
     public String dumpCsv() {
         return MaterialCsv.dump(this, ShapeRegistry.instance()::describeOverrides);
     }

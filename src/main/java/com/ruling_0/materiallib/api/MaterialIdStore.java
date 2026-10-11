@@ -9,12 +9,11 @@ import java.util.Map;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
-/// The per-world store of the material id list: the name -> index assignment the world last ran with, its
-/// content hash, the digest of the shape overrides it ran with, and the list version counting how many
-/// assignments and override sets the world has seen.
+/// Reads and writes the per-world material id list at `<worldDir>/materiallib/material-ids.json`.
+/// [MaterialIdStore.WorldIds] describes what it stores.
 ///
-/// Lives at `<worldDir>/materiallib/material-ids.json`. [WorldMaterialIds] compares the stored hash against
-/// the registry's at server start and advances the list version through a saved transition when they differ.
+/// [WorldMaterialIds] compares the stored hash and override digest with the running ones at server start, and
+/// advances the list version through a saved transition when either differs.
 public final class MaterialIdStore {
 
     static final String FILE_NAME = "material-ids.json";

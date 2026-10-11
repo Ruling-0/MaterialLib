@@ -21,11 +21,10 @@ import cpw.mods.fml.relauncher.SideOnly;
 ///
 /// Simple shapes are created through [MaterialLibAPI#newItemShape]. A mod that wants custom item behavior (right click
 /// logic, NBT) subclasses this and registers the instance through [MaterialLibAPI#registerItemShape]. The base handles
-/// subtypes, textures from each material's [TextureSet] -- one render pass per icon layer -- the
-/// [StandardProperties#TINT] and [StandardProperties#LAYER_TINTS] colors, display names, and oredict. Create and
-/// register the item inside the owning mod's [MaterialRegistrationEvent] handler. MaterialLib registers the chosen
-/// owner's item under its own domain; see [ShapeOwnerStore]. An advanced tooltip names the mod that owns the shape
-/// and the mod that added the material.
+/// subtypes, textures from each material's [TextureSet], the [StandardProperties#TINT] and
+/// [StandardProperties#LAYER_TINTS] colors, display names, and oredict. Create and register the item inside the
+/// owning mod's [MaterialRegistrationEvent] handler. MaterialLib registers the chosen owner's item under its own
+/// domain; see [ShapeOwnerStore].
 public class ShapeItem extends Item implements BackedShape {
 
     private final String modid;
@@ -224,7 +223,7 @@ public class ShapeItem extends Item implements BackedShape {
         return icons.layerColor(material, layer);
     }
 
-    /// Whether `material`'s icon bound from the resource-pack override location (see [TextureSet]). Override art
+    /// Whether `material`'s icon was bound from the resource-pack override location (see [TextureSet]). Override art
     /// carries its own colors, so MaterialLib draws it untinted. A caller compositing the icon itself skips its own
     /// tint the same way.
     @SideOnly(Side.CLIENT)

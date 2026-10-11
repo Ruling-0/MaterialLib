@@ -51,7 +51,7 @@ public final class PosteaMigration implements IVersionedTransformer {
         VersionedReplacementManager.register(new PosteaMigration());
     }
 
-    /// Drops the cached shape ids and names.
+    /// Drops the cached shape ids and names, and the registry's override substitutions.
     public static void invalidateIds() {
         blockIds = null;
         itemIds = null;

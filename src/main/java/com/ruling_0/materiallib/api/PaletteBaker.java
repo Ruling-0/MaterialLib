@@ -2,7 +2,8 @@ package com.ruling_0.materiallib.api;
 
 /// Handles the pixel-level arithmetic behind [PaletteRef].
 ///
-/// A base texture is indexed such that each pixel's HSV value has an index, sorted in order of decreasing value.
+/// A base texture's distinct HSV values are ranked from brightest to darkest, and each pixel takes the palette
+/// entry at its value's rank.
 final class PaletteBaker {
 
     private PaletteBaker() {}

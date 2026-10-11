@@ -34,8 +34,9 @@ public final class FamilyEdit {
         return this;
     }
 
-    /// Clears the family's value for a property, letting the property default show again for members without
-    /// their own value. Rejects [StandardProperties#NAME] and [StandardProperties#TEXTURE_SET].
+    /// Clears the family's value for a property. Members without their own value fall back to another family's value
+    /// or the property default, as [Material#getProperty] resolves it. Rejects [StandardProperties#NAME] and
+    /// [StandardProperties#TEXTURE_SET].
     public FamilyEdit removeProperty(Property<?> property) {
         Objects.requireNonNull(property, "property must not be null");
         StandardProperties.requireSettable(property);
@@ -60,7 +61,7 @@ public final class FamilyEdit {
         return this;
     }
 
-    /// Removes a shape the family has at this point in the edit order; a later [#generateShape] adds it back for
+    /// Removes a shape the family has at this point in the edit order. A later [#generateShape] adds it back for
     /// all members. Members that removed the shape individually keep their mask either way.
     public FamilyEdit removeShape(Shape shape) {
         Names.validate(shape);
@@ -75,7 +76,6 @@ public final class FamilyEdit {
         return this;
     }
 
-    /// Adds a material to this family.
     public FamilyEdit addMaterial(String materialModid, String materialName) {
         registry.enqueueAddToFamily(
             Names.validate("material modid", materialModid),

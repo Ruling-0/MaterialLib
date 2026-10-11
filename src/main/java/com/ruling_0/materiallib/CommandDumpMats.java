@@ -13,9 +13,8 @@ import net.minecraft.util.EnumChatFormatting;
 
 import com.ruling_0.materiallib.api.MaterialRegistry;
 
-/// The /dumpmats debug command: writes the material registry's full index assignment as CSV to the
-/// configured file and reports the path in chat. Requires operator permission since it writes a file
-/// on the server.
+/// The `/dumpmats` debug command, which writes the material registry's index assignment as CSV (see
+/// [MaterialRegistry#dumpCsv]) and links the written file in chat. Requires operator permission.
 public class CommandDumpMats extends CommandBase {
 
     private final File dumpFile;

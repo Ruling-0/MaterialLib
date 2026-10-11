@@ -18,15 +18,14 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /// The per-material icon layer stacks of an item or block shape, keyed by material index. Once [#bind] has run,
 /// [#get] and [#layer] never return null: an index that bound no icon resolves to the transparent [#EMPTY_ICON]
-/// placeholder. See [TextureSet] for the files a stack is built from and the tints its layers take. A material with a
-/// null [StandardProperties#TEXTURE_SET] or [StandardProperties#FALLBACK_TEXTURE_SETS] -- or a null entry inside the
-/// list -- is treated like one whose texture files do not exist. A resource-pack file at [#overridePath] reskins a
-/// single material, outranks every other source, and draws untinted ([#isOverride]); see [#resolvePath].
+/// placeholder. See [TextureSet] for the files a stack is built from and the tints its layers take. A resource-pack
+/// file at [#overridePath] reskins a single material, outranks every other source, and draws untinted
+/// ([#isOverride]). [#resolvePath] gives the full source order.
 ///
 /// On a palette-enabled instance, a material carrying [StandardProperties#PALETTE] whose art resolved from a texture
-/// set binds one baked sprite in place of the stack -- every layer flattened and recolored through the palette --
-/// and so reports a single layer and white from [#layerColor] ([#isPaletteBaked]). Override and per-material art
-/// outrank a palette and keep their tints, as does every material of a palette-disabled instance.
+/// set binds one baked sprite in place of the stack, with every layer flattened and recolored through the palette.
+/// It then reports a single layer and white from [#layerColor] ([#isPaletteBaked]). Override and per-material art
+/// are never baked.
 final class ShapeIcons {
 
     /// The transparent placeholder icon path, present on both the item and block atlases.
@@ -90,13 +89,13 @@ final class ShapeIcons {
         this.paletteEnabled = paletteEnabled;
     }
 
-    /// Registers one icon per served material from its texture set, looked up under `shapeName`.
+    /// As [#bind(IIconRegister, Material[], List)], for a single shape name.
     void bind(IIconRegister register, Material[] materials, String shapeName) {
         bind(register, materials, List.of(shapeName));
     }
 
-    /// Registers one icon per served material, from the highest-priority texture source that resolves any name in
-    /// `shapeNameCandidates`; within one source, earlier names win. A variant block shape passes
+    /// Registers the icon stack of each served material, from the highest-priority source that resolves a name in
+    /// `shapeNameCandidates` (see [#resolvePath]). A variant block shape passes
     /// `<shapeName>_<variant>` before `<shapeName>`, so a variant needs no texture of its own unless it looks
     /// different from the plain shape.
     void bind(IIconRegister register, Material[] materials, List<String> shapeNameCandidates) {
@@ -158,8 +157,7 @@ final class ShapeIcons {
         emptyIcon = register.registerIcon(EMPTY_ICON);
     }
 
-    /// Whether `material` generates no shape at all: an ore-dictionary marker pseudo-material, which backs a name
-    /// without ever drawing.
+    /// Whether `material` generates no shape, as an oredict marker material that never draws.
     private static boolean isMarker(Material material) {
         return material.getShapes().isEmpty();
     }

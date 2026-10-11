@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
      name = "MaterialLib",
      acceptedMinecraftVersions = "[1.7.10]",
      dependencies = "required-after:gtnhlib;required-after:postea@[1.4.0-mu,);required-after:endlessids")
+/// The MaterialLib mod, which forwards the FML lifecycle events to its sided proxy.
 public class MaterialLib {
 
     public static final String MODID = "materiallib";

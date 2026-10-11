@@ -23,8 +23,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-/// The palette pngs behind [PaletteRef]: where they live, their pixels for the sprites baking against them, and
-/// the [#bake] entry point that puts such a sprite on an atlas.
+/// Loads the palette pngs behind [PaletteRef]s and puts sprites baked against them on an atlas through [#bake].
 ///
 /// One png serves every material whose palette names it, each material reading its own column. A parsed png is
 /// held until the next atlas stitch begins.

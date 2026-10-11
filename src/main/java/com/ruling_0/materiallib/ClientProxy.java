@@ -15,6 +15,8 @@ import com.ruling_0.materiallib.api.ShapeRegistry;
 import cpw.mods.fml.client.registry.RenderingRegistry;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 
+/// The client proxy, which also attaches the shape item and block renderers and registers the texture-stitch
+/// handlers.
 public class ClientProxy extends CommonProxy {
 
     @Override

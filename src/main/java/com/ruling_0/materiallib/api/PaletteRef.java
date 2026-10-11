@@ -2,24 +2,24 @@ package com.ruling_0.materiallib.api;
 
 import com.ruling_0.materiallib.MaterialLib;
 
-/// A material's palette: column `column` of `assets/<modid>/textures/palettes/<name>.png`, counted from zero and
-/// set through [MaterialBuilder#usePalette] or [MaterialEdit#usePalette].
+/// A material's palette: column `column`, counted from zero, of `assets/<modid>/textures/palettes/<name>.png`. Set
+/// through [MaterialBuilder#usePalette] or [MaterialEdit#usePalette].
 ///
 /// A material carrying one has its shape art baked rather than tinted. The base texture and its `_LAYER<n>`s are
 /// recolored through the palette when the texture atlas stitches, then flattened with the uncolored `_OVERLAY` into
 /// a single sprite. [StandardProperties#TINT] and its siblings stay settable and readable -- fluids and external
-/// consumers still apply them -- but they no longer color the material's baked shape art.
+/// consumers still apply them -- but they do not color the material's baked shape art.
 ///
 /// A palette png holds one palette per column, its entries running top to bottom. Trailing fully-transparent pixels are
 /// ignored; interior transparent entries are not. No maximum height is assumed. Baking sorts the base texture's
-/// distinct shades (its grayscale values, lightest first) and maps them onto the column's entries in that order,
-/// clamping to the last entry where the art carries more shades than the palette. Alpha is kept from the base art and
-/// layers.
+/// distinct shades (by HSV value, the brightest channel, lightest first) and maps them onto the column's entries in
+/// that order, clamping to the last entry where the art carries more shades than the palette. Alpha is kept from the
+/// base art and layers.
 ///
 /// Only texture set art bakes. Overrides under `mloverrides/`, [IconPather] paths, and fluid still/flowing textures
-/// are used without coloring. A missing palette png causes materials to fall back to tinting. A palette that cannot
-/// be applied (invalid column index, fully-transparent column, unreadable layer) leaves the composed texture
-/// uncolored.
+/// are used without coloring. A missing palette png causes materials to fall back to tinting. A palette column that
+/// cannot be read (unreadable png, column outside it, fully-transparent column) leaves the composed texture
+/// uncolored. A layer that cannot be read, or whose size differs from the base, is left out of the sprite.
 ///
 /// A resource pack recolors every material drawing from a palette png by replacing that png.
 public record PaletteRef(String modid, String name, int column) {

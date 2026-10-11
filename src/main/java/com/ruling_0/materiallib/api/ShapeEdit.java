@@ -5,11 +5,10 @@ import java.util.Objects;
 import com.ruling_0.materiallib.MaterialLib;
 
 /// Queued cross-mod changes to a [Shape] identified by name, obtained from [MaterialLibAPI#editShape].
-/// Queuing, ordering, and skip behavior are as in [MaterialEdit]; an edit addressed to any declaration of a
-/// unified name applies to the shape that owns the name.
+/// Queuing, ordering, and skip behavior are as in [MaterialEdit].
 ///
-/// A shape is addressed by name alone, unlike a material: shape names are unified across mods into one owner
-/// (see [ShapeUnification]), so the modid identifies the editor rather than the target.
+/// Unlike a material, a shape is addressed by name alone. Shape names unify across mods into one owner (see
+/// [ShapeUnification]), and an edit applies to that owner. The modid identifies the editor, not the target.
 public final class ShapeEdit {
 
     private final ShapeRegistry registry;

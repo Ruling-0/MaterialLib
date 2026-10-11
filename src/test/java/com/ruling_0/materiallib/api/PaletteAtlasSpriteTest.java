@@ -28,8 +28,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /// Pins how [PaletteAtlasSprite] flattens a layer stack: layers are strips of the base's exact size, baked and
-/// drawn frame for frame, and any other size is left out. Also pins the level array it hands `loadSprite`: sized
-/// by the client's mipmap setting, with a null tail that no headless run can observe.
+/// drawn frame for frame, and any other size is left out. Also pins the level array it hands `loadSprite`: the art
+/// followed by one null slot per client mipmap level.
 class PaletteAtlasSpriteTest {
 
     private static final int WHITE = 0xFFFFFFFF;

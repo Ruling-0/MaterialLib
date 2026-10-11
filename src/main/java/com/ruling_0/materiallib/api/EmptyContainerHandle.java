@@ -6,7 +6,7 @@ import net.minecraft.item.ItemStack;
 /// A mod's claim on an empty container item, returned by
 /// [MaterialLibAPI#registerEmptyContainer(String, String, String)].
 ///
-/// Registration only records the claim; the item is created and registered with FML when shapes resolve. Handles
+/// Registration only records the claim. The item is created and registered with FML when shapes resolve. Handles
 /// registered for the same name by different mods all bind to the one item elected for that name, so a handle held
 /// by a non-owning mod still builds stacks of the owner's item.
 public final class EmptyContainerHandle {

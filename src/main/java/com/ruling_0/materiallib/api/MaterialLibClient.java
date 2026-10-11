@@ -27,9 +27,9 @@ public final class MaterialLibClient {
     private MaterialLibClient() {}
 
     /// Creates and registers an icon set named `name` on `atlas`; see [IconSet]. Call from a mod's client proxy
-    /// during preInit, or any time before the first texture stitch -- a set created later binds only on the next
-    /// resource reload. An icon set registers nothing with the game, so creation is not bound to the registration
-    /// window. Duplicate names bind independently; identical icon paths dedupe at registration.
+    /// during preInit, or any time before the first texture stitch. A set created later binds only on the next
+    /// resource reload. Creation is not limited to the [MaterialRegistrationEvent] window. Sets with duplicate names
+    /// bind independently, and identical icon paths dedupe at registration.
     public static IconSet newIconSet(String modid, String name, IconSet.Atlas atlas) {
         IconSet set = new IconSet(modid, name, atlas);
         iconSets.add(set);
@@ -38,8 +38,8 @@ public final class MaterialLibClient {
 
     static List<IconSet> getIconSets() { return iconSets; }
 
-    /// Whether atlas stitches bind only the placeholder icon: true until FML finishes mod loading, since the
-    /// mid-startup resource refresh stitches a temporary atlas that the load-complete reload replaces.
+    /// Whether atlas stitches bind only the placeholder icon: true until FML finishes mod loading. The mid-startup
+    /// resource refresh stitches a temporary atlas that the load-complete reload replaces.
     static boolean deferIconBinding() {
         return !Loader.instance().hasReachedState(LoaderState.AVAILABLE);
     }

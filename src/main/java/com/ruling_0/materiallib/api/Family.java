@@ -12,14 +12,15 @@ import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
 /// A named group of [Material]s that share [Property] values and generated [Shape]s.
 ///
-/// A material may belong to several families at once. Properties fall back member-to-family: a member's own
-/// value takes precedence, and among multiple families setting the same property the alphabetically-first
-/// family key wins (see [Material#getProperty]). Property conflict should not be relied on; wherever possible, keys
-/// should be unique. The family's shapes are added to every member, except members that removed them individually
-/// through [MaterialEdit#removeShape]. A family's tooltip lines appear on members' shapes after the material's own
-/// lines. Families are created through [MaterialLibAPI#newFamily] inside a [MaterialRegistrationEvent] handler
-/// and become read-only once the registry resolves at the end of MaterialLib's preInit. Membership is only
-/// available after resolution.
+/// A material may belong to several families at once. A member's own property value takes precedence over its
+/// families' values; see [Material#getProperty] for which family wins when several set the same property. Families
+/// sharing members should avoid setting the same property. Every member generates the family's shapes, except a
+/// shape the member removed through [MaterialEdit#removeShape]. A family's tooltip lines appear on members' shapes
+/// after the material's own lines.
+///
+/// Families are created through [MaterialLibAPI#newFamily] inside a [MaterialRegistrationEvent] handler. They become
+/// read-only once the registry resolves at the end of MaterialLib's preInit, and their members, shapes, properties
+/// and tooltip are only readable from then on.
 public final class Family {
 
     private final MaterialRegistry registry;
@@ -52,21 +53,18 @@ public final class Family {
     /// The registry key, `modid:name`.
     public String getKey() { return key; }
 
-    /// The materials belonging to this family. Only available after the registry has resolved.
     public Set<Material> getMaterials() {
         registry.requireResolved("query the members of ", key);
         return members;
     }
 
-    /// The shapes this family contributes to its members; individual materials may remove them through
-    /// [MaterialEdit#removeShape]. Only available after the registry has resolved.
+    /// The shapes this family contributes to its members, including any a member removed for itself.
     public Set<Shape> getShapes() {
         registry.requireResolved("query the shapes of ", key);
         return shapesView;
     }
 
-    /// Resolves a property for this family: its own value, else the property's default. Only available after the
-    /// registry has resolved.
+    /// Resolves a property for this family: its own value, else the property's default.
     @SuppressWarnings("unchecked")
     public <T> T getProperty(Property<T> property) {
         registry.requireResolved("query properties of ", key);
@@ -87,12 +85,11 @@ public final class Family {
         return propertiesView;
     }
 
-    /// True if this family has a custom tooltip.
     public boolean hasCustomTooltip() {
         return !tooltipLines.isEmpty();
     }
 
-    /// The added tooltip lines of this family.
+    /// The tooltip lines this family adds to its members' shapes.
     public List<String> getTooltip() {
         registry.requireResolved("query the tooltip of ", key);
         return tooltipLines;

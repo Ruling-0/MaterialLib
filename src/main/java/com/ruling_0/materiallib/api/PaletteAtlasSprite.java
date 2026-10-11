@@ -29,12 +29,13 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// the constructor. Animation follows the base texture: every layer is a strip of the base's exact size, drawn
 /// frame for frame, and only the base's animation metadata is read.
 ///
-/// A base texture that cannot be read is resolved as the missing texture. Other failures resolve as flattened
-/// but uncolored, with a log entry. A layer of any other size is left out.
+/// A base texture that cannot be read, or a bake that throws, resolves as the missing texture. A palette column
+/// that cannot be resolved leaves the art flattened but uncolored. A layer that cannot be read, or of any other
+/// size, is left out. Each of these failures is logged.
 @SideOnly(Side.CLIENT)
 final class PaletteAtlasSprite extends TextureAtlasSprite {
 
-    /// Base art with composited layers, and any animation metadata
+    /// An image and its animation metadata, if any.
     record Art(BufferedImage image, AnimationMetadataSection animation) {}
 
     private final boolean isItem;

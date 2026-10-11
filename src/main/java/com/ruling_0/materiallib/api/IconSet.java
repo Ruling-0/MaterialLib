@@ -8,16 +8,17 @@ import net.minecraft.util.IIcon;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
-/// A named per-material icon binding on one texture atlas, with no backing item or block: the icon resolution of a
-/// shape (resource-pack overrides, texture-set chain, fallbacks, unification alternatives, layer stack) for art a
-/// mod composites in its own renderers, e.g. tool parts drawn by the material read from a stack's NBT, or an extra
-/// face icon of a block the mod already owns. The set's name is the `<shape>` its art is filed under inside each
-/// texture set, i.e. the `<shape>` of `materials/<set>/<shape>.png`.
+/// Per-material icons for art a mod draws in its own renderers, such as tool parts drawn by the material read from a
+/// stack's NBT, or an extra face of a block the mod already owns.
+///
+/// An icon set resolves icons the way a shape does (resource-pack overrides, texture sets and their fallbacks,
+/// unification alternatives, layer stacks), but backs no item or block. Its name is the `<shape>` its art is filed
+/// under in each texture set, as in `materials/<set>/<shape>.png`. A material with no such art anywhere in its
+/// texture-set chain binds the transparent placeholder.
 ///
 /// Created through [MaterialLibClient#newIconSet] before the first texture stitch. Icons bind for every registered
-/// material -- an icon set has no served set, since no material generates one -- when the chosen atlas stitches, and
-/// re-bind on every resource reload; a caller must hold the set and read the icon per use, never caching the
-/// returned [IIcon]. A material whose whole texture-set chain lacks the art binds the transparent placeholder.
+/// material when the chosen atlas stitches, and re-bind on every resource reload, so callers read the icon on each
+/// use and never cache the returned [IIcon].
 @SideOnly(Side.CLIENT)
 public final class IconSet {
 

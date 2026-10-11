@@ -12,9 +12,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 
 /// Binds every [IconSet]'s icons when the atlas it was created on stitches.
 ///
-/// An icon set backs no item or block, so nothing else would ever call its icon registration; both atlases fire
-/// [TextureStitchEvent] on the client, which is where the sets hook in. Registered on the Forge event bus from the
-/// client proxy, alongside [ShapeFluidIcons].
+/// An icon set backs no item or block, so no item or block icon callback registers its icons. Registered on the
+/// Forge event bus from the client proxy.
 @SideOnly(Side.CLIENT)
 public final class IconSetBinder {
 
@@ -34,7 +33,7 @@ public final class IconSetBinder {
         }
     }
 
-    /// Every registered material in index order, the same order [ShapeRegistry] binds a shape's served materials in.
+    /// Every registered material in index order, the order in which [ShapeRegistry] binds a shape's served materials.
     private static Material[] registeredMaterials() {
         Collection<Material> registered = MaterialRegistry.instance().getMaterials();
         Material[] materials = registered.toArray(new Material[0]);

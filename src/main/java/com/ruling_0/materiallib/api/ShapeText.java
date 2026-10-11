@@ -9,7 +9,7 @@ import net.minecraft.util.StatCollector;
 /// Display name and tooltip text shared by a [ShapeItem], a [ShapeBlock]'s item form, and a [ShapeFluid].
 ///
 /// An item or block shape stack encodes its material as the item damage (the material's global index), while a
-/// fluid resolves its material directly; either way the name and tooltip build the same way. The advanced tooltip
+/// fluid resolves its material directly. Either way, the name and tooltip build the same way. The advanced tooltip
 /// names the contributing mods because a shape's saved identity is under MaterialLib's domain rather than theirs.
 final class ShapeText {
 
@@ -21,8 +21,7 @@ final class ShapeText {
         return MaterialRegistry.instance().getMaterialByIndex(stack.getItemDamage());
     }
 
-    /// The display name for a shape stack: a placeholder when the damage maps to no material; otherwise the name
-    /// for the shape-and-material pair.
+    /// The display name for a shape stack, or a placeholder when the damage maps to no material.
     static String displayName(Shape shape, ItemStack stack) {
         Material material = materialFor(stack);
         if (material == null) return missingMaterialName(stack.getItemDamage());

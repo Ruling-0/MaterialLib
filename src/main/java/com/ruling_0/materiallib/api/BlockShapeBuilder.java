@@ -62,7 +62,7 @@ public final class BlockShapeBuilder {
     /// its own backing block, named `<shapeName>_<variant>` (see [ShapeNaming#variantBlockName]), sharing the
     /// materials the shape generates but able to differ in texture (see [ShapeIcons]) and behavior (see
     /// [#drops], [#hardness], [#resistance], [#harvestLevel]). Omit this call for a shape with no variants, the
-    /// common case. A shape with variants must declare at least one; names must be unique and valid identifiers.
+    /// common case. At least one name is required, and names must be unique, valid identifiers.
     /// Shapes sharing this shape's name must declare the identical variant list, or unification fails loudly; see
     /// [ShapeUnification]. [MaterialLibAPI#getStack(Material, Shape, int)] and oredict registration use the first
     /// declared variant; [MaterialLibAPI#getStack(Material, Shape, String, int)] and
@@ -140,7 +140,8 @@ public final class BlockShapeBuilder {
         return this;
     }
 
-    /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice.
+    /// Registers the shape and returns the shape to generate; see [ShapeRegistry#register]. Fails if called twice, or
+    /// if a [#variantBase] is declared without [#variants].
     public Shape build() {
         if (built) {
             throw new IllegalStateException("Block shape " + Names.key(modid, name) + " was already built");

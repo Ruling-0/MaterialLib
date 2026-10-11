@@ -29,24 +29,18 @@ import cpw.mods.fml.relauncher.SideOnly;
 ///
 /// Simple shapes are created through [MaterialLibAPI#newBlockShape]. A mod wanting custom block behavior subclasses
 /// this and registers the instance through [MaterialLibAPI#registerBlockShape]. The base handles per-material textures
-/// from each material's [TextureSet], the [StandardProperties#TINT] color, creative-tab variants, and dropping the
-/// placed metadata; a material may instead be given a per-material icon ahead of its texture set through
-/// [#iconPathFor] (a subclass override) or a [BlockShapeBuilder#iconPath] pather. Create and register the block
-/// inside the owning mod's [MaterialRegistrationEvent] handler.
-/// MaterialLib registers the chosen owner's block under its own domain (see [ShapeOwnerStore]), and the block's item
-/// shows the same display name and advanced-tooltip attribution as an item shape.
+/// from each material's [TextureSet], the [StandardProperties#TINT] color, a creative-tab entry per material, and
+/// dropping the placed metadata. A per-material icon tried ahead of the texture set comes from [#iconPathFor] (a
+/// subclass override) or a [BlockShapeBuilder#iconPath] pather. Create and register the block inside the owning mod's
+/// [MaterialRegistrationEvent] handler. MaterialLib registers the chosen owner's block under its own domain; see
+/// [ShapeOwnerStore].
 ///
-/// A variant block built by [ShapeBlockVariants] additionally falls back from its own icon (`<shapeName>_<variant>`)
-/// to the plain shape name, and may draw an untinted base texture (e.g. a stone background) under the tinted
-/// material icon, composited by [ShapeBlockRenderingHandler]; see [#registerBlockIcons] and [#hasBaseTexture].
-/// Drops, hardness, resistance, and harvest level may be overridden per material and variant, and the harvest tool
-/// class per shape, through [BlockShapeBuilder]'s behavior hooks; a hook left unset preserves the vanilla default
-/// it replaces.
+/// Variant blocks ([ShapeBlockVariants]) and the drop, hardness, resistance and harvest hooks are configured through
+/// [BlockShapeBuilder].
 ///
-/// [ShapeBlockRenderingHandler] also composites a material whose art binds more than one icon layer (see
-/// [TextureSet]), and a material whose layers glow (see [StandardProperties#EMISSIVE_LAYERS]). A stack's depth is
-/// known only once the atlas stitches, so [#registerBlockIcons] switches such a block to that handler's render type
-/// there and never switches back.
+/// [#registerBlockIcons] switches a block on the vanilla render type to [ShapeBlockRenderingHandler]'s when a served
+/// material binds more than one icon layer (see [TextureSet]) or glows (see [StandardProperties#EMISSIVE_LAYERS]),
+/// and never switches it back.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;
@@ -408,8 +402,7 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     /// Forge's harvest gate only consults [#getHarvestLevel] when a harvest tool class is set (see
-    /// ForgeHooks.canHarvestBlock), so a harvest level hook with no declared tool defaults to pickaxe,
-    /// matching legacy GregTech ore blocks.
+    /// ForgeHooks.canHarvestBlock), so a harvest level hook with no declared tool defaults to pickaxe.
     @Override
     public String getHarvestTool(int metadata) {
         if (behavior.harvestTool() != null) return behavior.harvestTool();

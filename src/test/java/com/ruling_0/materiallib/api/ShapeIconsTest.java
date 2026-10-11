@@ -33,8 +33,8 @@ class ShapeIconsTest {
     private final TextureSet setB = TextureSet.of("testmod", "setB");
     private final TextureSet setC = TextureSet.of("testmod", "setC");
 
-    /// Constructs a [Material] directly -- [MaterialBuilder] rejects a missing [StandardProperties#TEXTURE_SET] --
-    /// to pin that binding it resolves the placeholder instead of crashing.
+    /// Pins that a material with no [StandardProperties#TEXTURE_SET] binds the placeholder instead of crashing. The
+    /// [Material] is constructed directly because [MaterialBuilder] rejects a missing texture set.
     @Test
     void materialWithoutTextureSetBindsPlaceholderInsteadOfCrashing() {
         Map<Property<?>, Object> properties = Map.of(StandardProperties.NAME, "Broken");

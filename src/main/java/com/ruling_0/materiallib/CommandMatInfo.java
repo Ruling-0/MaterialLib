@@ -28,9 +28,8 @@ import com.ruling_0.materiallib.api.ShapeItem;
 import com.ruling_0.materiallib.api.StackMaterialInfo;
 import com.ruling_0.materiallib.api.StandardProperties;
 
-/// The /matinfo debug command: prints the shape, variant, and material encoded by the held item, or otherwise the
-/// block the player is looking at, plus the material's family membership and property values, when it is a
-/// MaterialLib shape.
+/// The `/matinfo` debug command. Prints the shape, variant, and material of the held item, or else of the MaterialLib
+/// block the player is looking at, along with the material's families and property values.
 public class CommandMatInfo extends CommandBase {
 
     /// The properties printed as AARRGGBB hex.

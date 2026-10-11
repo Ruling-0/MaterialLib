@@ -18,8 +18,8 @@ public interface Shape {
 
     String getModId();
 
-    /// The shape's name, unique within its owning mod. Also names the texture file looked up inside a material's
-    /// [TextureSet] folder.
+    /// The shape's name, unique within its owning mod. By default it also names the texture file looked up inside a
+    /// material's [TextureSet] folder; see [ItemShapeBuilder#iconName] and [BlockShapeBuilder#iconName].
     String getName();
 
     /// The oredict prefixes for this shape. The full oredict entry for a material is each prefix followed by the

@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 /// Headless coverage for [ShapeBlock]'s block-level color callbacks on a composite. The tinted branch a plain
 /// block takes resolves a material through the process-wide [MaterialRegistry#instance], which throws on lookup
-/// before MaterialLib's preInit; the compositing itself needs a live client.
+/// before the registry resolves. The compositing itself needs a live client.
 class ShapeBlockTest {
 
     private final ShapeBlock withBaseTexture = new ShapeBlock(

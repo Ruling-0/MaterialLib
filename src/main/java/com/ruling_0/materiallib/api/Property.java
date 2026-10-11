@@ -1,16 +1,14 @@
 package com.ruling_0.materiallib.api;
 
-/// A typed key for a value attached to a [Material] or [Family].
+/// A typed key for a value attached to a [Material], [Family] or [Shape].
 ///
 /// Properties are compared by object identity. A property is created once, stored in a constant, and shared by
 /// every mod that reads or writes it. Creating a second property with the same modid and name yields a distinct
 /// key whose values are invisible to holders of the first, so properties meant for cross-mod use must be exposed
 /// as constants (see [StandardProperties] for the ones this mod provides).
 ///
-/// Values are read through [Material#getProperty] and [Family#getProperty]. Resolution for a material checks,
-/// in order: the material's own value, the values of the material's [Family]s (taking the first family that
-/// sets the property, in alphabetical, case-sensitive `modid:name` key order), then [#getDefaultValue()].
-/// Conflicting family values are logged when the registry resolves, compared via `equals`.
+/// Values are read through [Material#getProperty], [Family#getProperty] and [Shape#getProperty]. See
+/// [Material#getProperty] for how a material falls back to its families' values.
 public final class Property<T> {
 
     private final String modid;

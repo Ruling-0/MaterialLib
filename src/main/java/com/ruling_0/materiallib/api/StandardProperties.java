@@ -22,7 +22,7 @@ public final class StandardProperties {
 
     private StandardProperties() {}
 
-    /// The material's unlocalized name, used for item registration, translation keys, and oredict entries.
+    /// The material's registry name, used in translation keys and oredict entries.
     /// Derived from the name passed to [MaterialLibAPI#newMaterial]; builders and edits reject attempts to set or
     /// remove it. Conventionally, this should start with a capital letter.
     public static final Property<String> NAME = Property.of(MaterialLib.MODID, "name");

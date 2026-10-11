@@ -14,10 +14,10 @@ import com.ruling_0.materiallib.api.TextureSet;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
 
-/// A demonstration of the MaterialLib API, registered when the registerExamples config option is
-/// enabled: three materials, each of the four shape types, a family, and a shape consumer, registered
-/// through a [MaterialRegistrationEvent] handler. A dependent mod registers the same way, except it
-/// subscribes its handler during construction as described in the event doc (preInit used here due to config flag).
+/// A demonstration of the MaterialLib API, registered when the `registerExamples` config option is enabled. It
+/// registers three materials, each of the four shape types, a family, and a shape consumer through a
+/// [MaterialRegistrationEvent] handler. A dependent mod registers the same way, except it subscribes its handler
+/// during construction as described in the event doc. This handler subscribes in preInit, once the config is read.
 ///
 /// The materials are TestIron and TestGold, which both tint a base texture, and TestPalette, which bakes the
 /// same art through a palette column instead.
@@ -28,7 +28,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// icon. testOre and testFluid override their icon paths, and testBucket its untinted base icon. A consumer on
 /// testGear adds a shapeless recipe per material crafting its ingot into its gear, and lang overrides on
 /// TestGold show per-pair display names. TestGold is emissive and testOre sets emissive layers, so TestGold's
-/// testOre overlay glows.
+/// testOre icon glows.
 ///
 /// TestPalette draws column 1 of the `test` palette, a four-entry column short enough to merge the art's darker
 /// shades. Its ingot2 shape shows the composite: the numbered layers baked through the same column and the

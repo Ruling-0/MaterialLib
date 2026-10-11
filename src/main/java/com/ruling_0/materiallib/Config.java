@@ -4,6 +4,7 @@ import java.io.File;
 
 import net.minecraftforge.common.config.Configuration;
 
+/// MaterialLib's config options, read during preInit.
 public class Config {
 
     public static boolean registerExamples;

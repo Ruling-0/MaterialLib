@@ -6,11 +6,11 @@ import java.util.Set;
 
 import net.minecraft.item.ItemStack;
 
-/// The group of backing [ShapeBlock]s for one block [Shape] declared with [BlockShapeBuilder#variants]: one
-/// registered block per variant, named `<shapeName>_<variant>` so each keeps a stable save identity of its own
-/// (see [ShapeNaming#variantBlockName]). Materials generate the group once, through the [Shape] this class
-/// implements; the resulting per-material [Material#getShapes] set is shared by every variant block. A shape with
-/// no declared variants stays a plain [ShapeBlock] instead.
+/// The group of backing [ShapeBlock]s for one block [Shape] declared with [BlockShapeBuilder#variants], one
+/// registered block per variant. Each block is named `<shapeName>_<variant>` (see [ShapeNaming#variantBlockName]),
+/// so it keeps a stable save identity of its own. Materials generate the group once, through the [Shape] this class
+/// implements, and every variant block serves the same materials. A shape with no declared variants is a plain
+/// [ShapeBlock] instead.
 final class ShapeBlockVariants implements BackedShape {
 
     private final String modid;
@@ -35,10 +35,9 @@ final class ShapeBlockVariants implements BackedShape {
     }
 
     /// Builds the variant group and its backing blocks, one per name in `variantNames`, each registered as
-    /// `<name>_<variant>`, drawing the base texture `variantBases` declares for it, if any (see
-    /// [BlockShapeBuilder#variantBase]), and sharing `behavior`'s hooks (see [BlockShapeBuilder#drops] and
-    /// friends), `iconPather` (see [BlockShapeBuilder#iconPath]) and `iconName` (see [BlockShapeBuilder#iconName],
-    /// null for none). Fails when `variantBases` names a variant not in `variantNames`.
+    /// `<name>_<variant>`. Each block draws the base texture `variantBases` declares for its variant, if any (see
+    /// [BlockShapeBuilder#variantBase]). All blocks share `behavior`, `iconPather` and `iconName` (null for none).
+    /// Fails when `variantBases` names a variant not in `variantNames`.
     static ShapeBlockVariants create(String modid, String name, String[] oreDicts,
                                      List<String> variantNames, Map<String, String> variantBases,
                                      BlockBehavior behavior, IconPather iconPather, String iconName) {

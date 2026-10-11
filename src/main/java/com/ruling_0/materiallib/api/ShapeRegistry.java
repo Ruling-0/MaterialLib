@@ -88,8 +88,8 @@ public final class ShapeRegistry {
         return new ShapeEdit(this, modid, name);
     }
 
-    /// Queues a change to the shape owning `name`, applied when shapes resolve. The lookup is deferred to that
-    /// point, so the shape need not be registered yet; see [ShapeEdit] for the skip on a name nothing registered.
+    /// Queues a change to the shape owning `name`, looked up and applied when shapes resolve. The shape need not be
+    /// registered yet. A name nothing registered by then is skipped with a warning.
     void enqueueShapeOp(String modid, String name, String description, Consumer<ServedShape> op) {
         String edit = description + " " + name + " (from " + modid + ")";
         requireRegistration(edit);
@@ -203,7 +203,7 @@ public final class ShapeRegistry {
     }
 
     /// The full owner assignment after resolve: every persisted entry (including names whose owning mod is absent
-    /// this session) plus the owners chosen this session. Written back to the store.
+    /// this session) plus the owners chosen this session.
     Map<String, String> getAssignedOwners() {
         requireResolved("read assigned shape owners");
         return Collections.unmodifiableMap(assignedOwners);
@@ -439,8 +439,8 @@ public final class ShapeRegistry {
         return fluid == null ? null : fluidMaterials.get(fluid);
     }
 
-    /// The fluid registered for `material` in `shape`, or null when the material does not generate it.
-    /// `shape` must still be a fluid shape.
+    /// The fluid registered for `material` in `shape`, or null when the material does not generate it. The shape
+    /// must be a fluid shape.
     Fluid getFluid(Material material, Shape shape) {
         requireResolved("look up a fluid");
         material = material.canonical();
@@ -476,9 +476,9 @@ public final class ShapeRegistry {
     /// shape to the materials that generate it, registers fluids and the fluid container mappings, and registers
     /// the oredict entries.
     ///
-    /// Properties merge before the edits drain, matching [MaterialRegistry#resolve]: an edit is meant to override
-    /// what any declaration set, and a [ShapeEdit#removeProperty] that ran first would be undone by the merge.
-    /// Invoked by MaterialLib's preInit handler after [MaterialRegistry#resolve]; other mods must not call this.
+    /// Properties merge before the edits drain, as in [MaterialRegistry#resolve], so an edit overrides what any
+    /// declaration set. Invoked by MaterialLib's preInit handler after [MaterialRegistry#resolve]; other mods must
+    /// not call this.
     public void resolve() {
         requireRegistration("resolve shapes");
         MaterialRegistry.instance().requireResolved("resolve shapes", "");
