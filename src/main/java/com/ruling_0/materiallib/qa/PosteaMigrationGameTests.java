@@ -37,8 +37,8 @@ import openblocks.common.PlayerInventoryStore;
 /// In-world checks that [com.ruling_0.materiallib.PosteaMigration] reaches chunks, player data and mod-private
 /// storage.
 ///
-/// `qa/postea-migration/run.sh` seeds each storage before boot with a witness stack saved under an older material id
-/// list version. Each test reads the storage through the owning mod's load path and asserts the stack holds the
+/// `qa/postea-migration/run.sh` seeds each storage with a witness stack saved under an older material id list
+/// version. Each test reads the storage through the owning mod's load path and asserts the stack holds the
 /// witness material at the current list version. A test with no seed is skipped. The harness requires a "verified"
 /// log line from every test.
 @GameTestHolder(

@@ -64,8 +64,8 @@ public final class MaterialIdTransitions {
         return new MaterialIdTransitions(steps);
     }
 
-    /// Returns the single remap taking indices stamped at `fromVersion` to `toVersion`: an entry per index that
-    /// changed, mapped to its final index, or to [#DELETE] when its material was removed along the way. Indices
+    /// Returns the single remap taking indices stamped at `fromVersion` to `toVersion`. It holds an entry per index
+    /// that changed, mapped to its final index or to [#DELETE] when its material was removed along the way. Indices
     /// absent from the map are unchanged. Throws [IllegalArgumentException] when `fromVersion` is past `toVersion`, and
     /// [IllegalStateException] when a step in the span is missing.
     public Int2IntMap compose(int fromVersion, int toVersion) {
@@ -143,7 +143,8 @@ public final class MaterialIdTransitions {
 
     private record Step(int from, Int2IntMap changed) {
 
-        /// Returns the index `index` holds at `from + 1`, or [MaterialIdTransitions#DELETE].
+        /// Returns the index the material at `index` holds at list version `from + 1`, or
+        /// [MaterialIdTransitions#DELETE] when it was removed.
         int apply(int index) {
             return changed.getOrDefault(index, index);
         }

@@ -31,7 +31,7 @@ public final class WorldMaterialIds {
 
     /// Reconciles the world's stored id list under `dir` (the world's `materiallib` directory) with the
     /// registry's assignment, and loads the world's transition chain into [#transitions]. A world with no store
-    /// adopts the current assignment at list version 1. A matching hash leaves everything untouched. A mismatch
+    /// adopts the current assignment at list version 1. A matching hash leaves the store untouched. A mismatch
     /// saves the transition from the stored version and advances the store. Throws [IllegalStateException] on a corrupt
     /// store or transition file, or when either cannot be written.
     public static void check(MaterialRegistry registry, File dir) {

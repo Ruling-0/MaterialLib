@@ -33,7 +33,7 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 /// Data Postea never stamped is treated as list version 1. Loading data the chain cannot bring to the current version
 /// fails.
 ///
-/// Shape ids are cached until the next FML id remap ([#invalidateIds]), which rewrites them to the world's map.
+/// Shape ids are cached until the next FML id remap, which can renumber them (see [#invalidateIds]).
 public final class PosteaMigration implements IVersionedTransformer {
 
     static final String KEY = MaterialLib.MODID + ":idList";

@@ -58,7 +58,8 @@ public class CommonProxy {
         }
     }
 
-    // Before the worlds load, so the world's id list is reconciled against the registry before any chunk reads.
+    // Before the worlds load, so the world's id list is reconciled against the registry before any chunk or player
+    // data is read.
     public void serverAboutToStart(FMLServerAboutToStartEvent event) {
         File worldDir = new File(FMLCommonHandler.instance().getSavesDirectory(), event.getServer().getFolderName());
         WorldMaterialIds.check(MaterialRegistry.instance(), new File(worldDir, MaterialLib.MODID));
