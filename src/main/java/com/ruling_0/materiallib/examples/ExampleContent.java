@@ -27,7 +27,8 @@ import cpw.mods.fml.common.registry.GameRegistry;
 /// and a cobblestone variant, each with its own untinted vanilla base texture under the tinted material
 /// icon. testOre and testFluid override their icon paths, and testBucket its untinted base icon. A consumer on
 /// testGear adds a shapeless recipe per material crafting its ingot into its gear, and lang overrides on
-/// TestGold show per-pair display names. TestGold's testOre overlay glows, through testOre's emissive layers.
+/// TestGold show per-pair display names. TestGold is emissive and testOre sets emissive layers, so TestGold's
+/// testOre overlay glows.
 ///
 /// TestPalette draws column 1 of the `test` palette, a four-entry column short enough to merge the art's darker
 /// shades. Its ingot2 shape shows the composite: the numbered layers baked through the same column and the

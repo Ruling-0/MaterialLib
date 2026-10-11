@@ -44,9 +44,9 @@ import cpw.mods.fml.relauncher.SideOnly;
 /// it replaces.
 ///
 /// [ShapeBlockRenderingHandler] also composites a material whose art binds more than one icon layer (see
-/// [TextureSet]) or glows (see [StandardProperties#EMISSIVE_LAYERS]). A stack's depth is known only once the atlas
-/// stitches, so [#registerBlockIcons] switches such a block to that handler's render type there and never switches
-/// back.
+/// [TextureSet]), and a material whose layers glow (see [StandardProperties#EMISSIVE_LAYERS]). A stack's depth is
+/// known only once the atlas stitches, so [#registerBlockIcons] switches such a block to that handler's render type
+/// there and never switches back.
 public class ShapeBlock extends Block implements BackedShape {
 
     private final String modid;

@@ -95,7 +95,7 @@ public final class StandardProperties {
     public static final Property<PaletteRef> PALETTE = Property.of(MaterialLib.MODID, "palette");
 
     /// Whether the material's icon layers draw full-bright on a block shape that sets [#EMISSIVE_LAYERS]. Every other
-    /// shape ignores it. Players can hide these layers instead through MaterialLib's `renderEmissiveLayers` option.
+    /// shape ignores it. With MaterialLib's `renderEmissiveLayers` option off, these layers are not drawn at all.
     public static final Property<Boolean> EMISSIVE = Property.of(MaterialLib.MODID, "emissive", false);
 
     /// Read from a shape rather than a material: whether the block shape draws the icon layers of an [#EMISSIVE]

@@ -19,8 +19,8 @@ import org.lwjgl.opengl.GL11;
 
 /// Renders a [ShapeBlock] composite -- an untinted base texture, where the variant declares one, under the
 /// material's icon layer stack -- in world and in every item form (GUI slot, hotbar, held, and dropped). A block
-/// with neither a base texture nor layered material art keeps the vanilla full-cube render type and never reaches
-/// this handler; see [ShapeBlock#setRenderType].
+/// with no base texture, layered material art or glowing material keeps the vanilla full-cube render type and never
+/// reaches this handler; see [ShapeBlock#setRenderType].
 ///
 /// Each layer is drawn with its icon and color passed in explicitly, under a [RenderBlocks] override texture, so
 /// the handler holds no state and one shared instance serves every thread of Angelica's off-thread chunk meshing.
@@ -32,10 +32,11 @@ import org.lwjgl.opengl.GL11;
 /// out the overlay's transparent pixels; the overlay icons are cutout textures, not translucent ones, matching
 /// legacy GT ore blocks.
 ///
-/// The material layers of an emissive material (see [StandardProperties#EMISSIVE_LAYERS]) draw at full brightness
-/// without ambient occlusion, face by face, so a chunk mesher keeps the vertex lightmap instead of recomputing smooth
-/// lighting. In item form they go in a second [Tessellator] batch, since a batch applies the brightness it was given
-/// last to every vertex. With [Config#renderEmissiveLayers] off they are not drawn at all.
+/// On a shape that sets [StandardProperties#EMISSIVE_LAYERS], the material layers of an
+/// [StandardProperties#EMISSIVE] material draw at full brightness without ambient occlusion, face by face, so a chunk
+/// mesher keeps the full-bright vertex lightmap and does not recompute smooth lighting. In item form they go in a
+/// second [Tessellator] batch, since setting a brightness turns the lightmap on for every vertex of a batch. With
+/// [Config#renderEmissiveLayers] off they are not drawn at all.
 @SideOnly(Side.CLIENT)
 @ThreadSafeISBRH(perThread = false)
 public final class ShapeBlockRenderingHandler implements ISimpleBlockRenderingHandler {
