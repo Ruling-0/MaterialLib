@@ -2,7 +2,7 @@ package com.ruling_0.materiallib.api;
 
 import net.minecraft.entity.item.EntityItem;
 
-/// A callback an item [Shape]'s items run every tick while dropped in the world, attached through
+/// A callback that runs every tick while an item [Shape]'s item lies dropped in the world, attached through
 /// [ShapeEdit#onEntityItemUpdate].
 @FunctionalInterface
 public interface EntityItemCallback {

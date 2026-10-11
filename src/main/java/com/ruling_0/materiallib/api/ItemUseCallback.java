@@ -4,7 +4,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
-/// A callback an item [Shape]'s items run when a player uses one on a block, attached through [ShapeEdit#onItemUse].
+/// A callback that runs when a player uses an item [Shape]'s item on a block, attached through [ShapeEdit#onItemUse].
 @FunctionalInterface
 public interface ItemUseCallback {
 
