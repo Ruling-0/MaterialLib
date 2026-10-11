@@ -61,6 +61,7 @@ public final class Material {
     private Family[] sortedFamilies;
     private Set<Family> familiesView;
     private Set<Shape> shapes;
+    private UnaryOperator<Shape> canonicalShape = UnaryOperator.identity();
     private Map<Property<?>, Object> propertiesView;
     private int index = -1;
     private Material canonical = this;
@@ -124,15 +125,29 @@ public final class Material {
     }
 
     /// The shapes this material generates: its own shapes plus its families', minus any removed for this
-    /// material specifically. Only available after the registry has resolved.
+    /// material specifically. Once shapes unify, each is the canonical shape of its name. Only available after the
+    /// registry has resolved.
     public Set<Shape> getShapes() {
         if (canonical != this) return canonical.getShapes();
         registry.requireResolved("query the shapes of ", key);
         return shapes;
     }
 
+    /// Whether this material generates `shape`, or the shape it unified onto. Agrees with
+    /// [MaterialLibAPI#findStack] returning a stack. Only available after the registry has resolved.
     public boolean hasShape(Shape shape) {
-        return getShapes().contains(shape);
+        if (canonical != this) return canonical.hasShape(shape);
+        return getShapes().contains(canonicalShape.apply(shape));
+    }
+
+    /// Replaces each generated shape with its canonical shape once shape names unify.
+    void unifyShapes(UnaryOperator<Shape> canonicalOf) {
+        canonicalShape = canonicalOf;
+        Set<Shape> unified = new ReferenceLinkedOpenHashSet<>(shapes.size());
+        for (Shape shape : shapes) {
+            unified.add(canonicalOf.apply(shape));
+        }
+        shapes = Collections.unmodifiableSet(unified);
     }
 
     /// Resolves a property for this material: its own value, else the value of the alphabetically-first family

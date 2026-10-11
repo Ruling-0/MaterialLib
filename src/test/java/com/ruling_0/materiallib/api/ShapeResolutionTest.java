@@ -33,6 +33,18 @@ class ShapeResolutionTest {
     }
 
     @Test
+    void hasShapeAnswersThroughShapeUnification() {
+        Shape aliasGear = new TestShape("othermod", "gear");
+        Material material = registry.newMaterial("testmod", "TestIron", texture).generateShape(aliasGear).build();
+        registry.resolve();
+        material.unifyShapes(shape -> shape == aliasGear ? gear : shape);
+
+        assertEquals(Set.of(gear), material.getShapes());
+        assertTrue(material.hasShape(gear));
+        assertTrue(material.hasShape(aliasGear));
+    }
+
+    @Test
     void builderRemovalMasksFamilyShape() {
         registry.newFamily("testmod", "Metals").generateShapes(ingot, frame).build();
         Material material = registry.newMaterial("testmod", "TestIron", texture)

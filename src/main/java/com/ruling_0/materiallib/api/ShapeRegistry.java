@@ -487,6 +487,9 @@ public final class ShapeRegistry {
         pendingOps.drain();
         freezeProperties();
         collectCanonicalShapes();
+        for (Material material : MaterialRegistry.instance().getMaterials()) {
+            material.unifyShapes(unification::canonical);
+        }
         registerEmptyContainers();
         bindServedMaterials();
         registerFluids();
