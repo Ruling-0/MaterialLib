@@ -23,18 +23,18 @@ final class ShapeText {
 
     /// The display name for a shape stack: a placeholder when the damage maps to no material; otherwise the name
     /// for the shape-and-material pair.
-    static String displayName(Shape shape, String displayNameFormat, ItemStack stack) {
+    static String displayName(Shape shape, ItemStack stack) {
         Material material = materialFor(stack);
         if (material == null) return missingMaterialName(stack.getItemDamage());
-        return displayName(shape, displayNameFormat, material);
+        return displayName(shape, material);
     }
 
     /// The display name for a shape-and-material pair. A lang override for the exact pair wins, trying a variant
     /// block's per-variant key (`shape.<modid>.<shapeName>_<variant>...`) before its declared shape name's key.
     /// Otherwise the first key of [ShapeNaming#formatKeys] that has a translation builds the name, through the
-    /// shape's [StandardProperties#NAME_FORMATTER] when set. The declared format applies when no format key
-    /// translates or its translation is not a valid format string.
-    static String displayName(Shape shape, String displayNameFormat, Material material) {
+    /// shape's [StandardProperties#NAME_FORMATTER] when set. When no format key translates, or its translation is
+    /// not a valid format string, the name is the material name followed by the capitalized shape name.
+    static String displayName(Shape shape, Material material) {
         String overrideKey = ShapeNaming.overrideKey(shape, material);
         if (StatCollector.canTranslate(overrideKey)) return StatCollector.translateToLocal(overrideKey);
         String groupName = shape instanceof ShapeBlock block ? block.getGroupName() : null;
@@ -50,12 +50,13 @@ final class ShapeText {
                 break;
             }
         }
-        if (formatKey == null) return ShapeNaming.format(displayNameFormat, material.getLocalizedName());
+        String defaultFormat = ShapeNaming.defaultFormat(shapeName);
+        if (formatKey == null) return ShapeNaming.format(defaultFormat, material.getLocalizedName());
         ShapeNameFormatter formatter = shape.getProperty(StandardProperties.NAME_FORMATTER);
         String name = formatter != null ? formatter.displayName(formatKey, material) : null;
         if (name != null) return name;
         String translatedFormat = StatCollector.translateToLocal(formatKey);
-        return ShapeNaming.format(translatedFormat, displayNameFormat, material.getLocalizedName());
+        return ShapeNaming.format(translatedFormat, defaultFormat, material.getLocalizedName());
     }
 
     /// Appends a shape stack's tooltip: the material's and its families' custom tooltip lines, then -- with

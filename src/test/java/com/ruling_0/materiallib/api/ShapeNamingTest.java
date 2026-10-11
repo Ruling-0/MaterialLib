@@ -1,7 +1,6 @@
 package com.ruling_0.materiallib.api;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.Map;
@@ -51,7 +50,7 @@ class ShapeNamingTest {
     }
 
     @Test
-    void aTranslatedFormatThatIsInvalidFallsBackToTheDeclaredFormat() {
+    void aTranslatedFormatThatIsInvalidFallsBackToTheDefaultFormat() {
         assertEquals("Iron Gear", ShapeNaming.format("%s Zahnrad %d", "%s Gear", "Iron"));
         assertEquals("Iron Zahnrad", ShapeNaming.format("%s Zahnrad", "%s Gear", "Iron"));
     }
@@ -74,13 +73,8 @@ class ShapeNamingTest {
     }
 
     @Test
-    void requireValidFormatRejectsAFormatThatCannotTakeAStringArgument() {
-        assertThrows(IllegalArgumentException.class, () -> ShapeNaming.requireValidFormat("%d"));
-    }
-
-    @Test
-    void requireValidFormatAcceptsALiteralFormatWithoutAPlaceholder() {
-        assertEquals("Bucket of Lava", ShapeNaming.requireValidFormat("Bucket of Lava"));
+    void theDefaultFormatCapitalizesTheShapeName() {
+        assertEquals("%s Gear", ShapeNaming.defaultFormat("gear"));
     }
 
     @Test

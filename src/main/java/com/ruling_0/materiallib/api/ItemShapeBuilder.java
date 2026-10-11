@@ -14,7 +14,6 @@ public final class ItemShapeBuilder {
     private final String modid;
     private final String name;
     private String[] oreDicts;
-    private String displayNameFormat;
     private String iconName;
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
@@ -32,12 +31,12 @@ public final class ItemShapeBuilder {
         return this;
     }
 
-    /// Sets the display-name format applied to the material name (e.g. `"%s Gear"` -> `Iron Gear`). Defaults to
-    /// the material name followed by the capitalized shape name. A lang file may override individual names; see
-    /// [ShapeNaming].
-    public ItemShapeBuilder displayName(String displayNameFormat) {
-        this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
-        return this;
+    /// Sets the shape's [StandardProperties#DISPLAY_NAME_FORMAT_KEY], the translation key of the format applied to the
+    /// material name. For example, a key translating to `%s Gear` gives `Iron Gear`. Without a translation, the
+    /// name is the material name followed by the capitalized shape name. A lang file may override individual
+    /// names; see [ShapeNaming].
+    public ItemShapeBuilder displayNameKey(String key) {
+        return property(StandardProperties.DISPLAY_NAME_FORMAT_KEY, key);
     }
 
     /// Sets the name this shape's textures are filed under inside each texture set, defaulting to the shape name,
@@ -64,8 +63,7 @@ public final class ItemShapeBuilder {
         }
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
-        String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        ShapeItem shape = new ShapeItem(modid, name, format, prefixes);
+        ShapeItem shape = new ShapeItem(modid, name, prefixes);
         if (iconName != null) {
             shape.setIconName(iconName);
         }

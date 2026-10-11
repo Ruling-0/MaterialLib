@@ -13,7 +13,6 @@ public final class FluidShapeBuilder {
 
     private final String modid;
     private final String name;
-    private String displayNameFormat;
     private FluidNamer namer;
     private FluidConfigurer configurer;
     private IconPather iconPather;
@@ -25,12 +24,12 @@ public final class FluidShapeBuilder {
         this.name = name;
     }
 
-    /// Sets the display-name format applied to the material name (e.g. `"Molten %s"` -> `Molten Iron`). Defaults to
-    /// the material name followed by the capitalized shape name. A lang file may override individual names; see
-    /// [ShapeNaming].
-    public FluidShapeBuilder displayName(String displayNameFormat) {
-        this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
-        return this;
+    /// Sets the shape's [StandardProperties#DISPLAY_NAME_FORMAT_KEY], the translation key of the format applied to the
+    /// material name. For example, a key translating to `Molten %s` gives `Molten Iron`. Without a translation, the
+    /// name is the material name followed by the capitalized shape name. A lang file may override individual
+    /// names; see [ShapeNaming].
+    public FluidShapeBuilder displayNameKey(String key) {
+        return property(StandardProperties.DISPLAY_NAME_FORMAT_KEY, key);
     }
 
     /// Sets the function computing each served material's Forge fluid name, in place of the default
@@ -73,8 +72,7 @@ public final class FluidShapeBuilder {
             throw new IllegalStateException("Fluid shape " + Names.key(modid, name) + " was already built");
         }
         built = true;
-        String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        ShapeFluid shape = new ShapeFluid(modid, name, format, namer, configurer, iconPather);
+        ShapeFluid shape = new ShapeFluid(modid, name, namer, configurer, iconPather);
         shape.properties().setAll(shape, properties);
         return ShapeRegistry.instance().register(shape);
     }

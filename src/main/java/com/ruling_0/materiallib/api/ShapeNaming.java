@@ -4,16 +4,15 @@ import java.util.ArrayList;
 import java.util.IllegalFormatException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /// Builds the translation keys and display strings for a [Shape] rendered for a particular [Material].
 ///
 /// A shape stack's name comes from three kinds of key. The override key replaces the name of one shape-and-material
 /// pair outright. Otherwise a format key ([#formatKeys]) translates the format, such as `%s Gear`, that combines the
-/// shape with the material name. The shape's declared format applies when no format key translates. The material
-/// name key translates the material name, falling back to [Material#getName]. Key construction stays free of game
-/// lookups so tests can cover it. The [Shape] and [Material] argument order keeps the keys stable across shapes that
-/// unify.
+/// shape with the material name. Without one, the name is the material name followed by the capitalized shape
+/// name. The material name key translates the material name, falling back to [Material#getName]. Key construction
+/// stays free of game lookups so tests can cover it. The [Shape] and [Material] argument order keeps the keys stable
+/// across shapes that unify.
 final class ShapeNaming {
 
     private ShapeNaming() {}
@@ -54,36 +53,22 @@ final class ShapeNaming {
         return String.format(displayFormat, materialName);
     }
 
-    /// Applies `translatedFormat` to a material name, or `declaredFormat` when the translation is null or not a
+    /// Applies `translatedFormat` to a material name, or `fallbackFormat` when the translation is null or not a
     /// valid format string.
-    static String format(String translatedFormat, String declaredFormat, String materialName) {
+    static String format(String translatedFormat, String fallbackFormat, String materialName) {
         if (translatedFormat != null) {
             try {
                 return format(translatedFormat, materialName);
             }
             catch (IllegalFormatException ignored) {}
         }
-        return format(declaredFormat, materialName);
+        return format(fallbackFormat, materialName);
     }
 
-    /// Validates a shape's display-name format by applying it to an empty material name, and returns it. Rejects a
-    /// null format or one that is not a valid format string.
-    static String requireValidFormat(String displayNameFormat) {
-        Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
-        try {
-            format(displayNameFormat, "");
-        }
-        catch (RuntimeException e) {
-            throw new IllegalArgumentException(
-                "displayNameFormat \"" + displayNameFormat + "\" is not a valid format string", e);
-        }
-        return displayNameFormat;
-    }
-
-    /// The display format for a shape: the given format, or the material name followed by the capitalized
-    /// shape name (e.g. `gear` to `"%s Gear"`) when none was set.
-    static String formatOrDefault(String shapeName, String displayNameFormat) {
-        return displayNameFormat != null ? displayNameFormat : "%s " + capitalize(shapeName);
+    /// The display format of a shape whose format key has no translation: the material name followed by the
+    /// capitalized shape name, e.g. `gear` to `"%s Gear"`.
+    static String defaultFormat(String shapeName) {
+        return "%s " + capitalize(shapeName);
     }
 
     /// The registry name of one variant's backing block: the shape name, an underscore, and the variant name,

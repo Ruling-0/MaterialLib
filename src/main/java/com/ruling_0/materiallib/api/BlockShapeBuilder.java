@@ -16,7 +16,6 @@ public final class BlockShapeBuilder {
     private final String modid;
     private final String name;
     private String[] oreDicts;
-    private String displayNameFormat;
     private String iconName;
     private String[] variants;
     private final Map<String, String> variantBases = new LinkedHashMap<>();
@@ -41,12 +40,12 @@ public final class BlockShapeBuilder {
         return this;
     }
 
-    /// Sets the display-name format applied to the material name (e.g. `"%s Block"` -> `Iron Block`). Defaults to
-    /// the material name followed by the capitalized shape name. A lang file may override individual names; see
-    /// [ShapeNaming].
-    public BlockShapeBuilder displayName(String displayNameFormat) {
-        this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
-        return this;
+    /// Sets the shape's [StandardProperties#DISPLAY_NAME_FORMAT_KEY], the translation key of the format applied to the
+    /// material name. For example, a key translating to `%s Block` gives `Iron Block`. Without a translation, the
+    /// name is the material name followed by the capitalized shape name. A lang file may override individual
+    /// names; see [ShapeNaming].
+    public BlockShapeBuilder displayNameKey(String key) {
+        return property(StandardProperties.DISPLAY_NAME_FORMAT_KEY, key);
     }
 
     /// Sets the name this shape's textures are filed under inside each texture set, defaulting to the shape name,
@@ -153,17 +152,16 @@ public final class BlockShapeBuilder {
         }
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
-        String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
         BlockBehavior behavior = new BlockBehavior(dropsFn, hardnessFn, resistanceFn, harvestLevelFn, harvestTool);
         if (variants == null) {
-            ShapeBlock shape = new ShapeBlock(modid, name, format, prefixes, null, null, null, behavior, iconPather);
+            ShapeBlock shape = new ShapeBlock(modid, name, prefixes, null, null, null, behavior, iconPather);
             if (iconName != null) {
                 shape.setIconName(iconName);
             }
             shape.properties().setAll(shape, properties);
             return ShapeRegistry.instance().register(shape);
         }
-        ShapeBlockVariants group = ShapeBlockVariants.create(modid, name, format, prefixes, List.of(variants),
+        ShapeBlockVariants group = ShapeBlockVariants.create(modid, name, prefixes, List.of(variants),
             variantBases, behavior, iconPather, iconName);
         group.properties().setAll(group, properties);
         return ShapeRegistry.instance().register(group);

@@ -21,7 +21,7 @@ class ShapeFluidTest {
     @Test
     void fluidNameIsShapeAndMaterialLowercasedByDefault() {
         Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
-        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten");
 
         assertEquals("molten.testiron", molten.fluidName(iron));
     }
@@ -30,7 +30,7 @@ class ShapeFluidTest {
     void aCustomNamerOverridesTheDefaultName() {
         Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
         FluidNamer namer = (shape, material) -> "legacy." + material.getName().toLowerCase(Locale.ENGLISH);
-        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s", namer, null);
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten", namer, null);
 
         assertEquals("legacy.testiron", molten.fluidName(iron));
     }
@@ -43,7 +43,7 @@ class ShapeFluidTest {
         Material broken = new Material(registry, "examplemod", "Broken", properties, Set.of(), List.of());
         registry.register(broken);
         registry.resolve();
-        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten");
 
         assertEquals(ShapeIcons.EMPTY_ICON, molten.resolveIconPath(broken, path -> false));
     }
@@ -54,7 +54,7 @@ class ShapeFluidTest {
         Material iron = registry.newMaterial("examplemod", "TestIron", texture)
             .build();
         registry.resolve();
-        ShapeFluid molten = new ShapeFluid("examplemod", "molten", "Molten %s");
+        ShapeFluid molten = new ShapeFluid("examplemod", "molten");
 
         molten.resolveIconPath(iron, path -> true);
         assertTrue(molten.hasOverrideIcon(iron));
@@ -66,9 +66,9 @@ class ShapeFluidTest {
     @Test
     void namerDivergenceIsDetectedPerServedMaterial() {
         Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
-        ShapeFluid canonical = new ShapeFluid("examplemod", "molten", "Molten %s");
+        ShapeFluid canonical = new ShapeFluid("examplemod", "molten");
         canonical.bindServedMaterials(new Material[] { iron });
-        ShapeFluid candidate = new ShapeFluid("othermod", "molten", "Molten %s",
+        ShapeFluid candidate = new ShapeFluid("othermod", "molten",
             (shape, material) -> "legacy." + material.getName()
                 .toLowerCase(Locale.ENGLISH),
             null);
@@ -79,9 +79,9 @@ class ShapeFluidTest {
     @Test
     void agreeingNamersReportNoDivergence() {
         Material iron = registry.newMaterial("examplemod", "TestIron", texture).build();
-        ShapeFluid canonical = new ShapeFluid("examplemod", "molten", "Molten %s");
+        ShapeFluid canonical = new ShapeFluid("examplemod", "molten");
         canonical.bindServedMaterials(new Material[] { iron });
-        ShapeFluid candidate = new ShapeFluid("othermod", "molten", "Molten %s");
+        ShapeFluid candidate = new ShapeFluid("othermod", "molten");
 
         assertNull(canonical.firstNameDivergence(candidate));
     }

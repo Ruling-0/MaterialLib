@@ -21,7 +21,6 @@ public final class FluidInContainerShapeBuilder {
     private EmptyContainer emptyContainer;
     private int volume = FluidContainerRegistry.BUCKET_VOLUME;
     private String[] oreDicts;
-    private String displayNameFormat;
     private String emptyIconPath;
     private final Map<Property<?>, Object> properties = new Reference2ObjectLinkedOpenHashMap<>();
     private boolean built;
@@ -67,12 +66,12 @@ public final class FluidInContainerShapeBuilder {
         return this;
     }
 
-    /// Sets the display-name format applied to the material name (e.g. `"%s Bucket"` -> `Iron Bucket`). Defaults to
-    /// the material name followed by the capitalized shape name. A lang file may override individual names; see
-    /// [ShapeNaming].
-    public FluidInContainerShapeBuilder displayName(String displayNameFormat) {
-        this.displayNameFormat = Objects.requireNonNull(displayNameFormat, "displayNameFormat must not be null");
-        return this;
+    /// Sets the shape's [StandardProperties#DISPLAY_NAME_FORMAT_KEY], the translation key of the format applied to the
+    /// material name. For example, a key translating to `%s Bucket` gives `Iron Bucket`. Without a translation, the
+    /// name is the material name followed by the capitalized shape name. A lang file may override individual
+    /// names; see [ShapeNaming].
+    public FluidInContainerShapeBuilder displayNameKey(String key) {
+        return property(StandardProperties.DISPLAY_NAME_FORMAT_KEY, key);
     }
 
     /// Sets the untinted base icon path drawn under the fluid fill (e.g. `"gregtech:items/cell_base"`), in place of
@@ -102,9 +101,8 @@ public final class FluidInContainerShapeBuilder {
         }
         built = true;
         String[] prefixes = oreDicts != null ? oreDicts : new String[] { name };
-        String format = ShapeNaming.formatOrDefault(name, displayNameFormat);
-        ShapeFluidInContainer shape = new ShapeFluidInContainer(modid, name, format, fluidShape, emptyContainer,
-            volume, emptyIconPath, prefixes);
+        ShapeFluidInContainer shape = new ShapeFluidInContainer(modid, name, fluidShape, emptyContainer, volume,
+            emptyIconPath, prefixes);
         shape.properties().setAll(shape, properties);
         return ShapeRegistry.instance().register(shape);
     }

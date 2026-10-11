@@ -31,7 +31,6 @@ public class ShapeItem extends Item implements BackedShape {
     private final String modid;
     private final String name;
     private final List<String> oreDicts;
-    private final String displayNameFormat;
 
     private final ServedMaterials served = new ServedMaterials();
     private final ShapeProperties props = new ShapeProperties();
@@ -41,13 +40,12 @@ public class ShapeItem extends Item implements BackedShape {
     private final List<EntityItemCallback> entityItemCallbacks = new ArrayList<>();
 
     /// Creates an item shape. `oreDicts` are the oredict prefixes, at least one, each with the material name
-    /// appended (e.g. `gear` -> `gearIron`); `displayNameFormat` is applied to the material name to build the
-    /// display name, e.g. `"%s Gear"`. Identifiers must be non-empty and free of ':' and whitespace.
-    public ShapeItem(String modid, String name, String displayNameFormat, String... oreDicts) {
+    /// appended (e.g. `gear` -> `gearIron`). Identifiers must be non-empty and free of ':' and whitespace. The
+    /// display name comes from the shape's [StandardProperties#DISPLAY_NAME_FORMAT_KEY].
+    public ShapeItem(String modid, String name, String... oreDicts) {
         this.modid = Names.validate("item shape modid", modid);
         this.name = Names.validate("item shape name", name);
         this.oreDicts = Names.validateOreDicts(oreDicts);
-        this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
         setHasSubtypes(true);
         setMaxDamage(0);
         setCreativeTab(CreativeTabs.tabMaterials);
@@ -93,7 +91,7 @@ public class ShapeItem extends Item implements BackedShape {
 
     @Override
     public String getItemStackDisplayName(ItemStack stack) {
-        return ShapeText.displayName(this, displayNameFormat, stack);
+        return ShapeText.displayName(this, stack);
     }
 
     @Override

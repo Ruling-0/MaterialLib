@@ -42,7 +42,6 @@ public class ShapeFluid implements ServedShape {
 
     private final String modid;
     private final String name;
-    private final String displayNameFormat;
     private final FluidNamer namer;
     private final FluidConfigurer configurer;
     private final IconPather iconPather;
@@ -54,27 +53,23 @@ public class ShapeFluid implements ServedShape {
     private final Set<Material> warnedMissingIcon = new ReferenceOpenHashSet<>();
     private final Set<Material> overrideIcons = new ReferenceOpenHashSet<>();
 
-    /// Creates a fluid shape. `displayNameFormat` is applied to the material name to build the fluid's display
-    /// name, e.g. `"Molten %s"`. Identifiers must be non-empty and free of ':' and whitespace.
-    public ShapeFluid(String modid, String name, String displayNameFormat) {
-        this(modid, name, displayNameFormat, null, null);
+    /// Creates a fluid shape. Identifiers must be non-empty and free of ':' and whitespace. The fluid's display name
+    /// comes from the shape's [StandardProperties#DISPLAY_NAME_FORMAT_KEY].
+    public ShapeFluid(String modid, String name) {
+        this(modid, name, null, null);
     }
 
-    /// As [#ShapeFluid(String, String, String)], additionally setting this shape's [FluidNamer] and
-    /// [FluidConfigurer]. A null namer defaults to [FluidNamer#DEFAULT]; a null configurer performs no extra
-    /// configuration.
-    public ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer,
-                      FluidConfigurer configurer) {
-        this(modid, name, displayNameFormat, namer, configurer, null);
+    /// As [#ShapeFluid(String, String)], additionally setting this shape's [FluidNamer] and [FluidConfigurer]. A
+    /// null namer defaults to [FluidNamer#DEFAULT]; a null configurer performs no extra configuration.
+    public ShapeFluid(String modid, String name, FluidNamer namer, FluidConfigurer configurer) {
+        this(modid, name, namer, configurer, null);
     }
 
-    /// As [#ShapeFluid(String, String, String, FluidNamer, FluidConfigurer)], additionally setting this shape's
+    /// As [#ShapeFluid(String, String, FluidNamer, FluidConfigurer)], additionally setting this shape's
     /// [IconPather], or null for none; see [#resolveIconPath].
-    ShapeFluid(String modid, String name, String displayNameFormat, FluidNamer namer, FluidConfigurer configurer,
-               IconPather iconPather) {
+    ShapeFluid(String modid, String name, FluidNamer namer, FluidConfigurer configurer, IconPather iconPather) {
         this.modid = Names.validate("fluid shape modid", modid);
         this.name = Names.validate("fluid shape name", name);
-        this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
         this.namer = namer != null ? namer : FluidNamer.DEFAULT;
         this.configurer = configurer != null ? configurer : NO_OP_CONFIGURER;
         this.iconPather = iconPather;
@@ -261,7 +256,7 @@ public class ShapeFluid implements ServedShape {
         }
 
         @Override
-        public String getLocalizedName() { return ShapeText.displayName(ShapeFluid.this, displayNameFormat, material); }
+        public String getLocalizedName() { return ShapeText.displayName(ShapeFluid.this, material); }
 
         @Override
         public int getColor() {

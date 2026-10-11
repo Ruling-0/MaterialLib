@@ -69,7 +69,7 @@ class EmptyContainersTest {
     @Test
     void anEmptyContainerCannotReuseAShapeName() {
         ShapeRegistry registry = new ShapeRegistry();
-        registry.register(new ShapeFluid("amod", "cellEmpty", "Liquid %s"));
+        registry.register(new ShapeFluid("amod", "cellEmpty"));
 
         assertThrows(IllegalStateException.class, () -> registry.registerEmptyContainer("amod", "cellEmpty", null));
     }

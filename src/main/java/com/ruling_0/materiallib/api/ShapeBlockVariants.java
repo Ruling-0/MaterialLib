@@ -39,7 +39,7 @@ final class ShapeBlockVariants implements BackedShape {
     /// [BlockShapeBuilder#variantBase]), and sharing `behavior`'s hooks (see [BlockShapeBuilder#drops] and
     /// friends), `iconPather` (see [BlockShapeBuilder#iconPath]) and `iconName` (see [BlockShapeBuilder#iconName],
     /// null for none). Fails when `variantBases` names a variant not in `variantNames`.
-    static ShapeBlockVariants create(String modid, String name, String displayNameFormat, String[] oreDicts,
+    static ShapeBlockVariants create(String modid, String name, String[] oreDicts,
                                      List<String> variantNames, Map<String, String> variantBases,
                                      BlockBehavior behavior, IconPather iconPather, String iconName) {
         List<String> validatedOreDicts = Names.validateOreDicts(oreDicts);
@@ -49,7 +49,6 @@ final class ShapeBlockVariants implements BackedShape {
             ShapeBlock block = new ShapeBlock(
                 modid,
                 ShapeNaming.variantBlockName(name, variant),
-                displayNameFormat,
                 oreDictsArray,
                 name,
                 variant,

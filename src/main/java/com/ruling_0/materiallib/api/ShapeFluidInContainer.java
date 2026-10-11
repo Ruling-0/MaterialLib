@@ -40,28 +40,28 @@ public class ShapeFluidInContainer extends ShapeItem {
 
     /// Creates a fluid-in-container shape holding `fluidShape`, `volume` millibuckets per item. `emptyContainer` is
     /// the item returned when the fluid is drained (e.g. an empty bucket), or null for a container consumed on
-    /// drain. `oreDicts` and `displayNameFormat` behave as for a [ShapeItem].
-    public ShapeFluidInContainer(String modid, String name, String displayNameFormat, ShapeFluid fluidShape,
-                                 ItemStack emptyContainer, int volume, String... oreDicts) {
-        this(modid, name, displayNameFormat, fluidShape,
+    /// drain. `oreDicts` and the display name behave as for a [ShapeItem].
+    public ShapeFluidInContainer(String modid, String name, ShapeFluid fluidShape, ItemStack emptyContainer,
+                                 int volume, String... oreDicts) {
+        this(modid, name, fluidShape,
             emptyContainer == null ? null : new EmptyContainer.Eager(emptyContainer), volume, null, oreDicts);
     }
 
-    /// As [#ShapeFluidInContainer(String, String, String, ShapeFluid, ItemStack, int, String...)], but draining to
-    /// an empty container item registered through [MaterialLibAPI#registerEmptyContainer(String, String, String)].
-    protected ShapeFluidInContainer(String modid, String name, String displayNameFormat, Shape fluidShape,
-                                    EmptyContainerHandle emptyContainer, int volume, String... oreDicts) {
-        this(modid, name, displayNameFormat, fluidShape,
+    /// As [#ShapeFluidInContainer(String, String, ShapeFluid, ItemStack, int, String...)], but draining to an empty
+    /// container item registered through [MaterialLibAPI#registerEmptyContainer(String, String, String)].
+    protected ShapeFluidInContainer(String modid, String name, Shape fluidShape, EmptyContainerHandle emptyContainer,
+                                    int volume, String... oreDicts) {
+        this(modid, name, fluidShape,
             new EmptyContainer.Registered(Objects.requireNonNull(emptyContainer, "emptyContainer must not be null")),
             volume, null, oreDicts);
     }
 
-    /// As [#ShapeFluidInContainer(String, String, String, ShapeFluid, ItemStack, int, String...)], accepting any
-    /// form of [EmptyContainer] and an optional base icon path override (see
-    /// [FluidInContainerShapeBuilder#emptyIcon]); null uses [#emptyIconPath]'s default.
-    ShapeFluidInContainer(String modid, String name, String displayNameFormat, Shape fluidShape,
-                          EmptyContainer emptyContainer, int volume, String emptyIconOverride, String... oreDicts) {
-        super(modid, name, displayNameFormat, oreDicts);
+    /// As [#ShapeFluidInContainer(String, String, ShapeFluid, ItemStack, int, String...)], accepting any form of
+    /// [EmptyContainer] and an optional base icon path override (see [FluidInContainerShapeBuilder#emptyIcon]); null
+    /// uses [#emptyIconPath]'s default.
+    ShapeFluidInContainer(String modid, String name, Shape fluidShape, EmptyContainer emptyContainer, int volume,
+                          String emptyIconOverride, String... oreDicts) {
+        super(modid, name, oreDicts);
         Objects.requireNonNull(fluidShape, "fluidShape must not be null");
         if (!(fluidShape instanceof ShapeFluid)) {
             throw new IllegalArgumentException(fluidShape + " is not a fluid shape");

@@ -50,7 +50,6 @@ public class ShapeBlock extends Block implements BackedShape {
     private final String modid;
     private final String name;
     private final List<String> oreDicts;
-    private final String displayNameFormat;
     private final String groupName;
     private final String variant;
     private final String baseTexture;
@@ -66,16 +65,16 @@ public class ShapeBlock extends Block implements BackedShape {
     private int renderType = 0;
 
     /// Creates a block shape backed by a [net.minecraft.block.material.Material#iron] block. `oreDicts` are the
-    /// oredict prefixes, at least one; `displayNameFormat` is applied to the material name to build the display
-    /// name, e.g. `"%s Block"`. Identifiers must be non-empty and free of ':' and whitespace.
-    public ShapeBlock(String modid, String name, String displayNameFormat, String... oreDicts) {
-        this(net.minecraft.block.material.Material.iron, modid, name, displayNameFormat, oreDicts);
+    /// oredict prefixes, at least one. Identifiers must be non-empty and free of ':' and whitespace. The display
+    /// name comes from the shape's [StandardProperties#DISPLAY_NAME_FORMAT_KEY].
+    public ShapeBlock(String modid, String name, String... oreDicts) {
+        this(net.minecraft.block.material.Material.iron, modid, name, oreDicts);
     }
 
     /// Creates a block shape backed by a block of `blockMaterial`, for subclasses needing a non-metal block.
     public ShapeBlock(net.minecraft.block.material.Material blockMaterial, String modid, String name,
-                      String displayNameFormat, String... oreDicts) {
-        this(blockMaterial, modid, name, displayNameFormat, oreDicts, null, null, null, BlockBehavior.NONE, null);
+                      String... oreDicts) {
+        this(blockMaterial, modid, name, oreDicts, null, null, null, BlockBehavior.NONE, null);
     }
 
     /// Creates one variant's backing block for [ShapeBlockVariants], or the sole block of a variant-less shape
@@ -84,13 +83,12 @@ public class ShapeBlock extends Block implements BackedShape {
     /// this block's variant name, passed to `behavior`'s hooks; `baseTexture` is this variant's optional untinted
     /// background icon path, independent of any material's texture set, or null for none; `iconPather` is this
     /// shape's optional [BlockShapeBuilder#iconPath] override, or null for none.
-    ShapeBlock(String modid, String name, String displayNameFormat, String[] oreDicts, String groupName,
-               String variant, String baseTexture, BlockBehavior behavior, IconPather iconPather) {
+    ShapeBlock(String modid, String name, String[] oreDicts, String groupName, String variant, String baseTexture,
+               BlockBehavior behavior, IconPather iconPather) {
         this(
             net.minecraft.block.material.Material.iron,
             modid,
             name,
-            displayNameFormat,
             oreDicts,
             groupName,
             variant,
@@ -100,13 +98,12 @@ public class ShapeBlock extends Block implements BackedShape {
     }
 
     private ShapeBlock(net.minecraft.block.material.Material blockMaterial, String modid, String name,
-                       String displayNameFormat, String[] oreDicts, String groupName, String variant,
-                       String baseTexture, BlockBehavior behavior, IconPather iconPather) {
+                       String[] oreDicts, String groupName, String variant, String baseTexture,
+                       BlockBehavior behavior, IconPather iconPather) {
         super(blockMaterial);
         this.modid = Names.validate("block shape modid", modid);
         this.name = Names.validate("block shape name", name);
         this.oreDicts = Names.validateOreDicts(oreDicts);
-        this.displayNameFormat = ShapeNaming.requireValidFormat(displayNameFormat);
         this.groupName = groupName;
         this.variant = variant;
         this.baseTexture = baseTexture;
@@ -447,7 +444,7 @@ public class ShapeBlock extends Block implements BackedShape {
 
         @Override
         public String getItemStackDisplayName(ItemStack stack) {
-            return ShapeText.displayName(shape, shape.displayNameFormat, stack);
+            return ShapeText.displayName(shape, stack);
         }
 
         @Override

@@ -14,7 +14,7 @@ class ShapeFluidInContainerTest {
 
     @Test
     void emptyIconPathDerivesFromTheShapeUnlessOverridden() {
-        Shape fluid = new ShapeFluid("testmod", "molten", "Molten %s");
+        Shape fluid = new ShapeFluid("testmod", "molten");
 
         assertEquals("testmod:materials/cell_empty", new TestContainer(fluid, null).emptyIconPath());
         assertEquals("gregtech:items/cell_base", new TestContainer(fluid, "gregtech:items/cell_base").emptyIconPath());
@@ -23,7 +23,7 @@ class ShapeFluidInContainerTest {
     private static final class TestContainer extends ShapeFluidInContainer {
 
         TestContainer(Shape fluidShape, String emptyIconOverride) {
-            super("testmod", "cell", "%s Cell", fluidShape, (EmptyContainer) null, 1000, emptyIconOverride, "cell");
+            super("testmod", "cell", fluidShape, (EmptyContainer) null, 1000, emptyIconOverride, "cell");
         }
     }
 }

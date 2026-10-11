@@ -12,7 +12,6 @@ class ShapeBlockTest {
     private final ShapeBlock withBaseTexture = new ShapeBlock(
         "testmod",
         "ore_stone",
-        "%s Ore",
         new String[] { "ore" },
         "ore",
         "stone",

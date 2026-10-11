@@ -27,7 +27,6 @@ class BlockShapeBuilderTest {
         return new ShapeBlock(
             "testmod",
             "frame",
-            "%s Frame",
             new String[] { "frame" },
             null,
             null,
