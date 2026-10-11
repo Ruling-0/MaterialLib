@@ -103,9 +103,9 @@ public final class MaterialBuilder {
     }
 
     /// Serves this material's `shape` with `item` at metadata 0 instead of an item MaterialLib mints.
-    /// [MaterialLibAPI#getStack] returns it, it is registered under the shape's oredict names, and the shape's own
+    /// [MaterialLibAPI#getStack] returns it and it is registered under the shape's oredict names. The shape's own
     /// item or block does not carry this material. The material must still generate the shape. [Material] documents
-    /// which override stands when several mods declare the material. Only block shapes without variants and item
+    /// which override survives when several mods declare the material. Only block shapes without variants and item
     /// shapes other than fluid containers can be overridden. Any other override is ignored with a warning.
     ///
     /// During the registration event only vanilla items are guaranteed to exist. Another mod's item is named through
@@ -133,8 +133,8 @@ public final class MaterialBuilder {
 
     /// [#addShapeOverride(Shape, Item)] for another mod's item or block, named by registry name. The override is
     /// ignored when `itemModid` is not loaded. The name binds at MaterialLib's init, which throws
-    /// [IllegalStateException] when no item or block registered during preInit matches it. [MaterialLibAPI#getStack]
-    /// serves the pair from MaterialLib's init on.
+    /// [IllegalStateException] when the name matches no item or block registered during preInit.
+    /// [MaterialLibAPI#getStack] serves the pair from MaterialLib's init on.
     public MaterialBuilder addShapeOverride(Shape shape, String itemModid, String itemName, int meta) {
         Names.validate("override item modid", itemModid);
         Objects.requireNonNull(itemName, "itemName must not be null");

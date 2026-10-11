@@ -99,7 +99,7 @@ public final class MaterialEdit {
     }
 
     /// Overrides the material's item in `shape`, as [MaterialBuilder#addShapeOverride(Shape, Item, int)]. An
-    /// edit's override beats every declaration's, and the last edit for a shape wins.
+    /// edit's override beats every declaration's. The last edit for a shape wins.
     public MaterialEdit addShapeOverride(Shape shape, Item item, int meta) {
         Objects.requireNonNull(item, "item must not be null");
         return addShapeOverride(shape, new ShapeOverride.Eager(new ItemStack(item, 1, meta)));

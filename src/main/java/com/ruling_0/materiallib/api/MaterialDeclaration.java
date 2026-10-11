@@ -8,8 +8,8 @@ import java.util.function.UnaryOperator;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
-/// The shapes, families and overrides one mod's [MaterialBuilder] declared, kept apart from the unified [Material]
-/// it folds into. Unification merges every declaration's shapes onto the owner, but which [ShapeOverride] stands
+/// The shapes, families and overrides declared by one mod's [MaterialBuilder], kept apart from the unified [Material]
+/// it folds into. Unification merges every declaration's shapes onto the owner, but which [ShapeOverride] survives
 /// depends on which declaration generates the shape.
 record MaterialDeclaration(Set<Shape> shapes, Set<Shape> removedShapes, List<String[]> familyKeys,
                            Map<Shape, ShapeOverride> overrides) {
@@ -23,8 +23,8 @@ record MaterialDeclaration(Set<Shape> shapes, Set<Shape> removedShapes, List<Str
         overrides = new Reference2ObjectLinkedOpenHashMap<>(overrides);
     }
 
-    /// Whether this declaration alone generates `canonicalShape`, through its own shapes or a family it joins, without
-    /// removing it. `canonical` maps a declared shape onto the elected shape of its name.
+    /// Whether this declaration's own shapes or families generate `canonicalShape`, without it removing the shape.
+    /// `canonical` maps a declared shape onto its election winner.
     boolean generates(Shape canonicalShape, UnaryOperator<Shape> canonical, MaterialRegistry registry) {
         for (Shape removed : removedShapes) {
             if (canonical.apply(removed) == canonicalShape) return false;

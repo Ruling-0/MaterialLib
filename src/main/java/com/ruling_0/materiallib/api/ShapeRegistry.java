@@ -254,7 +254,7 @@ public final class ShapeRegistry {
         overrideSubstitutions = null;
     }
 
-    /// The fingerprint of every standing override, or empty when nothing is overridden.
+    /// The content hash of every applied override, or empty when nothing is overridden.
     String getOverrideDigest() {
         requireResolved("fingerprint shape overrides");
         List<String> lines = new ObjectArrayList<>();

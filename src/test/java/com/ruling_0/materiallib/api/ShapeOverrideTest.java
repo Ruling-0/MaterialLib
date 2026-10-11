@@ -8,8 +8,7 @@ import java.util.function.UnaryOperator;
 
 import org.junit.jupiter.api.Test;
 
-/// Pins which declaration's shape override stands once same-name materials unify: an override replaces the
-/// version of a shape its own declaration would have produced, never another mod's.
+/// Pins which shape override survives once same-name materials unify. [Material] documents the precedence.
 class ShapeOverrideTest {
 
     private static final Predicate<String> ALL_LOADED = modid -> true;

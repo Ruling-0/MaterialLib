@@ -28,9 +28,9 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
 /// Remaps shape block metadata and shape stack damage in saved data from the material id list version it was saved
-/// under to the current one, through the world's [MaterialIdTransitions] chain, then turns blocks and stacks of a
-/// pair served by a shape override into the overriding item through [OverrideSubstitutions]. Covers chunks, player
-/// data and mods' own world storage.
+/// under to the current one, through the world's [MaterialIdTransitions] chain. Blocks and stacks of a pair served by
+/// a shape override then become the overriding item through [OverrideSubstitutions]. Covers chunks, player data and
+/// mods' own world storage.
 ///
 /// Data Postea never stamped is treated as list version 1. Loading data the chain cannot bring to the current version
 /// fails.

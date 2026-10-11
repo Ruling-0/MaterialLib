@@ -37,8 +37,8 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 /// A shape override ([MaterialBuilder#addShapeOverride(Shape, net.minecraft.item.Item)]) serves one shape of the
 /// material with a foreign item instead of one MaterialLib mints. A [MaterialEdit] override wins over every
 /// declaration. Otherwise the owner's override applies. A non-owning declaration's override applies only to a shape
-/// that declaration generates and the owner's does not; among several, the alphabetically-first modid wins. An
-/// override for a shape the unified material does not generate is ignored.
+/// that declaration generates and the owner's declaration does not. Among several, the alphabetically-first modid
+/// wins. An override for a shape the unified material does not generate is ignored.
 public final class Material {
 
     private static final Comparator<Family> FAMILY_KEY_ORDER = Comparator.comparing(Family::getKey);
@@ -220,7 +220,7 @@ public final class Material {
     }
 
     /// The override serving `canonicalShape` of this unified material, or null when MaterialLib mints the pair. See
-    /// the class doc for the precedence. `canonical` maps a declared shape onto the elected shape of its name.
+    /// the class doc for the precedence. `canonical` maps a declared shape onto its election winner.
     ShapeOverride chooseOverride(Shape canonicalShape, UnaryOperator<Shape> canonical, Predicate<String> modLoaded) {
         ShapeOverride edited = null;
         for (Map.Entry<Shape, ShapeOverride> entry : editedOverrides.entrySet()) {
@@ -246,7 +246,7 @@ public final class Material {
         return null;
     }
 
-    /// Every shape some declaration or edit of this unified material names an override for.
+    /// Every shape named by an override in some declaration or edit of this unified material.
     Set<Shape> overriddenShapeDeclarations() {
         Set<Shape> declared = new ReferenceLinkedOpenHashSet<>(editedOverrides.keySet());
         declared.addAll(declaration.overrides().keySet());

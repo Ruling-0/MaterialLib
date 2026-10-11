@@ -17,10 +17,10 @@ import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-/// Rewrites saved shape stacks and placed shape blocks of a pair served by a shape override into the overriding item.
-/// Such data comes from a world saved before the override applied, when the shape's own item carried the material.
+/// Rewrites saved shape stacks and placed shape blocks of a pair served by a shape override into the overriding item,
+/// for worlds saved before the override applied.
 ///
-/// Holds the numeric ids of one id mapping. [ShapeRegistry#overrideSubstitutions] rebuilds it after
+/// Holds the numeric ids of one FML id mapping. [ShapeRegistry#overrideSubstitutions] rebuilds it after
 /// [ShapeRegistry#invalidateOverrideSubstitutions].
 public final class OverrideSubstitutions {
 
@@ -76,8 +76,8 @@ public final class OverrideSubstitutions {
         stack.setShort("Damage", (short) target.getItemDamage());
     }
 
-    /// The `blockId << 32 | metadata` a placed block of an overridden pair becomes, or -1 when it stays. Unpack the
-    /// result with [#blockId] and [#metadata].
+    /// The packed `blockId << 32 | metadata` that a placed block of an overridden pair becomes, or -1 when it stays.
+    /// [#blockId] and [#metadata] unpack the result.
     public long substituteBlock(int blockId, int metadata) {
         return blocks.get(pack(blockId, metadata));
     }
