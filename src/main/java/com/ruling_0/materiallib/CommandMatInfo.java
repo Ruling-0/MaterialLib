@@ -63,8 +63,8 @@ public class CommandMatInfo extends CommandBase {
         send(sender, "Hold a MaterialLib shape item, or look at a MaterialLib shape block, to inspect it");
     }
 
-    /// Reports the held stack when [MaterialLibAPI#lookupStack] knows it, returning whether it did. A held override
-    /// item also names the pair it serves.
+    /// Reports the held stack when [MaterialLibAPI#lookupStack] resolves it, returning whether it did. A held override
+    /// item also reports its own registry name and damage.
     private static boolean reportHeldItem(ICommandSender sender, ItemStack stack) {
         StackMaterialInfo info = MaterialLibAPI.lookupStack(stack);
         if (info == null) return false;

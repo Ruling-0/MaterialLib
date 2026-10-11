@@ -50,7 +50,7 @@ public class PosteaMigrationGameTests {
     private static final String WITNESS_MATERIAL = System.getProperty("materiallib.qa.witnessMaterial", "Tin");
     private static final String WITNESS_SHAPE = System.getProperty("materiallib.qa.witnessShape", "ingot");
     private static final String WITNESS_BLOCK_SHAPE = System.getProperty("materiallib.qa.witnessBlockShape", "frameGt");
-    /// A material whose witness-shape pair is served by a shape override; the seeded EnderStorage slot 1 holds it.
+    /// A material whose witness-shape pair is served by a shape override. The seeded EnderStorage slot 1 holds it.
     private static final String OVERRIDE_MATERIAL = System.getProperty("materiallib.qa.overrideMaterial", "Iron");
     /// The registry name of the item overriding that pair.
     private static final String OVERRIDE_ITEM = System.getProperty("materiallib.qa.overrideItem",

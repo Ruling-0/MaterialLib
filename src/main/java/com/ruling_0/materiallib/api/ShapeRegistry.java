@@ -372,7 +372,7 @@ public final class ShapeRegistry {
     }
 
     /// The shape, variant, and material `stack` stands for, or null when it is neither a MaterialLib item or block
-    /// nor an override's item; see [StackMaterialInfo] for the result's null fields.
+    /// nor an override's item. See [StackMaterialInfo] for the result's null fields.
     StackMaterialInfo lookupStack(ItemStack stack) {
         requireResolved("look up an item stack");
         if (stack == null || stack.getItem() == null) return null;
