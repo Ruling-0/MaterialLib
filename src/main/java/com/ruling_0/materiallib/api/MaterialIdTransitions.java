@@ -15,8 +15,6 @@ import it.unimi.dsi.fastutil.ints.Int2IntMaps;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 
 /// The per-world chain of material id transitions, `v<K>-to-v<K+1>.json` files under
 /// `<worldDir>/materiallib/transitions`.
@@ -67,7 +65,7 @@ public final class MaterialIdTransitions {
     }
 
     /// Returns the single remap taking indices stamped at `fromVersion` to `toVersion`: an entry per index that
-    /// changes, mapped to its final index, or to [#DELETE] when its material was removed along the way. Indices
+    /// changed, mapped to its final index, or to [#DELETE] when its material was removed along the way. Indices
     /// absent from the map are unchanged. Throws [IllegalArgumentException] when `fromVersion` is past `toVersion`, and
     /// [IllegalStateException] when a step in the span is missing.
     public Int2IntMap compose(int fromVersion, int toVersion) {
@@ -88,13 +86,10 @@ public final class MaterialIdTransitions {
             Int2IntMap next = new Int2IntOpenHashMap();
             for (Int2IntMap.Entry entry : current.int2IntEntrySet()) {
                 int at = entry.getIntValue();
-                next.put(entry.getIntKey(), at == DELETE ? DELETE : step.apply(at));
+                next.put(entry.getIntKey(), step.apply(at));
             }
-            for (int movedFrom : step.moved().keySet()) {
-                if (!current.containsKey(movedFrom)) next.put(movedFrom, step.moved().get(movedFrom));
-            }
-            for (int removedIndex : step.removed()) {
-                if (!current.containsKey(removedIndex)) next.put(removedIndex, DELETE);
+            for (Int2IntMap.Entry entry : step.changed().int2IntEntrySet()) {
+                if (!current.containsKey(entry.getIntKey())) next.put(entry.getIntKey(), entry.getIntValue());
             }
             current = next;
         }
@@ -126,33 +121,31 @@ public final class MaterialIdTransitions {
             Integer.parseInt(name.group(2)) != data.to) {
             throw new IllegalStateException(corrupt(file) + " (the file name does not match its versions)");
         }
-        Int2IntMap moved = new Int2IntOpenHashMap();
+        Int2IntMap changed = new Int2IntOpenHashMap();
         for (Map.Entry<Integer, Integer> entry : data.moved.entrySet()) {
             if (entry.getKey() == null || entry.getKey() < 0 || entry.getValue() == null || entry.getValue() < 0) {
                 throw new IllegalStateException(corrupt(file) + " (invalid moved entry " + entry + ")");
             }
-            moved.put((int) entry.getKey(), (int) entry.getValue());
+            changed.put((int) entry.getKey(), (int) entry.getValue());
         }
-        IntSet removed = new IntOpenHashSet();
         for (Integer index : data.removed) {
-            if (index == null || index < 0 || moved.containsKey((int) index)) {
+            if (index == null || index < 0 || changed.containsKey((int) index)) {
                 throw new IllegalStateException(corrupt(file) + " (invalid removed index " + index + ")");
             }
-            removed.add((int) index);
+            changed.put((int) index, DELETE);
         }
-        return new Step(data.from, moved, removed);
+        return new Step(data.from, changed);
     }
 
     private static String corrupt(File file) {
         return "The material id transition at " + file + " is unreadable or malformed. Fix or restore the file.";
     }
 
-    private record Step(int from, Int2IntMap moved, IntSet removed) {
+    private record Step(int from, Int2IntMap changed) {
 
         /// Returns the index `index` holds at `from + 1`, or [MaterialIdTransitions#DELETE].
         int apply(int index) {
-            if (moved.containsKey(index)) return moved.get(index);
-            return removed.contains(index) ? DELETE : index;
+            return changed.getOrDefault(index, index);
         }
     }
 

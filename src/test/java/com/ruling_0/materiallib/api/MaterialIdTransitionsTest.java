@@ -108,4 +108,11 @@ class MaterialIdTransitionsTest {
 
         assertThrows(IllegalStateException.class, () -> MaterialIdTransitions.load(dir));
     }
+
+    @Test
+    void loadingAnIndexBothMovedAndRemovedFailsLoudly() {
+        MaterialIdTransitions.write(dir, 1, 2, Map.of(0, 5), List.of(0));
+
+        assertThrows(IllegalStateException.class, () -> MaterialIdTransitions.load(dir));
+    }
 }
