@@ -410,7 +410,7 @@ public class ShapeBlock extends Block implements BackedShape {
         return new ArrayList<>(behavior.drops().drops(material, variant, fortune, silkTouch, harvester));
     }
 
-    /// False for a shape with a drop function, which decides silk-touch drops itself in [#getDrops].
+    /// False for a shape with a drop function, which decides silk-touch drops through [#getDrops].
     @Override
     public boolean canSilkHarvest(World world, EntityPlayer player, int x, int y, int z, int metadata) {
         return behavior.drops() == null && super.canSilkHarvest(world, player, x, y, z, metadata);
